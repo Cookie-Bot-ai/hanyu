@@ -236,7 +236,10 @@
     transition:background .15s ease; }
   .word-row:hover{ background:rgba(255,255,255,.05); }
   .word-row:last-child{ border-bottom:none; }
-  .word-row .info{ line-height:1.4; }
+  /* Without min-width:0 a long meaning refuses to wrap and shoves the buttons out of
+     the row — they ended up underneath the text and unclickable. */
+  .word-row .info{ line-height:1.4; min-width:0; flex:1 1 auto; overflow-wrap:anywhere; }
+  .word-row > div:last-child{ flex:0 0 auto; }
   .word-row .info .h{ font-family:'STZhongsong','SimSun',serif; font-size:16px; margin-right:6px; }
   .word-row .info .p{ color:var(--gold); margin-right:6px; }
   .word-row .info .m{ color:#BCC9BF; }
@@ -5139,6 +5142,9 @@ function speechChars(text){
 }
 
 function speak(text){
+  // Un-stick a jammed queue: Chrome can leave synthesis paused after an interruption,
+  // and every later speak() then silently does nothing.
+  try{ if(speechSynthesis.paused) speechSynthesis.resume(); }catch(e){}
   speechSynthesis.cancel();
   const chars = speechChars(text); // punctuation-free, split by code point — safe for CJK
   if(chars.length === 0) return;
@@ -5926,6 +5932,13 @@ function finishPronAttempt(){
   if(pronFinish) pronFinish();
 }
 
+// If the tab is backgrounded mid-attempt the callbacks may never arrive, so make sure
+// the microphone is released rather than left holding audio output hostage.
+document.addEventListener('visibilitychange', () => {
+  if(document.hidden && pronListening){ pronSession++; stopPronListening(); }
+});
+window.addEventListener('pagehide', () => { if(pronRec){ try{ pronRec.abort(); }catch(e){} } });
+
 function resetPronForNewCard(){
   if(pronListening){
     pronSession++;
@@ -6041,6 +6054,9 @@ function stopPronListening(){
   clearTimeout(pronAutoStop);
   clearTimeout(pronFinishFallback);
   pronListening = false;
+  // Release the microphone. Without this the session stays open (continuous mode) and
+  // the browser keeps audio OUTPUT suspended — playback goes silent app-wide.
+  if(pronRec){ try{ pronRec.stop(); }catch(e){} try{ pronRec.abort(); }catch(e){} }
   if(!pronCtx) return;
   const btn = document.getElementById(pronCtx.btnId);
   if(btn){
