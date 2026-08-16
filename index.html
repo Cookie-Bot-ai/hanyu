@@ -42,11 +42,14 @@
   .hanzi{ font-family:'STZhongsong','SimSun','Songti SC',serif; }
   h1{ font-family:'STZhongsong','SimSun','Songti SC',serif; font-size:25px; margin:3px 0 0; letter-spacing:1px; }
   .eyebrow{ font-size:10px; letter-spacing:2.5px; text-transform:uppercase; color:var(--muted); }
-  .wrap{ width:100%; max-width:560px; }
+  .wrap{ width:100%; max-width:640px; }
   /* Three-column shell: reference rails left and right, app in the middle.
-     The rails are sticky so they stay readable while the middle column scrolls. */
-  .shell{ display:grid; gap:20px; align-items:start; width:100%; max-width:1260px;
-    grid-template-columns:minmax(230px,300px) minmax(0,560px) minmax(230px,300px);
+     The rails are sticky so they stay readable while the middle column scrolls.
+     Widened from the original 1260px/300px-rail layout so the tone-sandhi and
+     radical reference panels sit further out at the edges on wide screens,
+     instead of crowding the center card. */
+  .shell{ display:grid; gap:32px; align-items:start; width:100%; max-width:1640px;
+    grid-template-columns:minmax(260px,380px) minmax(0,640px) minmax(260px,380px);
     justify-content:center; }
   .shell > .wrap{ max-width:none; }
   .side{ position:sticky; top:24px; max-height:calc(100vh - 48px); overflow-y:auto;
@@ -57,8 +60,8 @@
   .side summary{ font-size:14px; }
   .side table{ font-size:12px; }
   /* Not enough width for rails — stack them below the app instead of squashing it */
-  @media (max-width:1180px){
-    .shell{ grid-template-columns:minmax(0,560px); max-width:560px; }
+  @media (max-width:1400px){
+    .shell{ grid-template-columns:minmax(0,640px); max-width:640px; }
     .shell > .wrap{ order:1; }
     .side-left{ order:2; }
     .side-right{ order:3; }
@@ -390,6 +393,48 @@
         <label for="stroke-hide-learned">Hide learned words (✓)</label>
         <input type="checkbox" id="stroke-hide-learned" style="margin-left:auto;">
       </div>
+      <div class="speed-row" style="margin-bottom:12px;">
+        <label for="stroke-order">Card order</label>
+        <select class="mode" id="stroke-order" style="margin-left:auto;">
+          <option value="shuffle">🔀 Shuffled</option>
+          <option value="newest">🆕 Newest added first</option>
+          <option value="oldest">📜 Oldest added first</option>
+        </select>
+      </div>
+      <!-- Listen & Translate Practice: only shown in Phrases (read-only) mode.
+           Plays the phrase in one language, pauses for you to say the translation
+           out loud, then plays the translation — Reveal shows the text any time.
+           Moved to the top of the card so it's the first thing seen in Phrases mode. -->
+      <div id="phrase-practice-block" style="display:none;margin-bottom:14px;">
+        <div class="card" style="padding:14px;">
+          <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">🗣️ Listen &amp; Translate Practice</div>
+          <div class="form-grid" style="margin-bottom:10px;">
+            <div>
+              <span class="field-label">Hear it in</span>
+              <select class="mode" id="phrase-source-lang" style="width:100%;">
+                <option value="zh">Chinese</option>
+                <option value="en">English</option>
+                <option value="vi">Vietnamese</option>
+              </select>
+            </div>
+            <div>
+              <span class="field-label">Translate to</span>
+              <select class="mode" id="phrase-target-lang" style="width:100%;">
+                <option value="en">English</option>
+                <option value="zh">Chinese</option>
+                <option value="vi">Vietnamese</option>
+              </select>
+            </div>
+          </div>
+          <div class="toolbar" style="margin:0 0 10px;">
+            <button class="action btn-play wide" id="phrase-practice-play">▶ Start</button>
+          </div>
+          <div id="phrase-practice-status" style="font-size:12px;color:var(--muted);min-height:16px;margin-bottom:8px;"></div>
+          <button class="action btn-reveal wide" id="phrase-practice-reveal">👀 Reveal Translation</button>
+          <div id="phrase-practice-answer" class="translation-box" style="display:none;margin-top:8px;"></div>
+        </div>
+      </div>
+
       <div class="row" id="stroke-direction-row" style="margin-top:0;margin-bottom:12px;">
         <button class="action btn-reveal" id="stroke-direction-toggle" style="flex:1;">🔤 Character → Meaning</button>
       </div>
@@ -413,6 +458,7 @@
         <div class="reveal-area" id="stroke-reveal" style="display:flex;flex-direction:column;gap:4px;">
           <div class="pinyin" id="stroke-pinyin"></div>
           <div class="meaning" id="stroke-meaning"></div>
+          <div class="meaning" id="stroke-notes" style="color:var(--muted);white-space:pre-wrap;"></div>
         </div>
         <div id="stroke-feedback" style="font-size:13px;color:var(--jade);margin-top:8px;min-height:18px;"></div>
         <div id="flash-voice-note" style="font-size:11px;color:var(--muted);margin-top:8px;"></div>
@@ -422,9 +468,11 @@
       <div class="toolbar">
         <button class="action btn-reveal hz" id="stroke-toggle-p" title="Show pinyin" aria-label="Show pinyin">拼</button>
         <button class="action btn-reveal hz" id="stroke-toggle-m" title="Show meaning" aria-label="Show meaning">英</button>
+        <button class="action btn-reveal hz" id="stroke-toggle-notes" title="Show your notes" aria-label="Show your notes">📝</button>
       </div>
       <div id="stroke-pron-row" style="display:none;"></div>
       <div id="stroke-pron-result" class="pron-result" style="display:none;"></div>
+
       <div class="toolbar">
         <button class="action btn-reveal wide" id="stroke-shuffle" title="Shuffle the deck">🔀 Shuffle</button>
       </div>
@@ -449,11 +497,15 @@
           </div>
         </div>
         <div class="full">
-          <span class="field-label">Meaning</span>
-          <input class="field" id="add-mn" placeholder="e.g. thank you">
+          <span class="field-label">Meaning (optional — auto-translated if left blank)</span>
+          <input class="field" id="add-mn" placeholder="e.g. thank you — leave blank to auto-translate">
+        </div>
+        <div class="full">
+          <span class="field-label">Your notes (optional)</span>
+          <input class="field" id="add-notes" placeholder="e.g. your own Vietnamese translation, a mnemonic, anything">
         </div>
       </div>
-      <div style="font-size:11px;color:var(--muted);margin:-4px 0 10px;">Pinyin is generated automatically from the hanzi — no need to type it.</div>
+      <div style="font-size:11px;color:var(--muted);margin:-4px 0 10px;">Pinyin and English are generated automatically from the hanzi — fill in English yourself only if you want to override the auto-translation. Notes are entirely up to you; nothing is auto-filled there.</div>
       <button class="action btn-next" id="add-submit" style="width:100%;">+ Add word</button>
       <div id="pinyin-warning" style="font-size:11px;color:var(--gold);margin-top:6px;display:none;">Pinyin auto-generation needs internet the first time it loads — it looks unavailable right now, so pinyin will be left blank (fill it in via Edit if needed).</div>
       <div id="add-feedback" style="margin-top:8px;font-size:12px;color:var(--muted);"></div>
@@ -7398,12 +7450,15 @@ function renderHskList(){
   });
   // Un-add: for words added by mistake. Takes the recording with it, since the
   // recording is keyed to the word's id and would otherwise be orphaned.
+  // No confirm() dialog here deliberately — window.confirm() is unreliable inside
+  // installed/standalone PWAs (some WebViews silently no-op it), which made this
+  // button appear broken. The action is safe to fire immediately: the word only
+  // leaves My Words, it stays in the HSK list and can be re-added with one tap.
   list.querySelectorAll('[data-hsk-remove]').forEach(btn => {
     btn.addEventListener('click', () => {
       const hanzi = btn.dataset.hskRemove;
       const word = allWords.find(x => x.h === hanzi);
       if(!word) return;
-      if(!confirm(`Remove ${hanzi} from your words?` + '\n\nIt stays in the HSK list, so you can add it back any time.')) return;
       allWords = allWords.filter(x => x.h !== hanzi);
       saveWords(allWords);
       refreshAllDecks();
@@ -7902,6 +7957,36 @@ function speak(text){
   speakNext();
 }
 
+// Generic multi-language playback for Listen & Translate Practice (Chinese/English/
+// Vietnamese) — separate from speak() above, which is deliberately zh-only and
+// splits into per-character utterances for tone drilling. Practice phrases just need
+// one natural utterance in whichever language was picked, awaited so the pause and
+// the translation playback that follow it are sequenced correctly instead of overlapping.
+function bestVoiceFor(langCode){
+  const voices = speechSynthesis.getVoices();
+  const short = langCode.split('-')[0].toLowerCase();
+  return voices.find(v => v.lang && v.lang.toLowerCase() === langCode.toLowerCase())
+      || voices.find(v => v.lang && v.lang.toLowerCase().startsWith(short))
+      || null;
+}
+function speakLangAsync(text, langCode){
+  return new Promise(resolve => {
+    try{ if(speechSynthesis.paused) speechSynthesis.resume(); }catch(e){}
+    speechSynthesis.cancel();
+    if(!text){ resolve(); return; }
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = langCode;
+    const voice = bestVoiceFor(langCode);
+    if(voice) u.voice = voice;
+    u.rate = Math.min(1.5, speechRate);
+    u.volume = 1.0;
+    u.pitch = 1.0;
+    u.onend = resolve;
+    u.onerror = resolve; // e.g. no voice installed for that language — don't hang the sequence
+    speechSynthesis.speak(u);
+  });
+}
+
 const speedSlider = document.getElementById('speed-slider');
 const speedVal = document.getElementById('speed-val');
 speedSlider.value = speechRate;
@@ -7938,9 +8023,10 @@ document.querySelectorAll('.tab-btn:not(.subtab-btn)').forEach(btn => {
       strokeDirection = 'char';   // the guess quiz doesn't apply to a whole phrase
       strokeScope = 'myphrases';
       document.getElementById('stroke-scope').style.display = 'none';
-      strokeDeck = shuffle(scopedVocab(strokeScope));
+      strokeDeck = orderStrokeDeck(scopedVocab(strokeScope));
       strokeIdx = 0;
       strokeRevealed = false; strokeGuessShowPinyin = false;
+      resetPhraseSession();
       renderStroke();
     }
     if(tab === 'stroke'){
@@ -7951,7 +8037,7 @@ document.querySelectorAll('.tab-btn:not(.subtab-btn)').forEach(btn => {
       if(strokeScope === 'myphrases'){
         document.getElementById('stroke-scope').value = 'all';
         strokeScope = 'all';
-        strokeDeck = shuffle(scopedVocab(strokeScope));
+        strokeDeck = orderStrokeDeck(scopedVocab(strokeScope));
         strokeIdx = 0;
         strokeRevealed = false; strokeGuessShowPinyin = false;
         renderStroke();
@@ -8337,10 +8423,20 @@ renderBeeScore();
 
 // ---- Stroke order writing practice (via HanziWriter, loads stroke data from a CDN) ----
 let strokeScope = 'all';
-let strokeDeck = shuffle(scopedVocab(strokeScope));
+// Card order for the Flashcards deck: 'shuffle' (default) randomizes every rebuild;
+// 'newest'/'oldest' use insertion order in allWords, since words are always appended
+// (pushed) — same convention as the Word Library's own newest/oldest sort.
+let strokeOrder = 'shuffle';
+function orderStrokeDeck(list){
+  if(strokeOrder === 'newest') return list.slice().reverse();
+  if(strokeOrder === 'oldest') return list.slice();
+  return shuffle(list);
+}
+let strokeDeck = orderStrokeDeck(scopedVocab(strokeScope));
 let strokeIdx = 0;
 let strokeShowPinyin = false;
 let strokeShowMeaning = false;
+let strokeShowNotes = false;
 let strokeWriters = []; // HanziWriter instances for the characters in the current word
 // Phrases is a READING tab: show the phrase, hear it, check pronunciation. No 130px
 // character tiles and no stroke tracing — that stays in Flashcards, where you're
@@ -8357,7 +8453,7 @@ let strokeDirection = 'char'; // 'char' = see hanzi, guess meaning; 'meaning' = 
 // too, leaving just a stranded label. Hide the lot; the guess box has its own controls.
 function setWritingControlsVisible(visible){
   const d = (visible && !strokeReadOnly) ? '' : 'none';
-  ['stroke-writing-actions', 'stroke-recorder-row', 'stroke-toggle-p', 'stroke-toggle-m', 'stroke-pron-check', 'stroke-animate']
+  ['stroke-writing-actions', 'stroke-recorder-row', 'stroke-toggle-p', 'stroke-toggle-m', 'stroke-toggle-notes', 'stroke-pron-check', 'stroke-animate']
     .forEach(id => { const el = document.getElementById(id); if(el) el.style.display = d; });
   // A verdict belongs to one specific card, so never carry it across a mode switch
   const res = document.getElementById('stroke-pron-result');
@@ -8366,8 +8462,12 @@ function setWritingControlsVisible(visible){
   // the writing chrome and the Meaning→Character quiz, which needs a single character.
   const dirRow = document.getElementById('stroke-direction-row');
   if(dirRow) dirRow.style.display = strokeReadOnly ? 'none' : '';
-  ['stroke-toggle-p', 'stroke-toggle-m', 'stroke-pron-check', 'stroke-recorder-row']
+  ['stroke-toggle-p', 'stroke-toggle-m', 'stroke-toggle-notes', 'stroke-pron-check', 'stroke-recorder-row']
     .forEach(id => { const el = document.getElementById(id); if(el && strokeReadOnly) el.style.display = ''; });
+  // Listen & Translate Practice is a Phrases-only feature — Flashcards drills single
+  // characters/words, where "translate the whole sentence back" doesn't apply.
+  const phraseBlock = document.getElementById('phrase-practice-block');
+  if(phraseBlock) phraseBlock.style.display = strokeReadOnly ? '' : 'none';
 }
 let strokeRevealed = false; // in meaning-first mode: has the character been revealed for this card yet?
 let strokeGuessShowPinyin = false; // pinyin-hint toggle while guessing in meaning-first mode
@@ -8460,7 +8560,42 @@ function updateStrokeStatusButtons(){
   learnedBtn.style.color = '#E7EAE3';
 }
 
+// Notes is a manual, freeform field the person types themselves — their own
+// Vietnamese gloss, a mnemonic, anything. Unlike the old auto-translate attempt,
+// there's nothing to fetch: just show whatever they saved, or a short prompt if
+// they haven't written one yet for this word.
+function renderNotesFor(card){
+  const el = document.getElementById('stroke-notes');
+  if(!strokeShowNotes || !card){ el.textContent = ''; return; }
+  el.textContent = card.n ? card.n : '(no notes yet — add some via Edit in the Word Library)';
+}
+
+// Cancels any in-flight Listen & Translate Practice sequence (speech + pending
+// timers) so switching cards, shuffling, or leaving the tab never lets one card's
+// audio/pause bleed into the next. Does NOT touch phraseSessionActive — that only
+// changes on Start / on leaving the Phrases tab, not on every card transition.
+let phrasePracticeToken = 0;
+let phraseSessionActive = false; // false: button reads "Start"; true: button reads "Next ▶" and auto-advances
+function stopPhrasePractice(){
+  phrasePracticeToken++;
+  try{ speechSynthesis.cancel(); }catch(e){}
+  const statusEl = document.getElementById('phrase-practice-status');
+  if(statusEl) statusEl.textContent = '';
+  const answerEl = document.getElementById('phrase-practice-answer');
+  if(answerEl) answerEl.style.display = 'none';
+  const revealBtn = document.getElementById('phrase-practice-reveal');
+  if(revealBtn) revealBtn.textContent = '👀 Reveal Translation';
+}
+// Called fresh each time the Phrases tab is opened, so a session from last time
+// doesn't linger with the button still reading "Next".
+function resetPhraseSession(){
+  phraseSessionActive = false;
+  const playBtn = document.getElementById('phrase-practice-play');
+  if(playBtn) playBtn.textContent = '▶ Start';
+}
+
 function renderStroke(){
+  stopPhrasePractice();
   resetPronForNewCard();
   const countEl = document.getElementById('stroke-count');
   const feedback = document.getElementById('stroke-feedback');
@@ -8475,6 +8610,7 @@ function renderStroke(){
     document.getElementById('stroke-targets').innerHTML = `<div class="hint">${emptyDeckMessage(strokeScope)}</div>`;
     document.getElementById('stroke-pinyin').textContent = '';
     document.getElementById('stroke-meaning').textContent = '';
+    document.getElementById('stroke-notes').textContent = '';
     feedback.textContent = '';
     playBtn.style.display = 'none';
     setWritingControlsVisible(strokeDirection !== 'meaning');
@@ -8512,6 +8648,8 @@ function renderStroke(){
   document.getElementById('stroke-meaning').textContent = strokeShowMeaning ? card.m : '';
   document.getElementById('stroke-toggle-p').classList.toggle('on', strokeShowPinyin);
   document.getElementById('stroke-toggle-m').classList.toggle('on', strokeShowMeaning);
+  document.getElementById('stroke-toggle-notes').classList.toggle('on', strokeShowNotes);
+  renderNotesFor(card);
   feedback.textContent = '';
   playBtn.style.display = '';
 
@@ -8590,15 +8728,125 @@ function quizStrokeWord(){
 
 document.getElementById('stroke-scope').addEventListener('change', (e) => {
   strokeScope = e.target.value;
-  strokeDeck = shuffle(scopedVocab(strokeScope));
+  strokeDeck = orderStrokeDeck(scopedVocab(strokeScope));
   strokeIdx = 0;
   strokeRevealed = false; strokeGuessShowPinyin = false;
   renderStroke();
 });
 document.getElementById('stroke-hide-learned').checked = getHideLearned();
 document.getElementById('stroke-hide-learned').addEventListener('change', (e) => refreshAllPracticeForHideLearned(e.target.checked));
+document.getElementById('stroke-order').addEventListener('change', (e) => {
+  strokeOrder = e.target.value;
+  strokeDeck = orderStrokeDeck(scopedVocab(strokeScope));
+  strokeIdx = 0;
+  strokeRevealed = false; strokeGuessShowPinyin = false;
+  renderStroke();
+});
 document.getElementById('stroke-toggle-p').addEventListener('click', () => { strokeShowPinyin = !strokeShowPinyin; renderStroke(); });
 document.getElementById('stroke-toggle-m').addEventListener('click', () => { strokeShowMeaning = !strokeShowMeaning; renderStroke(); });
+document.getElementById('stroke-toggle-notes').addEventListener('click', () => { strokeShowNotes = !strokeShowNotes; renderStroke(); });
+
+// ---- Phrases: Listen & Translate Practice ----
+function phraseLangCode(lang){ return { zh: 'zh-CN', en: 'en-US', vi: 'vi-VN' }[lang] || 'en-US'; }
+// Best-known text for a card in a given language, without hitting the network —
+// callers fall back to an async fetch themselves when this comes back empty.
+function phraseLangTextSync(card, lang){
+  if(lang === 'zh') return card.h || '';
+  if(lang === 'en') return card.m || '';
+  if(lang === 'vi') return card.v || translateCache[card.h + '|vi'] || '';
+  return '';
+}
+async function phraseLangTextAsync(card, lang){
+  const sync = phraseLangTextSync(card, lang);
+  if(sync) return sync;
+  if(lang === 'vi') return await getAutoVietnamese(card.h, card.m);
+  if(lang === 'en') return await getAutoEnglish(card.h);
+  return '';
+}
+// Keep the two selects from ever landing on the same language — translating
+// Chinese "to Chinese" isn't a practice round.
+function syncPhraseLangSelectors(){
+  const s = document.getElementById('phrase-source-lang');
+  const t = document.getElementById('phrase-target-lang');
+  Array.from(t.options).forEach(opt => { opt.disabled = (opt.value === s.value); });
+  if(t.value === s.value){
+    const next = Array.from(t.options).find(opt => opt.value !== s.value);
+    if(next) t.value = next.value;
+  }
+}
+document.getElementById('phrase-source-lang').addEventListener('change', syncPhraseLangSelectors);
+syncPhraseLangSelectors();
+
+// The core listen/pause/translate sequence for one card. Shared by both the
+// initial Start press and every automatic advance afterward.
+async function runPhrasePracticeRound(){
+  if(strokeDeck.length === 0) return;
+  const token = ++phrasePracticeToken;
+  const card = strokeDeck[strokeIdx];
+  const statusEl = document.getElementById('phrase-practice-status');
+  const sourceLang = document.getElementById('phrase-source-lang').value;
+  const targetLang = document.getElementById('phrase-target-lang').value;
+
+  statusEl.textContent = 'Preparing…';
+  const sourceText = await phraseLangTextAsync(card, sourceLang);
+  if(token !== phrasePracticeToken) return; // card changed while awaiting translation
+  if(!sourceText){ statusEl.textContent = 'No text available in that language yet.'; return; }
+
+  statusEl.textContent = '🔊 Playing…';
+  await speakLangAsync(sourceText, phraseLangCode(sourceLang));
+  if(token !== phrasePracticeToken) return;
+
+  statusEl.textContent = '✏️ Your turn — say the translation out loud…';
+  await new Promise(r => setTimeout(r, 4500)); // decent pause to answer before hearing it
+  if(token !== phrasePracticeToken) return;
+
+  const targetText = await phraseLangTextAsync(card, targetLang);
+  if(token !== phrasePracticeToken) return;
+  if(!targetText){ statusEl.textContent = 'No translation available in that language yet.'; return; }
+
+  statusEl.textContent = '🔊 Here\'s the translation…';
+  await speakLangAsync(targetText, phraseLangCode(targetLang));
+  if(token !== phrasePracticeToken) return;
+  statusEl.textContent = strokeDeck.length > 1
+    ? 'Done — tap Reveal to check, or Next ▶ to continue.'
+    : 'Done — tap Reveal to check.';
+}
+
+// Start begins the session and plays the first card. From then on the same
+// button reads "Next ▶": each press advances the deck and immediately plays the
+// new card automatically — no need to press Start again for every phrase.
+document.getElementById('phrase-practice-play').addEventListener('click', async () => {
+  const btn = document.getElementById('phrase-practice-play');
+  if(!phraseSessionActive){
+    phraseSessionActive = true;
+    btn.textContent = 'Next ▶';
+  } else {
+    if(strokeDeck.length === 0) return;
+    strokeIdx = (strokeIdx + 1) % strokeDeck.length;
+    strokeRevealed = false; strokeGuessShowPinyin = false;
+    renderStroke(); // resets per-card UI (reveal box, status) via stopPhrasePractice()
+    btn.textContent = 'Next ▶'; // renderStroke() doesn't touch this button's label — keep it
+  }
+  await runPhrasePracticeRound();
+});
+
+document.getElementById('phrase-practice-reveal').addEventListener('click', async () => {
+  if(strokeDeck.length === 0) return;
+  const card = strokeDeck[strokeIdx];
+  const answerEl = document.getElementById('phrase-practice-answer');
+  const btn = document.getElementById('phrase-practice-reveal');
+  if(answerEl.style.display !== 'none'){
+    answerEl.style.display = 'none';
+    btn.textContent = '👀 Reveal Translation';
+    return;
+  }
+  const targetLang = document.getElementById('phrase-target-lang').value;
+  answerEl.textContent = 'Looking up…';
+  answerEl.style.display = '';
+  const text = await phraseLangTextAsync(card, targetLang);
+  answerEl.textContent = text || '(translation unavailable — check your connection)';
+  btn.textContent = '🙈 Hide Translation';
+});
 // ---- Pronunciation check (speech recognition) --------------------------------
 // Available on every practice tab: Flashcards, Phrases, Dictation and Q&A. It replaced
 // the voice-recording feature entirely — recording only ever let you compare yourself
@@ -8968,7 +9216,11 @@ document.getElementById('stroke-learned-toggle').addEventListener('click', () =>
   updateStrokeStatusButtons();
 });
 document.getElementById('stroke-shuffle').addEventListener('click', () => {
-  strokeDeck = shuffle(scopedVocab(strokeScope));
+  // Manual shuffle always wins over a sorted order — switch the dropdown back to
+  // "Shuffled" so it doesn't silently re-sort on the next tab switch or filter change.
+  strokeOrder = 'shuffle';
+  document.getElementById('stroke-order').value = 'shuffle';
+  strokeDeck = orderStrokeDeck(scopedVocab(strokeScope));
   strokeIdx = 0;
   strokeRevealed = false; strokeGuessShowPinyin = false;
   renderStroke();
@@ -8976,14 +9228,14 @@ document.getElementById('stroke-shuffle').addEventListener('click', () => {
 document.getElementById('stroke-prev').addEventListener('click', () => {
   if(strokeDeck.length === 0) return;
   strokeIdx = (strokeIdx - 1 + strokeDeck.length) % strokeDeck.length;
-  strokeShowPinyin = false; strokeShowMeaning = false;
+  strokeShowPinyin = false; strokeShowMeaning = false; strokeShowNotes = false;
   strokeRevealed = false; strokeGuessShowPinyin = false;
   renderStroke();
 });
 document.getElementById('stroke-next').addEventListener('click', () => {
   if(strokeDeck.length === 0) return;
   strokeIdx = (strokeIdx + 1) % strokeDeck.length;
-  strokeShowPinyin = false; strokeShowMeaning = false;
+  strokeShowPinyin = false; strokeShowMeaning = false; strokeShowNotes = false;
   strokeRevealed = false; strokeGuessShowPinyin = false;
   renderStroke();
 });
@@ -9034,7 +9286,7 @@ function refreshAllPracticeForHideLearned(newVal){
   renderBeeScore();
   renderBeeEmptyState();
 
-  strokeDeck = shuffle(scopedVocab(strokeScope));
+  strokeDeck = orderStrokeDeck(scopedVocab(strokeScope));
   strokeIdx = 0;
   strokeRevealed = false; strokeGuessShowPinyin = false;
   document.getElementById('stroke-hide-learned').checked = newVal;
@@ -9049,7 +9301,7 @@ function refreshAllDecks(){
   beeShowHint = false;
   beeCardState = beeDeck.map(() => ({ drawing: null, checked: false, assessed: false }));
   renderBeeEmptyState();
-  strokeDeck = shuffle(scopedVocab(strokeScope));
+  strokeDeck = orderStrokeDeck(scopedVocab(strokeScope));
   strokeIdx = 0;
   strokeRevealed = false; strokeGuessShowPinyin = false;
   renderStroke();
@@ -9101,7 +9353,8 @@ function renderCustomList(){
             <input class="field" data-edit-h value="${w.h}" style="width:70px;">
             <input class="field" data-edit-p value="${w.p}" style="width:100px;">
             <button class="action btn-reveal small" data-regen-p="${i}" title="Regenerate pinyin from hanzi">🔄</button>
-            <input class="field" data-edit-m value="${w.m}" style="flex:1;min-width:120px;">
+            <input class="field" data-edit-m value="${w.m}" placeholder="English meaning" style="flex:1;min-width:120px;">
+            <input class="field" data-edit-notes value="${escapeHtml(w.n || '')}" placeholder="Your notes (optional)" style="flex:1;min-width:120px;">
           </div>
           <div style="display:flex;gap:6px;">
             <button class="action btn-next small" data-save="${i}">Save</button>
@@ -9111,7 +9364,7 @@ function renderCustomList(){
     }
     return `
       <div class="word-row">
-        <div class="info"><span class="h hanzi">${w.h}</span><span class="p">${w.p}</span><span class="m">${w.m}</span></div>
+        <div class="info"><span class="h hanzi">${w.h}</span><span class="p">${w.p}</span><span class="m">${w.m}</span>${w.n ? `<span class="m" style="color:var(--muted);">📝 ${escapeHtml(w.n)}</span>` : ''}</div>
         <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;">
           <button class="action small" data-star="${i}" title="Needs practice" style="background:${w.status==='star' ? 'var(--gold)' : 'var(--border)'};color:${w.status==='star' ? '#1A211C' : '#E7EAE3'};">⭐</button>
           <button class="action small" data-learned="${i}" title="Learned — hide from rotation" style="background:${w.status==='learned' ? 'var(--jade)' : 'var(--border)'};color:#E7EAE3;">✓</button>
@@ -9204,8 +9457,9 @@ function renderCustomList(){
       const h = row.querySelector('[data-edit-h]').value.trim();
       const p = row.querySelector('[data-edit-p]').value.trim();
       const m = row.querySelector('[data-edit-m]').value.trim();
+      const n = row.querySelector('[data-edit-notes]').value.trim();
       if(!h || !p || !m) return;
-      allWords[i] = { h, p, m, id: allWords[i].id || newId() };
+      allWords[i] = { ...allWords[i], h, p, m, n, id: allWords[i].id || newId() };
       saveWords(allWords);
       editingIndex = null;
       renderCustomList();
@@ -9214,12 +9468,13 @@ function renderCustomList(){
   });
 }
 
-document.getElementById('add-submit').addEventListener('click', () => {
+document.getElementById('add-submit').addEventListener('click', async () => {
   const h = document.getElementById('add-hz').value.trim();
-  const m = document.getElementById('add-mn').value.trim();
+  let m = document.getElementById('add-mn').value.trim();
+  const n = document.getElementById('add-notes').value.trim();
   const fb = document.getElementById('add-feedback');
-  if(!h || !m){
-    fb.textContent = 'Fill in hanzi and meaning.';
+  if(!h){
+    fb.textContent = 'Fill in the hanzi at least — meaning is auto-translated if left blank.';
     fb.style.color = '#C9A227';
     return;
   }
@@ -9230,12 +9485,24 @@ document.getElementById('add-submit').addEventListener('click', () => {
     return;
   }
   const p = autoPinyin(h);
-  allWords.push({h, p, m, id: newId()});
+  const addBtn = document.getElementById('add-submit');
+  if(!m){
+    addBtn.disabled = true;
+    fb.textContent = 'Translating…';
+    fb.style.color = '#8A9A92';
+    m = await getAutoEnglish(h);
+    addBtn.disabled = false;
+  }
+  allWords.push({h, p, m, n, id: newId()});
   saveWords(allWords);
   document.getElementById('add-hz').value = '';
   document.getElementById('add-mn').value = '';
+  document.getElementById('add-notes').value = '';
   document.getElementById('pinyin-warning').style.display = p ? 'none' : 'block';
-  fb.textContent = p ? `Added "${h}" — pinyin "${p}" generated automatically.` : `Added "${h}" — pinyin left blank, fill it in via Edit.`;
+  const parts = [];
+  parts.push(p ? `pinyin "${p}"` : 'pinyin left blank');
+  parts.push(m ? `English "${m}"` : 'English left blank');
+  fb.textContent = `Added "${h}" — ${parts.join(', ')} (edit any of these below if needed).`;
   fb.style.color = '#3E7C59';
   renderCustomList();
   refreshAllDecks();
@@ -9379,6 +9646,62 @@ async function translateFullSentence(text){
   await loadCedict();
   if(!cedictLoaded) return { ok: false, message: 'Both the translation service and the dictionary are unavailable right now — check your internet connection and try again.' };
   return { ok: true, mode: 'dict', text: dictionaryTranslate(text) || '(no dictionary match)' };
+}
+
+// ---- Automatic English + Vietnamese translation (words & phrases) ----
+// Same MyMemory service as above, generalised to any langpair. Used so a person
+// only ever has to type the hanzi — English and Vietnamese are filled in for them,
+// same spirit as auto-pinyin. Results are cached in localStorage keyed by
+// "hanzi|langpair", since HSK's own 5,000+ built-in words are never bulk-translated
+// up front (that alone would burn through MyMemory's free daily quota) — instead
+// each word's Vietnamese gloss is fetched once, the first time it's actually shown,
+// and reused forever after from cache.
+const AUTO_TRANSLATE_CACHE_KEY = 'chinesevocab_auto_translate_cache';
+function loadTranslateCache(){
+  try{ return JSON.parse(localStorage.getItem(AUTO_TRANSLATE_CACHE_KEY)) || {}; }
+  catch(e){ return {}; }
+}
+function saveTranslateCache(cache){
+  try{ localStorage.setItem(AUTO_TRANSLATE_CACHE_KEY, JSON.stringify(cache)); }catch(e){}
+}
+let translateCache = loadTranslateCache();
+
+async function myMemoryTranslate(text, langpair){
+  const email = localStorage.getItem(MYMEMORY_EMAIL_STORAGE);
+  const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${langpair}`
+    + (email ? `&de=${encodeURIComponent(email)}` : '');
+  const res = await fetch(url);
+  if(!res.ok) return null;
+  const data = await res.json();
+  const translated = data && data.responseData && data.responseData.translatedText;
+  if(translated && !/^PLEASE SELECT|INVALID/i.test(translated)) return translated.trim();
+  return null;
+}
+
+// English gloss for a hanzi word/phrase, auto-generated — reuses the same MT
+// service as the Q&A "Translate my sentence" button, just cached per-hanzi.
+async function getAutoEnglish(hanzi){
+  const key = hanzi + '|en';
+  if(translateCache[key]) return translateCache[key];
+  try{
+    const text = await myMemoryTranslate(hanzi, 'zh-CN|en');
+    if(text){ translateCache[key] = text; saveTranslateCache(translateCache); return text; }
+  }catch(e){ /* offline or rate-limited — leave blank, editable by hand */ }
+  return '';
+}
+
+// Vietnamese gloss — tries zh->vi first; MyMemory's zh->vi pair is thinner than
+// zh->en, so if it comes back empty, fall back to translating the already-known
+// English meaning (en->vi is a much better-covered pair for this free service).
+async function getAutoVietnamese(hanzi, englishFallback){
+  const key = hanzi + '|vi';
+  if(translateCache[key]) return translateCache[key];
+  try{
+    let text = await myMemoryTranslate(hanzi, 'zh-CN|vi');
+    if(!text && englishFallback) text = await myMemoryTranslate(englishFallback, 'en|vi');
+    if(text){ translateCache[key] = text; saveTranslateCache(translateCache); return text; }
+  }catch(e){ /* offline or rate-limited — leave blank, editable by hand */ }
+  return '';
 }
 
 // The translation is the payoff of this whole panel, so it gets a labelled box rather
