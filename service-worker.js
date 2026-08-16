@@ -3,7 +3,7 @@
 // Bump CACHE_VERSION whenever index.html changes, otherwise returning visitors keep
 // getting the old cached copy. That is the single most common way to ship an update
 // that nobody receives.
-const CACHE_VERSION = 'hanyu-2026-08-16c';
+const CACHE_VERSION = 'hanyu-2026-08-16-12.24';
 
 // Same-origin app shell. These must all exist or the install step fails silently.
 const SHELL = [
