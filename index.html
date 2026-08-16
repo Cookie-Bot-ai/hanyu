@@ -414,7 +414,6 @@
               <select class="mode" id="phrase-source-lang" style="width:100%;">
                 <option value="zh">Chinese</option>
                 <option value="en">English</option>
-                <option value="vi">Vietnamese</option>
               </select>
             </div>
             <div>
@@ -422,7 +421,6 @@
               <select class="mode" id="phrase-target-lang" style="width:100%;">
                 <option value="en">English</option>
                 <option value="zh">Chinese</option>
-                <option value="vi">Vietnamese</option>
               </select>
             </div>
           </div>
@@ -430,8 +428,6 @@
             <button class="action btn-play wide" id="phrase-practice-play">▶ Start</button>
           </div>
           <div id="phrase-practice-status" style="font-size:12px;color:var(--muted);min-height:16px;margin-bottom:8px;"></div>
-          <button class="action btn-reveal wide" id="phrase-practice-reveal">👀 Reveal Translation</button>
-          <div id="phrase-practice-answer" class="translation-box" style="display:none;margin-top:8px;"></div>
         </div>
       </div>
 
@@ -753,6 +749,21 @@
       </div>
       <p class="hint on-bg" style="margin:0 0 14px;">"Export words" is one file with everything: My Words, My Phrases, and My Q&amp;A together, plus any HSK word you've added and its ⭐/✓ status. HSK vocabulary itself never needs exporting; it's already built into this file wherever you open it.<br><br><b>Merge</b> adds anything new and leaves what's already here alone — safe, but words you deleted or edited on your PC won't change. <b>Replace</b> wipes this device's words, Q&amp;A and recordings and loads the file exactly as-is, so this copy becomes an exact mirror of the PC. Use Replace on a phone you only practise on.</p>
       <div id="import-all-feedback" class="on-bg" style="font-size:12px;margin-bottom:14px;"></div>
+
+      <!-- Offline bulk-add: separate from the JSON backup above. Download a plain-text
+           template, fill it in with Notepad (or any text editor) while offline, then
+           import it as a patch — new words/phrases only, always merged in, never a
+           full replace. -->
+      <div class="top-controls" style="margin-bottom:8px;">
+        <span class="section-title on-bg" style="margin:0;">Bulk add from a text file</span>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <button class="action btn-reveal small" id="download-patch-template">📋 Download template</button>
+          <button class="action btn-reveal small" id="import-patch-trigger">📥 Import patch</button>
+          <input type="file" id="import-patch-file" accept=".txt,text/plain" style="display:none;">
+        </div>
+      </div>
+      <p class="hint on-bg" style="margin:0 0 14px;">For typing up new words/phrases offline in Notepad (or any plain text editor), then bringing them in all at once. Download the template, fill in one line per word using the <code>hanzi | meaning | type | notes</code> format described inside it, save the file, then Import patch. Meaning auto-translates if left blank; pinyin is always automatic. This always merges — it never touches or replaces what's already here.</p>
+      <div id="import-patch-feedback" class="on-bg" style="font-size:12px;margin-bottom:14px;"></div>
 
       <div id="import-choice-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:999;align-items:center;justify-content:center;">
         <div style="background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:22px;max-width:340px;text-align:center;box-shadow:0 20px 50px rgba(0,0,0,.5);">
@@ -8025,7 +8036,7 @@ document.querySelectorAll('.tab-btn:not(.subtab-btn)').forEach(btn => {
       document.getElementById('stroke-scope').style.display = 'none';
       strokeDeck = orderStrokeDeck(scopedVocab(strokeScope));
       strokeIdx = 0;
-      strokeRevealed = false; strokeGuessShowPinyin = false;
+      strokeRevealed = false; strokeGuessShowPinyin = false; resetPhraseRoundDisplay();
       resetPhraseSession();
       renderStroke();
     }
@@ -8039,7 +8050,7 @@ document.querySelectorAll('.tab-btn:not(.subtab-btn)').forEach(btn => {
         strokeScope = 'all';
         strokeDeck = orderStrokeDeck(scopedVocab(strokeScope));
         strokeIdx = 0;
-        strokeRevealed = false; strokeGuessShowPinyin = false;
+        strokeRevealed = false; strokeGuessShowPinyin = false; resetPhraseRoundDisplay();
         renderStroke();
       }
     }
@@ -8437,6 +8448,24 @@ let strokeIdx = 0;
 let strokeShowPinyin = false;
 let strokeShowMeaning = false;
 let strokeShowNotes = false;
+// Phrases practice: whether the Chinese hanzi line is currently shown. Reused
+// strokeShowMeaning/strokeShowPinyin cover the English/pinyin side of the same
+// reveal — see resetPhraseRoundDisplay() below for how all three line up with
+// "hear it in / translate to".
+let phraseHanziVisible = true;
+// Sets the phrase card to "source shown, translation hidden" for a fresh round —
+// called at every card-navigation point (prev/next/shuffle/tab-switch), same as
+// the strokeRevealed reset just above each call site, never from inside
+// renderStroke() itself (that would erase an in-progress reveal on every
+// unrelated re-render, e.g. clicking the notes toggle mid-round).
+function resetPhraseRoundDisplay(){
+  if(!strokeReadOnly){ phraseHanziVisible = true; return; } // Flashcards: unaffected, always show
+  const sel = document.getElementById('phrase-source-lang');
+  const sourceLang = sel ? sel.value : 'zh';
+  phraseHanziVisible = (sourceLang === 'zh');
+  strokeShowPinyin = phraseHanziVisible;
+  strokeShowMeaning = (sourceLang === 'en');
+}
 let strokeWriters = []; // HanziWriter instances for the characters in the current word
 // Phrases is a READING tab: show the phrase, hear it, check pronunciation. No 130px
 // character tiles and no stroke tracing — that stays in Flashcards, where you're
@@ -8490,7 +8519,16 @@ function buildStrokeTargets(hanzi){
     const line = document.createElement('div');
     line.className = 'hanzi phrase-read';
     line.style.fontSize = size + 'px';
-    line.textContent = hanzi;
+    if(phraseHanziVisible){
+      line.textContent = hanzi;
+    } else {
+      // Chinese is the translation being practiced this round — kept out of sight
+      // until the reveal step so hearing the source and guessing means something.
+      line.textContent = '🙈 Chinese hidden until revealed';
+      line.style.fontSize = '18px';
+      line.style.color = 'var(--muted)';
+      line.style.fontStyle = 'italic';
+    }
     container.appendChild(line);
     return chars;
   }
@@ -8581,10 +8619,6 @@ function stopPhrasePractice(){
   try{ speechSynthesis.cancel(); }catch(e){}
   const statusEl = document.getElementById('phrase-practice-status');
   if(statusEl) statusEl.textContent = '';
-  const answerEl = document.getElementById('phrase-practice-answer');
-  if(answerEl) answerEl.style.display = 'none';
-  const revealBtn = document.getElementById('phrase-practice-reveal');
-  if(revealBtn) revealBtn.textContent = '👀 Reveal Translation';
 }
 // Called fresh each time the Phrases tab is opened, so a session from last time
 // doesn't linger with the button still reading "Next".
@@ -8730,7 +8764,7 @@ document.getElementById('stroke-scope').addEventListener('change', (e) => {
   strokeScope = e.target.value;
   strokeDeck = orderStrokeDeck(scopedVocab(strokeScope));
   strokeIdx = 0;
-  strokeRevealed = false; strokeGuessShowPinyin = false;
+  strokeRevealed = false; strokeGuessShowPinyin = false; resetPhraseRoundDisplay();
   renderStroke();
 });
 document.getElementById('stroke-hide-learned').checked = getHideLearned();
@@ -8739,7 +8773,7 @@ document.getElementById('stroke-order').addEventListener('change', (e) => {
   strokeOrder = e.target.value;
   strokeDeck = orderStrokeDeck(scopedVocab(strokeScope));
   strokeIdx = 0;
-  strokeRevealed = false; strokeGuessShowPinyin = false;
+  strokeRevealed = false; strokeGuessShowPinyin = false; resetPhraseRoundDisplay();
   renderStroke();
 });
 document.getElementById('stroke-toggle-p').addEventListener('click', () => { strokeShowPinyin = !strokeShowPinyin; renderStroke(); });
@@ -8747,19 +8781,17 @@ document.getElementById('stroke-toggle-m').addEventListener('click', () => { str
 document.getElementById('stroke-toggle-notes').addEventListener('click', () => { strokeShowNotes = !strokeShowNotes; renderStroke(); });
 
 // ---- Phrases: Listen & Translate Practice ----
-function phraseLangCode(lang){ return { zh: 'zh-CN', en: 'en-US', vi: 'vi-VN' }[lang] || 'en-US'; }
+function phraseLangCode(lang){ return { zh: 'zh-CN', en: 'en-US' }[lang] || 'en-US'; }
 // Best-known text for a card in a given language, without hitting the network —
 // callers fall back to an async fetch themselves when this comes back empty.
 function phraseLangTextSync(card, lang){
   if(lang === 'zh') return card.h || '';
   if(lang === 'en') return card.m || '';
-  if(lang === 'vi') return card.v || translateCache[card.h + '|vi'] || '';
   return '';
 }
 async function phraseLangTextAsync(card, lang){
   const sync = phraseLangTextSync(card, lang);
   if(sync) return sync;
-  if(lang === 'vi') return await getAutoVietnamese(card.h, card.m);
   if(lang === 'en') return await getAutoEnglish(card.h);
   return '';
 }
@@ -8774,11 +8806,35 @@ function syncPhraseLangSelectors(){
     if(next) t.value = next.value;
   }
 }
-document.getElementById('phrase-source-lang').addEventListener('change', syncPhraseLangSelectors);
+document.getElementById('phrase-source-lang').addEventListener('change', () => {
+  syncPhraseLangSelectors();
+  // Changing "Hear it in" re-applies the fresh "source shown, translation hidden"
+  // layout for whatever card is currently up; renderStroke() also cancels any
+  // in-flight practice round via stopPhrasePractice(), which is correct here —
+  // the sequence was built around the old source language.
+  resetPhraseRoundDisplay();
+  renderStroke();
+});
 syncPhraseLangSelectors();
 
+// A light-weight refresh of just the phrase card's own display (hanzi line +
+// pinyin + meaning) — deliberately NOT renderStroke(), which also calls
+// stopPhrasePractice() and would cancel the very round calling this.
+function renderPhraseCardDisplay(){
+  const card = strokeDeck[strokeIdx];
+  if(!card) return;
+  buildStrokeTargets(card.h);
+  document.getElementById('stroke-pinyin').textContent = strokeShowPinyin ? card.p : '';
+  document.getElementById('stroke-meaning').textContent = strokeShowMeaning ? card.m : '';
+  document.getElementById('stroke-toggle-p').classList.toggle('on', strokeShowPinyin);
+  document.getElementById('stroke-toggle-m').classList.toggle('on', strokeShowMeaning);
+}
+
 // The core listen/pause/translate sequence for one card. Shared by both the
-// initial Start press and every automatic advance afterward.
+// initial Start press and every automatic advance afterward. The translation
+// is revealed directly into the phrase's own hanzi/pinyin/meaning display —
+// there's no separate answer box — timed to appear right as its audio starts,
+// so seeing it and hearing it land together.
 async function runPhrasePracticeRound(){
   if(strokeDeck.length === 0) return;
   const token = ++phrasePracticeToken;
@@ -8786,6 +8842,10 @@ async function runPhrasePracticeRound(){
   const statusEl = document.getElementById('phrase-practice-status');
   const sourceLang = document.getElementById('phrase-source-lang').value;
   const targetLang = document.getElementById('phrase-target-lang').value;
+
+  // Fresh round: show only the source side, translation side hidden.
+  resetPhraseRoundDisplay();
+  renderPhraseCardDisplay();
 
   statusEl.textContent = 'Preparing…';
   const sourceText = await phraseLangTextAsync(card, sourceLang);
@@ -8804,12 +8864,17 @@ async function runPhrasePracticeRound(){
   if(token !== phrasePracticeToken) return;
   if(!targetText){ statusEl.textContent = 'No translation available in that language yet.'; return; }
 
+  // Reveal happens right as the translation audio starts — both land together.
+  phraseHanziVisible = true;
+  strokeShowPinyin = true;
+  strokeShowMeaning = true;
+  renderPhraseCardDisplay();
   statusEl.textContent = '🔊 Here\'s the translation…';
   await speakLangAsync(targetText, phraseLangCode(targetLang));
   if(token !== phrasePracticeToken) return;
   statusEl.textContent = strokeDeck.length > 1
-    ? 'Done — tap Reveal to check, or Next ▶ to continue.'
-    : 'Done — tap Reveal to check.';
+    ? 'Done — tap Next ▶ to continue.'
+    : 'Done.';
 }
 
 // Start begins the session and plays the first card. From then on the same
@@ -8823,29 +8888,11 @@ document.getElementById('phrase-practice-play').addEventListener('click', async 
   } else {
     if(strokeDeck.length === 0) return;
     strokeIdx = (strokeIdx + 1) % strokeDeck.length;
-    strokeRevealed = false; strokeGuessShowPinyin = false;
-    renderStroke(); // resets per-card UI (reveal box, status) via stopPhrasePractice()
+    strokeRevealed = false; strokeGuessShowPinyin = false; resetPhraseRoundDisplay();
+    renderStroke(); // resets per-card UI (status, pron state) via stopPhrasePractice()
     btn.textContent = 'Next ▶'; // renderStroke() doesn't touch this button's label — keep it
   }
   await runPhrasePracticeRound();
-});
-
-document.getElementById('phrase-practice-reveal').addEventListener('click', async () => {
-  if(strokeDeck.length === 0) return;
-  const card = strokeDeck[strokeIdx];
-  const answerEl = document.getElementById('phrase-practice-answer');
-  const btn = document.getElementById('phrase-practice-reveal');
-  if(answerEl.style.display !== 'none'){
-    answerEl.style.display = 'none';
-    btn.textContent = '👀 Reveal Translation';
-    return;
-  }
-  const targetLang = document.getElementById('phrase-target-lang').value;
-  answerEl.textContent = 'Looking up…';
-  answerEl.style.display = '';
-  const text = await phraseLangTextAsync(card, targetLang);
-  answerEl.textContent = text || '(translation unavailable — check your connection)';
-  btn.textContent = '🙈 Hide Translation';
 });
 // ---- Pronunciation check (speech recognition) --------------------------------
 // Available on every practice tab: Flashcards, Phrases, Dictation and Q&A. It replaced
@@ -9222,21 +9269,21 @@ document.getElementById('stroke-shuffle').addEventListener('click', () => {
   document.getElementById('stroke-order').value = 'shuffle';
   strokeDeck = orderStrokeDeck(scopedVocab(strokeScope));
   strokeIdx = 0;
-  strokeRevealed = false; strokeGuessShowPinyin = false;
+  strokeRevealed = false; strokeGuessShowPinyin = false; resetPhraseRoundDisplay();
   renderStroke();
 });
 document.getElementById('stroke-prev').addEventListener('click', () => {
   if(strokeDeck.length === 0) return;
   strokeIdx = (strokeIdx - 1 + strokeDeck.length) % strokeDeck.length;
   strokeShowPinyin = false; strokeShowMeaning = false; strokeShowNotes = false;
-  strokeRevealed = false; strokeGuessShowPinyin = false;
+  strokeRevealed = false; strokeGuessShowPinyin = false; resetPhraseRoundDisplay();
   renderStroke();
 });
 document.getElementById('stroke-next').addEventListener('click', () => {
   if(strokeDeck.length === 0) return;
   strokeIdx = (strokeIdx + 1) % strokeDeck.length;
   strokeShowPinyin = false; strokeShowMeaning = false; strokeShowNotes = false;
-  strokeRevealed = false; strokeGuessShowPinyin = false;
+  strokeRevealed = false; strokeGuessShowPinyin = false; resetPhraseRoundDisplay();
   renderStroke();
 });
 document.getElementById('stroke-direction-toggle').addEventListener('click', () => {
@@ -9288,7 +9335,7 @@ function refreshAllPracticeForHideLearned(newVal){
 
   strokeDeck = orderStrokeDeck(scopedVocab(strokeScope));
   strokeIdx = 0;
-  strokeRevealed = false; strokeGuessShowPinyin = false;
+  strokeRevealed = false; strokeGuessShowPinyin = false; resetPhraseRoundDisplay();
   document.getElementById('stroke-hide-learned').checked = newVal;
   renderStroke();
 }
@@ -9303,7 +9350,7 @@ function refreshAllDecks(){
   renderBeeEmptyState();
   strokeDeck = orderStrokeDeck(scopedVocab(strokeScope));
   strokeIdx = 0;
-  strokeRevealed = false; strokeGuessShowPinyin = false;
+  strokeRevealed = false; strokeGuessShowPinyin = false; resetPhraseRoundDisplay();
   renderStroke();
 }
 
@@ -9648,13 +9695,13 @@ async function translateFullSentence(text){
   return { ok: true, mode: 'dict', text: dictionaryTranslate(text) || '(no dictionary match)' };
 }
 
-// ---- Automatic English + Vietnamese translation (words & phrases) ----
+// ---- Automatic English translation (words & phrases) ----
 // Same MyMemory service as above, generalised to any langpair. Used so a person
-// only ever has to type the hanzi — English and Vietnamese are filled in for them,
-// same spirit as auto-pinyin. Results are cached in localStorage keyed by
+// only ever has to type the hanzi and English gets filled in for them, same
+// spirit as auto-pinyin. Results are cached in localStorage keyed by
 // "hanzi|langpair", since HSK's own 5,000+ built-in words are never bulk-translated
 // up front (that alone would burn through MyMemory's free daily quota) — instead
-// each word's Vietnamese gloss is fetched once, the first time it's actually shown,
+// each word's English gloss is fetched once, the first time it's actually needed,
 // and reused forever after from cache.
 const AUTO_TRANSLATE_CACHE_KEY = 'chinesevocab_auto_translate_cache';
 function loadTranslateCache(){
@@ -9685,20 +9732,6 @@ async function getAutoEnglish(hanzi){
   if(translateCache[key]) return translateCache[key];
   try{
     const text = await myMemoryTranslate(hanzi, 'zh-CN|en');
-    if(text){ translateCache[key] = text; saveTranslateCache(translateCache); return text; }
-  }catch(e){ /* offline or rate-limited — leave blank, editable by hand */ }
-  return '';
-}
-
-// Vietnamese gloss — tries zh->vi first; MyMemory's zh->vi pair is thinner than
-// zh->en, so if it comes back empty, fall back to translating the already-known
-// English meaning (en->vi is a much better-covered pair for this free service).
-async function getAutoVietnamese(hanzi, englishFallback){
-  const key = hanzi + '|vi';
-  if(translateCache[key]) return translateCache[key];
-  try{
-    let text = await myMemoryTranslate(hanzi, 'zh-CN|vi');
-    if(!text && englishFallback) text = await myMemoryTranslate(englishFallback, 'en|vi');
     if(text){ translateCache[key] = text; saveTranslateCache(translateCache); return text; }
   }catch(e){ /* offline or rate-limited — leave blank, editable by hand */ }
   return '';
@@ -9973,6 +10006,120 @@ document.getElementById('export-text').addEventListener('click', () => {
   downloadJson({ vocab: allWords, qa: qaPairs }, 'chinese-app-words-backup-' + dateStamp() + '.json');
 });
 
+function downloadText(text, filename){
+  const blob = new Blob([text], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ---- Bulk add from a plain-text template (Notepad-friendly, separate from the
+// JSON backup above) — for typing up new words/phrases offline, then importing
+// them all at once. Always merges; never replaces anything already saved. ----
+const PATCH_TEMPLATE = `# Han Yu Learning — Bulk Word/Phrase Import Template
+#
+# One entry per line: hanzi | meaning | type | notes
+#
+#   hanzi    required  — the Chinese characters, e.g. 你好
+#   meaning  optional  — English meaning. Leave blank and it auto-translates
+#                        when you import, same as leaving Meaning blank in
+#                        the Word Library's Add Word form.
+#   type     optional  — "word" or "phrase". Leave blank for "word".
+#   notes    optional  — anything you want: your own Vietnamese translation,
+#                        a mnemonic, whatever. Nothing is auto-filled here.
+#
+# Pinyin is always generated automatically — don't include it.
+# Lines starting with # are ignored, so keep these instructions or delete
+# them, either is fine. Blank lines are ignored too.
+#
+# Examples (delete these two lines, or leave them — duplicates are skipped
+# automatically on import):
+# 你好 | hello | word |
+# 你好吗 | how are you | phrase | cau hoi tham suc khoe ban
+
+`;
+document.getElementById('download-patch-template').addEventListener('click', () => {
+  downloadText(PATCH_TEMPLATE, 'word-import-template.txt');
+});
+
+// Parses the pipe-delimited template format into plain {h, m, type, n} rows.
+// Deliberately tolerant: missing trailing fields are fine (a bare "hanzi |
+// meaning" line works), and a line that's just hanzi with no delimiter at all
+// still counts as a word with meaning auto-translated on import.
+function parsePatchText(text){
+  const rows = [];
+  const problems = [];
+  text.split(/\r?\n/).forEach((rawLine, i) => {
+    const line = rawLine.trim();
+    if(!line || line.startsWith('#')) return;
+    const parts = line.split('|').map(p => p.trim());
+    const h = parts[0];
+    if(!h){ problems.push(`Line ${i + 1}: no hanzi found — skipped.`); return; }
+    const m = parts[1] || '';
+    const typeRaw = (parts[2] || '').toLowerCase();
+    const type = typeRaw === 'phrase' ? 'phrase' : 'word';
+    const n = parts[3] || '';
+    rows.push({ h, m, type, n });
+  });
+  return { rows, problems };
+}
+
+// Applies parsed rows into allWords: skips anything already present by hanzi,
+// auto-translates a blank meaning, auto-generates pinyin, tags word vs phrase.
+async function importPatchRows(rows){
+  const existingHanzi = new Set(allWords.map(w => w.h));
+  let added = 0, skipped = 0;
+  for(const row of rows){
+    if(existingHanzi.has(row.h)){ skipped++; continue; }
+    const p = autoPinyin(row.h);
+    let m = row.m;
+    if(!m) m = await getAutoEnglish(row.h);
+    const item = { h: row.h, p, m, id: newId() };
+    item.myCategory = row.type === 'phrase' ? 'phrase' : 'word';
+    if(row.n) item.n = row.n;
+    allWords.push(item);
+    existingHanzi.add(row.h);
+    added++;
+  }
+  saveWords(allWords);
+  return { added, skipped };
+}
+
+document.getElementById('import-patch-trigger').addEventListener('click', () => {
+  document.getElementById('import-patch-file').click();
+});
+document.getElementById('import-patch-file').addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  const feedback = document.getElementById('import-patch-feedback');
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = async () => {
+    feedback.textContent = 'Importing…';
+    feedback.style.color = '#8A9A92';
+    const { rows, problems } = parsePatchText(String(reader.result));
+    if(rows.length === 0){
+      feedback.textContent = 'No valid lines found in that file — check the format against the template.';
+      feedback.style.color = '#C9A227';
+      e.target.value = '';
+      return;
+    }
+    const { added, skipped } = await importPatchRows(rows);
+    const parts = [`Added ${added} new`];
+    if(skipped) parts.push(`${skipped} already in your deck (skipped)`);
+    if(problems.length) parts.push(`${problems.length} line(s) ignored (no hanzi)`);
+    feedback.textContent = parts.join(', ') + '.';
+    feedback.style.color = '#3E7C59';
+    renderCustomList();
+    renderHskList();
+    refreshAllDecks();
+    e.target.value = '';
+  };
+  reader.readAsText(file);
+});
+
 
 // Merges incoming vocab/Q&A into the local lists (skipping duplicates by hanzi/question
 // text) and returns an idRemap so any accompanying recordings can be pointed at the
@@ -10011,6 +10158,8 @@ function mergeTextData(vocabIn, qaIn){
       } else {
         const p = (typeof w.p === 'string' && w.p.trim()) ? w.p : autoPinyin(w.h);
         const newItem = { h: w.h, p, m: w.m, id: newId() };
+        if(typeof w.n === 'string' && w.n.trim()) newItem.n = w.n;
+        if(w.myCategory === 'phrase' || w.myCategory === 'word') newItem.myCategory = w.myCategory;
         allWords.push(newItem); existingHanzi.add(w.h); vAdded++;
         if(w.id) idRemap.set('word:' + w.id, 'word:' + newItem.id);
       }
