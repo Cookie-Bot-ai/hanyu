@@ -427,6 +427,9 @@
           <div class="toolbar" style="margin:0 0 10px;">
             <button class="action btn-play wide" id="phrase-practice-play">▶ Start</button>
           </div>
+          <div class="toolbar" style="margin:0 0 10px;">
+            <button class="action btn-reveal wide" id="phrase-continuous-toggle" title="Auto-advance to the next phrase after each reveal, no need to tap Next">🔁 Continuous Play: Off</button>
+          </div>
           <div id="phrase-practice-status" style="font-size:12px;color:var(--muted);min-height:16px;margin-bottom:8px;"></div>
         </div>
       </div>
@@ -762,7 +765,7 @@
           <input type="file" id="import-patch-file" accept=".txt,text/plain" style="display:none;">
         </div>
       </div>
-      <p class="hint on-bg" style="margin:0 0 14px;">For typing up new words/phrases offline in Notepad (or any plain text editor), then bringing them in all at once. Download the template, fill in one line per word using the <code>hanzi | meaning | type | notes</code> format described inside it, save the file, then Import patch. Meaning auto-translates if left blank; pinyin is always automatic. This always merges — it never touches or replaces what's already here.</p>
+      <p class="hint on-bg" style="margin:0 0 14px;">For typing up new words and phrases offline in Notepad (or any plain text editor), then bringing them all in at once — mix both in the same file. Download the template, fill in one line per entry using the <code>hanzi | meaning | type | notes</code> format described inside it, save the file, then Import patch. Meaning auto-translates if left blank; pinyin is always automatic. Nothing is ever duplicated: an entry already in My Words/My Phrases is skipped, and one that's already part of the built-in HSK library gets added straight to your Flashcards deck automatically (same as tapping +Add in the HSK Library tab), rather than creating a second copy. This always merges — it never touches or replaces what's already here.</p>
       <div id="import-patch-feedback" class="on-bg" style="font-size:12px;margin-bottom:14px;"></div>
 
       <div id="import-choice-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:999;align-items:center;justify-content:center;">
@@ -8614,6 +8617,7 @@ function renderNotesFor(card){
 // changes on Start / on leaving the Phrases tab, not on every card transition.
 let phrasePracticeToken = 0;
 let phraseSessionActive = false; // false: button reads "Start"; true: button reads "Next ▶" and auto-advances
+let phraseContinuousMode = false; // when true, each completed round auto-chains into the next after a reflection pause
 function stopPhrasePractice(){
   phrasePracticeToken++;
   try{ speechSynthesis.cancel(); }catch(e){}
@@ -8621,11 +8625,15 @@ function stopPhrasePractice(){
   if(statusEl) statusEl.textContent = '';
 }
 // Called fresh each time the Phrases tab is opened, so a session from last time
-// doesn't linger with the button still reading "Next".
+// doesn't linger with the button still reading "Next" or auto-playing unasked.
 function resetPhraseSession(){
   phraseSessionActive = false;
+  phraseContinuousMode = false;
+  phraseChainRunning = false;
   const playBtn = document.getElementById('phrase-practice-play');
   if(playBtn) playBtn.textContent = '▶ Start';
+  const contBtn = document.getElementById('phrase-continuous-toggle');
+  if(contBtn){ contBtn.textContent = '🔁 Continuous Play: Off'; contBtn.classList.remove('on'); }
 }
 
 function renderStroke(){
@@ -8830,13 +8838,32 @@ function renderPhraseCardDisplay(){
   document.getElementById('stroke-toggle-m').classList.toggle('on', strokeShowMeaning);
 }
 
-// The core listen/pause/translate sequence for one card. Shared by both the
-// initial Start press and every automatic advance afterward. The translation
-// is revealed directly into the phrase's own hanzi/pinyin/meaning display —
-// there's no separate answer box — timed to appear right as its audio starts,
-// so seeing it and hearing it land together.
-async function runPhrasePracticeRound(){
+// Advances to the next card in the deck without cancelling the practice token —
+// used by Continuous Play, which needs to move on mid-chain. renderStroke()
+// can't be reused here for the same reason renderPhraseCardDisplay() exists:
+// it calls stopPhrasePractice() and would sever the very chain calling it.
+function advanceToNextPhraseCardSilently(){
   if(strokeDeck.length === 0) return;
+  strokeIdx = (strokeIdx + 1) % strokeDeck.length;
+  strokeRevealed = false; strokeGuessShowPinyin = false;
+  resetPhraseRoundDisplay();
+  resetPronForNewCard();
+  updateStrokeStatusButtons();
+  renderPhraseCardDisplay();
+  document.getElementById('stroke-count').textContent = `Word ${strokeIdx + 1} / ${strokeDeck.length}`;
+  document.getElementById('stroke-feedback').textContent = '';
+}
+
+// The core listen/pause/translate sequence for one card. Shared by the initial
+// Start press, every manual Next advance, and every automatic Continuous Play
+// advance. The translation is revealed directly into the phrase's own
+// hanzi/pinyin/meaning display — there's no separate answer box — timed to
+// appear right as its audio starts, so seeing it and hearing it land together.
+// Returns true if the round played all the way through, false if it bailed
+// early (no text/translation available) — Continuous Play stops the chain
+// on false rather than looping forever on a broken card.
+async function runPhrasePracticeRound(){
+  if(strokeDeck.length === 0) return false;
   const token = ++phrasePracticeToken;
   const card = strokeDeck[strokeIdx];
   const statusEl = document.getElementById('phrase-practice-status');
@@ -8849,20 +8876,20 @@ async function runPhrasePracticeRound(){
 
   statusEl.textContent = 'Preparing…';
   const sourceText = await phraseLangTextAsync(card, sourceLang);
-  if(token !== phrasePracticeToken) return; // card changed while awaiting translation
-  if(!sourceText){ statusEl.textContent = 'No text available in that language yet.'; return; }
+  if(token !== phrasePracticeToken) return false; // card changed while awaiting translation
+  if(!sourceText){ statusEl.textContent = 'No text available in that language yet.'; return false; }
 
   statusEl.textContent = '🔊 Playing…';
   await speakLangAsync(sourceText, phraseLangCode(sourceLang));
-  if(token !== phrasePracticeToken) return;
+  if(token !== phrasePracticeToken) return false;
 
   statusEl.textContent = '✏️ Your turn — say the translation out loud…';
   await new Promise(r => setTimeout(r, 4500)); // decent pause to answer before hearing it
-  if(token !== phrasePracticeToken) return;
+  if(token !== phrasePracticeToken) return false;
 
   const targetText = await phraseLangTextAsync(card, targetLang);
-  if(token !== phrasePracticeToken) return;
-  if(!targetText){ statusEl.textContent = 'No translation available in that language yet.'; return; }
+  if(token !== phrasePracticeToken) return false;
+  if(!targetText){ statusEl.textContent = 'No translation available in that language yet.'; return false; }
 
   // Reveal happens right as the translation audio starts — both land together.
   phraseHanziVisible = true;
@@ -8871,15 +8898,40 @@ async function runPhrasePracticeRound(){
   renderPhraseCardDisplay();
   statusEl.textContent = '🔊 Here\'s the translation…';
   await speakLangAsync(targetText, phraseLangCode(targetLang));
-  if(token !== phrasePracticeToken) return;
-  statusEl.textContent = strokeDeck.length > 1
-    ? 'Done — tap Next ▶ to continue.'
-    : 'Done.';
+  if(token !== phrasePracticeToken) return false;
+  statusEl.textContent = phraseContinuousMode
+    ? 'Done — reflect a moment, next phrase is coming up…'
+    : (strokeDeck.length > 1 ? 'Done — tap Next ▶ to continue.' : 'Done.');
+  return true;
+}
+
+// Runs one round, then — while Continuous Play stays on and nothing else has
+// interrupted (manual nav, tab switch, language change all bump
+// phrasePracticeToken and are checked for here) — waits a reflection pause,
+// long enough to notice a mistake and mentally correct it, then auto-advances
+// and runs the next round with no tap required.
+const PHRASE_REFLECTION_PAUSE_MS = 4000;
+let phraseChainRunning = false; // true only while a chain (Start/Next/Continuous) is actively mid-flight
+async function runPhrasePracticeChain(){
+  phraseChainRunning = true;
+  try{
+    let completed = await runPhrasePracticeRound();
+    while(completed && phraseContinuousMode){
+      const tokenBeforePause = phrasePracticeToken;
+      await new Promise(r => setTimeout(r, PHRASE_REFLECTION_PAUSE_MS));
+      if(tokenBeforePause !== phrasePracticeToken || !phraseContinuousMode || strokeDeck.length === 0) return;
+      advanceToNextPhraseCardSilently();
+      completed = await runPhrasePracticeRound();
+    }
+  } finally {
+    phraseChainRunning = false;
+  }
 }
 
 // Start begins the session and plays the first card. From then on the same
 // button reads "Next ▶": each press advances the deck and immediately plays the
 // new card automatically — no need to press Start again for every phrase.
+// If Continuous Play is on, either press also kicks off the auto-chain.
 document.getElementById('phrase-practice-play').addEventListener('click', async () => {
   const btn = document.getElementById('phrase-practice-play');
   if(!phraseSessionActive){
@@ -8892,8 +8944,28 @@ document.getElementById('phrase-practice-play').addEventListener('click', async 
     renderStroke(); // resets per-card UI (status, pron state) via stopPhrasePractice()
     btn.textContent = 'Next ▶'; // renderStroke() doesn't touch this button's label — keep it
   }
-  await runPhrasePracticeRound();
+  await runPhrasePracticeChain();
 });
+
+// Continuous Play just flips the flag the chain checks — it can be turned on
+// before Start (kicks in immediately) or mid-session (picked up as soon as
+// the current round finishes), and turning it off stops the chain cleanly at
+// its next pause check rather than cutting audio off mid-sentence.
+document.getElementById('phrase-continuous-toggle').addEventListener('click', async () => {
+  phraseContinuousMode = !phraseContinuousMode;
+  const btn = document.getElementById('phrase-continuous-toggle');
+  btn.textContent = phraseContinuousMode ? '🔁 Continuous Play: On' : '🔁 Continuous Play: Off';
+  btn.classList.toggle('on', phraseContinuousMode);
+  // Turning it on outside of any active round (e.g. before ever pressing Start,
+  // or after a chain already stopped) should start things moving right away
+  // rather than sitting there doing nothing until Start/Next is tapped.
+  if(phraseContinuousMode && !phraseChainRunning){
+    phraseSessionActive = true;
+    document.getElementById('phrase-practice-play').textContent = 'Next ▶';
+    await runPhrasePracticeChain();
+  }
+});
+
 // ---- Pronunciation check (speech recognition) --------------------------------
 // Available on every practice tab: Flashcards, Phrases, Dictation and Q&A. It replaced
 // the voice-recording feature entirely — recording only ever let you compare yourself
@@ -10019,15 +10091,19 @@ function downloadText(text, filename){
 // ---- Bulk add from a plain-text template (Notepad-friendly, separate from the
 // JSON backup above) — for typing up new words/phrases offline, then importing
 // them all at once. Always merges; never replaces anything already saved. ----
-const PATCH_TEMPLATE = `# Han Yu Learning — Bulk Word/Phrase Import Template
+const PATCH_TEMPLATE = `# Han Yu Learning — Bulk Word & Phrase Import Template
 #
-# One entry per line: hanzi | meaning | type | notes
+# Mix single words AND full phrases/sentences in the same file — one entry per
+# line: hanzi | meaning | type | notes
 #
-#   hanzi    required  — the Chinese characters, e.g. 你好
+#   hanzi    required  — the Chinese characters, e.g. 你好 or a whole sentence
+#                        like 你今天好吗
 #   meaning  optional  — English meaning. Leave blank and it auto-translates
 #                        when you import, same as leaving Meaning blank in
 #                        the Word Library's Add Word form.
 #   type     optional  — "word" or "phrase". Leave blank for "word".
+#                        Use "phrase" for anything that should land in the
+#                        Phrases practice tab rather than Flashcards.
 #   notes    optional  — anything you want: your own Vietnamese translation,
 #                        a mnemonic, whatever. Nothing is auto-filled here.
 #
@@ -10035,8 +10111,21 @@ const PATCH_TEMPLATE = `# Han Yu Learning — Bulk Word/Phrase Import Template
 # Lines starting with # are ignored, so keep these instructions or delete
 # them, either is fine. Blank lines are ignored too.
 #
-# Examples (delete these two lines, or leave them — duplicates are skipped
-# automatically on import):
+# Duplicates are handled for you on import:
+#   - Already in My Words / My Phrases?        → skipped, not duplicated.
+#   - Already part of the built-in HSK list,
+#     just not added to your deck yet?          → added straight to your
+#                                                  Flashcards deck automatically
+#                                                  (same as tapping +Add in the
+#                                                  HSK Library tab), using the
+#                                                  HSK library's own pinyin
+#                                                  and meaning.
+#   - Not found anywhere?                       → added as a new custom word
+#                                                  or phrase, using whatever
+#                                                  you typed here.
+#
+# Examples — one word, one phrase (delete these, or leave them; they'll just
+# be skipped as duplicates the next time you import):
 # 你好 | hello | word |
 # 你好吗 | how are you | phrase | cau hoi tham suc khoe ban
 
@@ -10067,13 +10156,36 @@ function parsePatchText(text){
   return { rows, problems };
 }
 
-// Applies parsed rows into allWords: skips anything already present by hanzi,
-// auto-translates a blank meaning, auto-generates pinyin, tags word vs phrase.
+// Looks up a hanzi across every loaded HSK level (not just the current one on
+// screen) — a patch import should recognise an HSK word regardless of which
+// level list you happen to have open in the HSK Library tab.
+function findHskWordByHanzi(hanzi){
+  for(const lvl in HSK_WORDS){
+    const found = HSK_WORDS[lvl].find(w => w.h === hanzi);
+    if(found) return found;
+  }
+  return null;
+}
+
+// Applies parsed rows into allWords with three outcomes per row:
+//  - already in My Words/My Phrases            -> skipped
+//  - already in the built-in HSK library        -> "activated" into the deck
+//    using the HSK library's own pinyin/meaning, exactly like tapping +Add
+//    in the HSK Library tab — never a second, diverging copy of the same word
+//  - genuinely new                              -> added as a custom word or
+//    phrase using the row's own data, auto-translating a blank meaning
 async function importPatchRows(rows){
   const existingHanzi = new Set(allWords.map(w => w.h));
-  let added = 0, skipped = 0;
+  let added = 0, addedFromHsk = 0, skipped = 0;
   for(const row of rows){
     if(existingHanzi.has(row.h)){ skipped++; continue; }
+    const hskMatch = findHskWordByHanzi(row.h);
+    if(hskMatch){
+      allWords.push({ h: hskMatch.h, p: hskMatch.p, m: hskMatch.m, id: newId() });
+      existingHanzi.add(row.h);
+      addedFromHsk++;
+      continue;
+    }
     const p = autoPinyin(row.h);
     let m = row.m;
     if(!m) m = await getAutoEnglish(row.h);
@@ -10085,7 +10197,7 @@ async function importPatchRows(rows){
     added++;
   }
   saveWords(allWords);
-  return { added, skipped };
+  return { added, addedFromHsk, skipped };
 }
 
 document.getElementById('import-patch-trigger').addEventListener('click', () => {
@@ -10106,8 +10218,11 @@ document.getElementById('import-patch-file').addEventListener('change', (e) => {
       e.target.value = '';
       return;
     }
-    const { added, skipped } = await importPatchRows(rows);
-    const parts = [`Added ${added} new`];
+    const { added, addedFromHsk, skipped } = await importPatchRows(rows);
+    const parts = [];
+    if(added) parts.push(`${added} new custom ${added === 1 ? 'entry' : 'entries'} added`);
+    if(addedFromHsk) parts.push(`${addedFromHsk} activated from the HSK library`);
+    if(!added && !addedFromHsk) parts.push('nothing new to add');
     if(skipped) parts.push(`${skipped} already in your deck (skipped)`);
     if(problems.length) parts.push(`${problems.length} line(s) ignored (no hanzi)`);
     feedback.textContent = parts.join(', ') + '.';
