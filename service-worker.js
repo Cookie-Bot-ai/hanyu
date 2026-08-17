@@ -3,7 +3,10 @@
 // Bump CACHE_VERSION whenever index.html changes, otherwise returning visitors keep
 // getting the old cached copy. That is the single most common way to ship an update
 // that nobody receives.
-const CACHE_VERSION = 'hanyu-2026-08-16e';
+// Format: hanyu-YYYY-MM-DD-V{n} — date stays the same all day, just increment V
+// each time you push again that day (V1, V2, V3...). Start a new date at V1 when
+// the day changes. Never reuse a full string, and never go backwards.
+const CACHE_VERSION = 'hanyu-2026-08-17-V1';
 
 // Same-origin app shell. These must all exist or the install step fails silently.
 const SHELL = [

@@ -183,6 +183,11 @@
 
   .card{ position:relative; background:var(--paper); border-radius:16px; padding:56px 24px; text-align:center;
     box-shadow:0 14px 34px rgba(0,0,0,.4), 0 2px 8px rgba(0,0,0,.25); min-height:220px; overflow:hidden; }
+  /* Phrases mode merges the Listen & Translate Practice controls into this same
+     card (see #phrase-practice-block nested inside #stroke-writing-card) — the
+     default padding above is sized for one big centered Flashcards character,
+     so it's tightened here whenever the practice controls are also present. */
+  #stroke-writing-card.phrase-merged{ padding:20px 20px 16px; }
   .hz{ color:var(--ink); }        /* base: every .hz sits on a light --paper container */
   .card .hz{ font-size:64px; color:var(--ink); margin-bottom:18px; }
   .reveal-area{ min-height:46px; }
@@ -401,12 +406,32 @@
           <option value="oldest">📜 Oldest added first</option>
         </select>
       </div>
-      <!-- Listen & Translate Practice: only shown in Phrases (read-only) mode.
-           Plays the phrase in one language, pauses for you to say the translation
-           out loud, then plays the translation — Reveal shows the text any time.
-           Moved to the top of the card so it's the first thing seen in Phrases mode. -->
-      <div id="phrase-practice-block" style="display:none;margin-bottom:14px;">
-        <div class="card" style="padding:14px;">
+      <div class="row" id="stroke-direction-row" style="margin-top:0;margin-bottom:12px;">
+        <button class="action btn-reveal" id="stroke-direction-toggle" style="flex:1;">🔤 Character → Meaning</button>
+      </div>
+      <div class="stage" id="stroke-stage">
+        <button class="card-nav prev" id="stroke-prev" title="Previous word" aria-label="Previous word">‹</button>
+        <button class="card-nav next" id="stroke-next" title="Next word" aria-label="Next word">›</button>
+        <div class="card-audio" id="stroke-card-audio">
+          <button id="stroke-play" title="Play the word" aria-label="Play the word">🔊</button>
+          <button id="stroke-pron-check" title="Check my pronunciation" aria-label="Check my pronunciation">🎤</button>
+          <button id="stroke-animate" title="Show the stroke order" aria-label="Show the stroke order">✍️</button>
+        </div>
+      <div id="stroke-guess-box" class="bee-box" style="display:none;margin-bottom:12px;">
+        <div class="meaning" id="stroke-guess-meaning" style="font-size:16px;"></div>
+        <div class="pinyin" id="stroke-guess-pinyin"></div>
+        <div class="hanzi" id="stroke-guess-char" style="font-size:30px;color:#4A5248;display:none;"></div>
+        <button class="action btn-reveal" id="stroke-guess-hint">Show Pinyin Hint</button>
+        <button class="action btn-play" id="stroke-guess-reveal">👀 Reveal Character</button>
+      </div>
+      <div class="card" style="padding-bottom:16px;" id="stroke-writing-card">
+        <!-- Listen & Translate Practice: merged into this same card so Phrases
+             mode reads as one continuous surface instead of two stacked boxes.
+             Only shown in Phrases (read-only) mode — the #stroke-writing-card
+             padding is tightened via .phrase-merged (toggled in JS) whenever
+             this is visible, since the default padding is sized for the big
+             centered Flashcards character instead. -->
+        <div id="phrase-practice-block" style="display:none;text-align:left;margin-bottom:14px;">
           <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">🗣️ Listen &amp; Translate Practice</div>
           <div class="form-grid" style="margin-bottom:10px;">
             <div>
@@ -430,29 +455,9 @@
           <div class="toolbar" style="margin:0 0 10px;">
             <button class="action btn-reveal wide" id="phrase-continuous-toggle" title="Auto-advance to the next phrase after each reveal, no need to tap Next">🔁 Continuous Play: Off</button>
           </div>
-          <div id="phrase-practice-status" style="font-size:12px;color:var(--muted);min-height:16px;margin-bottom:8px;"></div>
+          <div id="phrase-practice-status" style="font-size:12px;color:var(--muted);min-height:16px;margin-bottom:4px;"></div>
+          <hr style="border:none;border-top:1px solid var(--border);margin:4px 0 14px;">
         </div>
-      </div>
-
-      <div class="row" id="stroke-direction-row" style="margin-top:0;margin-bottom:12px;">
-        <button class="action btn-reveal" id="stroke-direction-toggle" style="flex:1;">🔤 Character → Meaning</button>
-      </div>
-      <div class="stage" id="stroke-stage">
-        <button class="card-nav prev" id="stroke-prev" title="Previous word" aria-label="Previous word">‹</button>
-        <button class="card-nav next" id="stroke-next" title="Next word" aria-label="Next word">›</button>
-        <div class="card-audio" id="stroke-card-audio">
-          <button id="stroke-play" title="Play the word" aria-label="Play the word">🔊</button>
-          <button id="stroke-pron-check" title="Check my pronunciation" aria-label="Check my pronunciation">🎤</button>
-          <button id="stroke-animate" title="Show the stroke order" aria-label="Show the stroke order">✍️</button>
-        </div>
-      <div id="stroke-guess-box" class="bee-box" style="display:none;margin-bottom:12px;">
-        <div class="meaning" id="stroke-guess-meaning" style="font-size:16px;"></div>
-        <div class="pinyin" id="stroke-guess-pinyin"></div>
-        <div class="hanzi" id="stroke-guess-char" style="font-size:30px;color:#4A5248;display:none;"></div>
-        <button class="action btn-reveal" id="stroke-guess-hint">Show Pinyin Hint</button>
-        <button class="action btn-play" id="stroke-guess-reveal">👀 Reveal Character</button>
-      </div>
-      <div class="card" style="padding-bottom:16px;" id="stroke-writing-card">
         <div id="stroke-targets" style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin:6px 0 12px;"></div>
         <div class="reveal-area" id="stroke-reveal" style="display:flex;flex-direction:column;gap:4px;">
           <div class="pinyin" id="stroke-pinyin"></div>
@@ -7080,6 +7085,7 @@ function attachInlineEditHandlers(root){
           <input class="field" data-ed="h" value="${escapeHtml(w.h)}" placeholder="Characters">
           <input class="field" data-ed="p" value="${escapeHtml(w.p || '')}" placeholder="Pinyin">
           <input class="field" data-ed="m" value="${escapeHtml(w.m || '')}" placeholder="Meaning">
+          <input class="field" data-ed="n" value="${escapeHtml(w.n || '')}" placeholder="Your notes (optional)">
           <div style="display:flex;gap:6px;">
             <button class="action btn-play small" data-ed-save="1" style="flex:1;">Save</button>
             <button class="action btn-reveal small" data-ed-cancel="1" style="flex:1;">Cancel</button>
@@ -7093,7 +7099,7 @@ function attachInlineEditHandlers(root){
         if(nh !== w.h && allWords.some(x => x.h === nh && x.id !== w.id)){
           alert('That word is already in your list.'); return;
         }
-        w.h = nh; w.p = val('p'); w.m = val('m');   // id kept, so status and decks survive
+        w.h = nh; w.p = val('p'); w.m = val('m'); w.n = val('n');   // id kept, so status and decks survive
         saveWords(allWords);
         refreshAllDecks();
         refreshCustomLists();
@@ -7145,6 +7151,7 @@ function renderCustomHskWords(){
       <input class="field" id="hsk-custom-hz" placeholder="Chinese character(s)" style="flex:1;min-width:110px;">
       <input class="field" id="hsk-custom-py" placeholder="Pinyin (optional)" style="flex:1;min-width:110px;">
       <input class="field" id="hsk-custom-m" placeholder="Meaning" style="flex:1;min-width:110px;">
+      <input class="field" id="hsk-custom-notes" placeholder="Your notes (optional)" style="flex:1;min-width:110px;">
       <button class="action btn-play small" id="hsk-custom-add-btn">+ Add</button>
     </div>`;
 
@@ -7152,7 +7159,7 @@ function renderCustomHskWords(){
     ? '<div class="empty-note">No custom words yet — add names, countries, brands, or anything else above.</div>'
     : customWords.map(w => `
       <div class="word-row">
-        <div class="info"><span class="h hanzi">${w.h}</span><span class="p">${w.p}</span><span class="m">${w.m}</span></div>
+        <div class="info"><span class="h hanzi">${w.h}</span><span class="p">${w.p}</span><span class="m">${w.m}</span>${w.n ? `<span class="m" style="color:var(--muted);">📝 ${escapeHtml(w.n)}</span>` : ''}</div>
         <div style="display:flex;gap:6px;align-items:center;">
           <button class="action small" data-custom-play="${w.id}" title="Play pronunciation">🔊</button>
           <button class="action small" data-inline-edit="${w.id}" title="Edit this entry">✏️</button>
@@ -7168,10 +7175,11 @@ function renderCustomHskWords(){
     const hz = document.getElementById('hsk-custom-hz').value.trim();
     const py = document.getElementById('hsk-custom-py').value.trim();
     const mn = document.getElementById('hsk-custom-m').value.trim();
+    const notes = document.getElementById('hsk-custom-notes').value.trim();
     if(!hz || !mn){ alert('Please fill in at least the Chinese character(s) and the meaning.'); return; }
     if(allWords.some(x => x.h === hz)){ alert('That word is already in your list.'); return; }
     const p = py || autoPinyin(hz);
-    allWords.push({ h: hz, p, m: mn, id: newId(), myCategory: 'word' });
+    allWords.push({ h: hz, p, m: mn, n: notes, id: newId(), myCategory: 'word' });
     saveWords(allWords);
     refreshAllDecks();
     renderHskList();
@@ -7221,6 +7229,7 @@ function renderCustomPhrases(){
       <input class="field" id="hsk-phrase-hz" placeholder="Chinese phrase / sentence" style="flex:1;min-width:110px;">
       <input class="field" id="hsk-phrase-py" placeholder="Pinyin (optional)" style="flex:1;min-width:110px;">
       <input class="field" id="hsk-phrase-m" placeholder="Meaning" style="flex:1;min-width:110px;">
+      <input class="field" id="hsk-phrase-notes" placeholder="Your notes (optional)" style="flex:1;min-width:110px;">
       <button class="action btn-play small" id="hsk-phrase-add-btn">+ Add</button>
     </div>`;
 
@@ -7228,7 +7237,7 @@ function renderCustomPhrases(){
     ? '<div class="empty-note">No custom phrases yet — paste a phrase or sentence above.</div>'
     : phrases.map(w => `
       <div class="word-row">
-        <div class="info"><span class="h hanzi">${w.h}</span><span class="p">${w.p}</span><span class="m">${w.m}</span></div>
+        <div class="info"><span class="h hanzi">${w.h}</span><span class="p">${w.p}</span><span class="m">${w.m}</span>${w.n ? `<span class="m" style="color:var(--muted);">📝 ${escapeHtml(w.n)}</span>` : ''}</div>
         <div style="display:flex;gap:6px;align-items:center;">
           <button class="action small" data-phrase-play="${w.id}" title="Play pronunciation">🔊</button>
           <button class="action small" data-inline-edit="${w.id}" title="Edit this entry">✏️</button>
@@ -7244,10 +7253,11 @@ function renderCustomPhrases(){
     const hz = document.getElementById('hsk-phrase-hz').value.trim();
     const py = document.getElementById('hsk-phrase-py').value.trim();
     const mn = document.getElementById('hsk-phrase-m').value.trim();
+    const notes = document.getElementById('hsk-phrase-notes').value.trim();
     if(!hz || !mn){ alert('Please fill in at least the phrase and the meaning.'); return; }
     if(allWords.some(x => x.h === hz)){ alert('That phrase is already in your list.'); return; }
     const p = py || autoPinyin(hz);
-    allWords.push({ h: hz, p, m: mn, id: newId(), myCategory: 'phrase' });
+    allWords.push({ h: hz, p, m: mn, n: notes, id: newId(), myCategory: 'phrase' });
     saveWords(allWords);
     refreshAllDecks();
     renderHskList();
@@ -8498,8 +8508,12 @@ function setWritingControlsVisible(visible){
     .forEach(id => { const el = document.getElementById(id); if(el && strokeReadOnly) el.style.display = ''; });
   // Listen & Translate Practice is a Phrases-only feature — Flashcards drills single
   // characters/words, where "translate the whole sentence back" doesn't apply.
+  // It's nested inside #stroke-writing-card (merged into one card visually), so
+  // that card's own padding gets tightened at the same time via .phrase-merged.
   const phraseBlock = document.getElementById('phrase-practice-block');
   if(phraseBlock) phraseBlock.style.display = strokeReadOnly ? '' : 'none';
+  const writingCardEl = document.getElementById('stroke-writing-card');
+  if(writingCardEl) writingCardEl.classList.toggle('phrase-merged', strokeReadOnly);
 }
 let strokeRevealed = false; // in meaning-first mode: has the character been revealed for this card yet?
 let strokeGuessShowPinyin = false; // pinyin-hint toggle while guessing in meaning-first mode
@@ -10275,6 +10289,7 @@ function mergeTextData(vocabIn, qaIn){
         const newItem = { h: w.h, p, m: w.m, id: newId() };
         if(typeof w.n === 'string' && w.n.trim()) newItem.n = w.n;
         if(w.myCategory === 'phrase' || w.myCategory === 'word') newItem.myCategory = w.myCategory;
+        if(w.status === 'star' || w.status === 'learned') newItem.status = w.status;
         allWords.push(newItem); existingHanzi.add(w.h); vAdded++;
         if(w.id) idRemap.set('word:' + w.id, 'word:' + newItem.id);
       }
