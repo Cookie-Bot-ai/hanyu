@@ -7460,9 +7460,10 @@ function renderHskList(){
     return;
   }
   list.innerHTML = filtered.map(w => {
-    const already = allWords.some(x => x.h === w.h);
+    const mine = allWords.find(x => x.h === w.h);
+    const already = !!mine;
     return `<div class="word-row">
-      <div class="info">${w.lvl ? `<span class="lvl">HSK ${w.lvl}</span>` : ''}<span class="h hanzi">${w.h}</span><span class="p">${w.p}</span>${w.pos ? `<span class="pos">${w.pos}</span>` : ''}<span class="m">${w.m}</span></div>
+      <div class="info">${w.lvl ? `<span class="lvl">HSK ${w.lvl}</span>` : ''}<span class="h hanzi">${w.h}</span><span class="p">${w.p}</span>${w.pos ? `<span class="pos">${w.pos}</span>` : ''}<span class="m">${w.m}</span>${mine && mine.n ? `<span class="m" style="color:var(--muted);">📝 ${escapeHtml(mine.n)}</span>` : ''}</div>
       <div style="display:flex;gap:6px;align-items:center;">
         <button class="action small" data-hsk-play="${w.h}" title="Play pronunciation">🔊</button>
         <button class="action ${already ? 'btn-danger' : 'btn-play'} small hsk-add-btn${already ? ' is-added' : ''}" ${already ? `data-hsk-remove="${w.h}"` : `data-hsk-add="${w.h}"`} title="${already ? 'Remove from my words' : 'Add to my words'}">${already ? 'Remove' : '+ Add'}</button>
@@ -10195,7 +10196,9 @@ async function importPatchRows(rows){
     if(existingHanzi.has(row.h)){ skipped++; continue; }
     const hskMatch = findHskWordByHanzi(row.h);
     if(hskMatch){
-      allWords.push({ h: hskMatch.h, p: hskMatch.p, m: hskMatch.m, id: newId() });
+      const activated = { h: hskMatch.h, p: hskMatch.p, m: hskMatch.m, id: newId() };
+      if(row.n) activated.n = row.n;
+      allWords.push(activated);
       existingHanzi.add(row.h);
       addedFromHsk++;
       continue;
