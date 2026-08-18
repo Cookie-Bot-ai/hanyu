@@ -471,8 +471,7 @@
       <div class="toolbar" id="stroke-writing-actions" style="display:none;"></div>
       <div class="toolbar">
         <button class="action btn-reveal hz" id="stroke-toggle-p" title="Show pinyin" aria-label="Show pinyin">拼</button>
-        <button class="action btn-reveal hz" id="stroke-toggle-m" title="Show meaning" aria-label="Show meaning">英</button>
-        <button class="action btn-reveal hz" id="stroke-toggle-notes" title="Show your notes" aria-label="Show your notes">📝</button>
+        <button class="action btn-reveal hz" id="stroke-toggle-m" title="Show meaning &amp; notes together" aria-label="Show meaning and notes">英📝</button>
       </div>
       <div id="stroke-pron-row" style="display:none;"></div>
       <div id="stroke-pron-result" class="pron-result" style="display:none;"></div>
@@ -689,6 +688,7 @@
         <div class="hz" id="qa-question" style="font-size:26px; line-height:1.4;">—</div>
         <div id="qa-question-pinyin" class="pinyin" style="margin-top:4px;"></div>
         <div id="qa-question-meaning" class="meaning" style="margin-top:6px;"></div>
+        <div id="qa-notes" class="meaning" style="color:var(--muted);white-space:pre-wrap;margin-top:4px;"></div>
         <div class="reveal-area" id="qa-reveal" style="margin-top:16px; border-top:1px solid #ddd5c4; padding-top:14px;">
           <div class="hint">think of your answer, then reveal below</div>
         </div>
@@ -697,12 +697,8 @@
       <div id="qa-pron-result" class="pron-result" style="display:none;"></div>
       <div class="row">
         <button class="action btn-reveal" id="qa-toggle-qpinyin">Show Q Pinyin</button>
-        <button class="action btn-reveal" id="qa-toggle-qmeaning">Show Q Translation</button>
+        <button class="action btn-reveal" id="qa-toggle-qmeaning">Show Translation &amp; Notes</button>
       </div>
-      <div class="row">
-        <button class="action btn-reveal" id="qa-toggle-notes">📝 Show Notes</button>
-      </div>
-      <div id="qa-notes" class="meaning" style="color:var(--muted);white-space:pre-wrap;margin-bottom:6px;"></div>
 
       <div style="margin-top:14px;">
         <span class="field-label">Type your answer (optional — pinyin generates automatically as you type)</span>
@@ -8473,8 +8469,7 @@ function orderStrokeDeck(list){
 let strokeDeck = orderStrokeDeck(scopedVocab(strokeScope));
 let strokeIdx = 0;
 let strokeShowPinyin = false;
-let strokeShowMeaning = false;
-let strokeShowNotes = false;
+let strokeShowMeaning = false; // also gates Notes now — see renderNotesFor(); one combined reveal
 // Phrases practice: whether the Chinese hanzi line is currently shown. Reused
 // strokeShowMeaning/strokeShowPinyin cover the English/pinyin side of the same
 // reveal — see resetPhraseRoundDisplay() below for how all three line up with
@@ -8509,7 +8504,7 @@ let strokeDirection = 'char'; // 'char' = see hanzi, guess meaning; 'meaning' = 
 // too, leaving just a stranded label. Hide the lot; the guess box has its own controls.
 function setWritingControlsVisible(visible){
   const d = (visible && !strokeReadOnly) ? '' : 'none';
-  ['stroke-writing-actions', 'stroke-recorder-row', 'stroke-toggle-p', 'stroke-toggle-m', 'stroke-toggle-notes', 'stroke-pron-check', 'stroke-animate']
+  ['stroke-writing-actions', 'stroke-recorder-row', 'stroke-toggle-p', 'stroke-toggle-m', 'stroke-pron-check', 'stroke-animate']
     .forEach(id => { const el = document.getElementById(id); if(el) el.style.display = d; });
   // A verdict belongs to one specific card, so never carry it across a mode switch
   const res = document.getElementById('stroke-pron-result');
@@ -8518,7 +8513,7 @@ function setWritingControlsVisible(visible){
   // the writing chrome and the Meaning→Character quiz, which needs a single character.
   const dirRow = document.getElementById('stroke-direction-row');
   if(dirRow) dirRow.style.display = strokeReadOnly ? 'none' : '';
-  ['stroke-toggle-p', 'stroke-toggle-m', 'stroke-toggle-notes', 'stroke-pron-check', 'stroke-recorder-row']
+  ['stroke-toggle-p', 'stroke-toggle-m', 'stroke-pron-check', 'stroke-recorder-row']
     .forEach(id => { const el = document.getElementById(id); if(el && strokeReadOnly) el.style.display = ''; });
   // Listen & Translate Practice is a Phrases-only feature — Flashcards drills single
   // characters/words, where "translate the whole sentence back" doesn't apply.
@@ -8635,7 +8630,7 @@ function updateStrokeStatusButtons(){
 // they haven't written one yet for this word.
 function renderNotesFor(card){
   const el = document.getElementById('stroke-notes');
-  if(!strokeShowNotes || !card){ el.textContent = ''; return; }
+  if(!strokeShowMeaning || !card){ el.textContent = ''; return; }
   el.textContent = card.n ? card.n : '(no notes yet — add some via Edit in the Word Library)';
 }
 
@@ -8718,7 +8713,6 @@ function renderStroke(){
   document.getElementById('stroke-meaning').textContent = strokeShowMeaning ? card.m : '';
   document.getElementById('stroke-toggle-p').classList.toggle('on', strokeShowPinyin);
   document.getElementById('stroke-toggle-m').classList.toggle('on', strokeShowMeaning);
-  document.getElementById('stroke-toggle-notes').classList.toggle('on', strokeShowNotes);
   renderNotesFor(card);
   feedback.textContent = '';
   playBtn.style.display = '';
@@ -8814,7 +8808,6 @@ document.getElementById('stroke-order').addEventListener('change', (e) => {
 });
 document.getElementById('stroke-toggle-p').addEventListener('click', () => { strokeShowPinyin = !strokeShowPinyin; renderStroke(); });
 document.getElementById('stroke-toggle-m').addEventListener('click', () => { strokeShowMeaning = !strokeShowMeaning; renderStroke(); });
-document.getElementById('stroke-toggle-notes').addEventListener('click', () => { strokeShowNotes = !strokeShowNotes; renderStroke(); });
 
 // ---- Phrases: Listen & Translate Practice ----
 function phraseLangCode(lang){ return { zh: 'zh-CN', en: 'en-US' }[lang] || 'en-US'; }
@@ -8864,6 +8857,7 @@ function renderPhraseCardDisplay(){
   document.getElementById('stroke-meaning').textContent = strokeShowMeaning ? card.m : '';
   document.getElementById('stroke-toggle-p').classList.toggle('on', strokeShowPinyin);
   document.getElementById('stroke-toggle-m').classList.toggle('on', strokeShowMeaning);
+  renderNotesFor(card);
 }
 
 // Advances to the next card in the deck without cancelling the practice token —
@@ -9375,14 +9369,14 @@ document.getElementById('stroke-shuffle').addEventListener('click', () => {
 document.getElementById('stroke-prev').addEventListener('click', () => {
   if(strokeDeck.length === 0) return;
   strokeIdx = (strokeIdx - 1 + strokeDeck.length) % strokeDeck.length;
-  strokeShowPinyin = false; strokeShowMeaning = false; strokeShowNotes = false;
+  strokeShowPinyin = false; strokeShowMeaning = false;
   strokeRevealed = false; strokeGuessShowPinyin = false; resetPhraseRoundDisplay();
   renderStroke();
 });
 document.getElementById('stroke-next').addEventListener('click', () => {
   if(strokeDeck.length === 0) return;
   strokeIdx = (strokeIdx + 1) % strokeDeck.length;
-  strokeShowPinyin = false; strokeShowMeaning = false; strokeShowNotes = false;
+  strokeShowPinyin = false; strokeShowMeaning = false;
   strokeRevealed = false; strokeGuessShowPinyin = false; resetPhraseRoundDisplay();
   renderStroke();
 });
@@ -9682,14 +9676,13 @@ let qaDeck = shuffle(qaPairs);
 let qaIdx = 0;
 let qaShowAnswer = false;
 let qaShowQPinyin = false;
-let qaShowQMeaning = false;
+let qaShowQMeaning = false; // also gates Notes now — merged into "Show Translation & Notes"
 let qaShowAPinyin = false;
 let qaShowAMeaning = false;
-let qaShowNotes = false;
 
 function resetQaToggles(){
   qaShowAnswer = false; qaShowQPinyin = false; qaShowQMeaning = false;
-  qaShowAPinyin = false; qaShowAMeaning = false; qaShowNotes = false;
+  qaShowAPinyin = false; qaShowAMeaning = false;
   document.getElementById('qa-user-answer').value = '';
   document.getElementById('qa-user-answer-pinyin').textContent = '';
   const qaTransEl = document.getElementById('qa-user-answer-translation');
@@ -9736,8 +9729,7 @@ function renderQaCard(){
   document.getElementById('qa-toggle-qmeaning').classList.toggle('on', qaShowQMeaning);
   document.getElementById('qa-toggle-apinyin').classList.toggle('on', qaShowAPinyin);
   document.getElementById('qa-toggle-ameaning').classList.toggle('on', qaShowAMeaning);
-  document.getElementById('qa-notes').textContent = qaShowNotes ? (card.n || '(no notes yet — add some via ✏️ Edit in Q&A Pairs)') : '';
-  document.getElementById('qa-toggle-notes').classList.toggle('on', qaShowNotes);
+  document.getElementById('qa-notes').textContent = qaShowQMeaning ? (card.n || '(no notes yet — add some via ✏️ Edit in Q&A Pairs)') : '';
 }
 document.getElementById('qa-play-q').addEventListener('click', () => { if(qaDeck.length) speak(qaDeck[qaIdx].q); });
 document.getElementById('qa-play-a').addEventListener('click', () => { if(qaDeck.length) speak(qaDeck[qaIdx].a); });
@@ -9746,7 +9738,6 @@ document.getElementById('qa-toggle-qpinyin').addEventListener('click', () => { q
 document.getElementById('qa-toggle-qmeaning').addEventListener('click', () => { qaShowQMeaning = !qaShowQMeaning; renderQaCard(); });
 document.getElementById('qa-toggle-apinyin').addEventListener('click', () => { qaShowAPinyin = !qaShowAPinyin; renderQaCard(); });
 document.getElementById('qa-toggle-ameaning').addEventListener('click', () => { qaShowAMeaning = !qaShowAMeaning; renderQaCard(); });
-document.getElementById('qa-toggle-notes').addEventListener('click', () => { qaShowNotes = !qaShowNotes; renderQaCard(); });
 
 // ---- Self-check: type your own attempt, get its pinyin generated live.
 // Translation only happens when you hit "Translate my sentence" — that's a
@@ -10158,8 +10149,18 @@ const PATCH_TEMPLATE = `# Han Yu Learning — Bulk Word, Phrase & Q&A Import Tem
 # Lines starting with # are ignored, so keep these instructions or delete
 # them, either is fine. Blank lines are ignored too.
 #
-# Duplicates are handled for you on import:
-#   - Already in My Words / My Phrases / Q&A Pairs? → skipped, not duplicated.
+# Duplicates never create a second copy — they're either left alone or patched:
+#   - Already in My Words / My Phrases / Q&A Pairs?  → left alone if nothing's
+#                                                       missing, or patched with
+#                                                       whichever fields are
+#                                                       currently blank there
+#                                                       (notes especially — handy
+#                                                       for re-importing after
+#                                                       adding a notes column to
+#                                                       words you already have).
+#                                                       Anything already filled
+#                                                       in locally is never
+#                                                       overwritten.
 #   - A word/phrase already part of the built-in
 #     HSK list, just not added to your deck yet?    → added straight to your
 #                                                       Flashcards deck automatically
@@ -10173,7 +10174,7 @@ const PATCH_TEMPLATE = `# Han Yu Learning — Bulk Word, Phrase & Q&A Import Tem
 #                                                       whatever you typed here.
 #
 # Examples — one word, one phrase, one Q&A pair (delete these, or leave them;
-# they'll just be skipped as duplicates the next time you import):
+# they'll just be left alone the next time you import, since nothing's missing):
 # 你好 | hello | word |
 # 你好吗 | how are you | phrase | cau hoi tham suc khoe ban
 # 你叫什么名字 | what is your name | qa | note about this qa | 我叫小明 | my name is xiaoming
@@ -10225,10 +10226,15 @@ function findHskWordByHanzi(hanzi){
 }
 
 // Applies parsed rows into allWords/qaPairs. Per row outcome:
-//  - "qa" rows go to qaPairs — skipped if that question already exists,
-//    otherwise added with auto pinyin on both sides and a blank meaning
-//    auto-translated on either side independently.
-//  - word/phrase rows already in My Words/My Phrases            -> skipped
+//  - "qa" rows go to qaPairs — a NEW question is added with auto pinyin on
+//    both sides and a blank meaning auto-translated on either side
+//    independently; an EXISTING question is patched with any field the row
+//    supplies that's currently blank locally (notes especially — re-importing
+//    the same file after adding a "notes" column fills in gaps rather than
+//    being skipped as an unchanged duplicate).
+//  - word/phrase rows already in My Words/My Phrases            -> patched the
+//    same way (fills in a blank note or meaning; never overwrites something
+//    already filled in, in case you'd customised it since)
 //  - word/phrase already in the built-in HSK library             -> "activated"
 //    into the deck using the HSK library's own pinyin/meaning, exactly like
 //    tapping +Add in the HSK Library tab — never a second, diverging copy —
@@ -10237,12 +10243,20 @@ function findHskWordByHanzi(hanzi){
 //    a custom word or phrase using the row's own data, auto-translating a
 //    blank meaning
 async function importPatchRows(rows){
-  const existingHanzi = new Set(allWords.map(w => w.h));
-  const existingQuestions = new Set(qaPairs.map(p => p.q));
-  let added = 0, addedFromHsk = 0, addedQa = 0, skipped = 0;
+  const existingHanzi = new Map(allWords.map(w => [w.h, w]));
+  const existingQuestions = new Map(qaPairs.map(p => [p.q, p]));
+  let added = 0, addedFromHsk = 0, addedQa = 0, updated = 0, skipped = 0;
   for(const row of rows){
     if(row.type === 'qa'){
-      if(existingQuestions.has(row.h)){ skipped++; continue; }
+      const existingPair = existingQuestions.get(row.h);
+      if(existingPair){
+        let changed = false;
+        if(!existingPair.n && row.n){ existingPair.n = row.n; changed = true; }
+        if(!existingPair.qm && row.m){ existingPair.qm = row.m; changed = true; }
+        if(!existingPair.am && row.answerMeaning){ existingPair.am = row.answerMeaning; changed = true; }
+        if(changed) updated++; else skipped++;
+        continue;
+      }
       const qp = autoPinyin(row.h);
       let qm = row.m;
       if(!qm) qm = await getAutoEnglish(row.h);
@@ -10252,17 +10266,24 @@ async function importPatchRows(rows){
       const pair = { q: row.h, qp, qm, a: row.answer, ap, am, id: newId() };
       if(row.n) pair.n = row.n;
       qaPairs.push(pair);
-      existingQuestions.add(row.h);
+      existingQuestions.set(row.h, pair);
       addedQa++;
       continue;
     }
-    if(existingHanzi.has(row.h)){ skipped++; continue; }
+    const existingWord = existingHanzi.get(row.h);
+    if(existingWord){
+      let changed = false;
+      if(!existingWord.n && row.n){ existingWord.n = row.n; changed = true; }
+      if(!existingWord.m && row.m){ existingWord.m = row.m; changed = true; }
+      if(changed) updated++; else skipped++;
+      continue;
+    }
     const hskMatch = findHskWordByHanzi(row.h);
     if(hskMatch){
       const activated = { h: hskMatch.h, p: hskMatch.p, m: hskMatch.m, id: newId() };
       if(row.n) activated.n = row.n;
       allWords.push(activated);
-      existingHanzi.add(row.h);
+      existingHanzi.set(row.h, activated);
       addedFromHsk++;
       continue;
     }
@@ -10273,12 +10294,12 @@ async function importPatchRows(rows){
     item.myCategory = row.type === 'phrase' ? 'phrase' : 'word';
     if(row.n) item.n = row.n;
     allWords.push(item);
-    existingHanzi.add(row.h);
+    existingHanzi.set(row.h, item);
     added++;
   }
   saveWords(allWords);
   saveQa(qaPairs);
-  return { added, addedFromHsk, addedQa, skipped };
+  return { added, addedFromHsk, addedQa, updated, skipped };
 }
 
 document.getElementById('import-patch-trigger').addEventListener('click', () => {
@@ -10299,13 +10320,14 @@ document.getElementById('import-patch-file').addEventListener('change', (e) => {
       e.target.value = '';
       return;
     }
-    const { added, addedFromHsk, addedQa, skipped } = await importPatchRows(rows);
+    const { added, addedFromHsk, addedQa, updated, skipped } = await importPatchRows(rows);
     const parts = [];
     if(added) parts.push(`${added} new custom ${added === 1 ? 'entry' : 'entries'} added`);
     if(addedFromHsk) parts.push(`${addedFromHsk} activated from the HSK library`);
     if(addedQa) parts.push(`${addedQa} new Q&A ${addedQa === 1 ? 'pair' : 'pairs'} added`);
-    if(!added && !addedFromHsk && !addedQa) parts.push('nothing new to add');
-    if(skipped) parts.push(`${skipped} already in your deck (skipped)`);
+    if(updated) parts.push(`${updated} existing ${updated === 1 ? 'entry' : 'entries'} updated with new info`);
+    if(!added && !addedFromHsk && !addedQa && !updated) parts.push('nothing new to add');
+    if(skipped) parts.push(`${skipped} unchanged (already up to date)`);
     if(problems.length) parts.push(`${problems.length} line(s) ignored (no hanzi)`);
     feedback.textContent = parts.join(', ') + '.';
     feedback.style.color = '#3E7C59';
