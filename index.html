@@ -551,6 +551,10 @@
             <span class="field-label">Answer meaning (optional)</span>
             <input class="field" id="add-am" placeholder="e.g. My name is Kim Cuc.">
           </div>
+          <div class="full">
+            <span class="field-label">Your notes (optional)</span>
+            <input class="field" id="add-qa-notes" placeholder="e.g. your own Vietnamese translation, a mnemonic, anything">
+          </div>
         </div>
         <div style="font-size:11px;color:var(--muted);margin:-4px 0 10px;">Pinyin for both question and answer is generated automatically.</div>
         <button class="action btn-next" id="add-qa-submit" style="width:100%;">+ Add question &amp; answer</button>
@@ -695,6 +699,10 @@
         <button class="action btn-reveal" id="qa-toggle-qpinyin">Show Q Pinyin</button>
         <button class="action btn-reveal" id="qa-toggle-qmeaning">Show Q Translation</button>
       </div>
+      <div class="row">
+        <button class="action btn-reveal" id="qa-toggle-notes">📝 Show Notes</button>
+      </div>
+      <div id="qa-notes" class="meaning" style="color:var(--muted);white-space:pre-wrap;margin-bottom:6px;"></div>
 
       <div style="margin-top:14px;">
         <span class="field-label">Type your answer (optional — pinyin generates automatically as you type)</span>
@@ -770,7 +778,7 @@
           <input type="file" id="import-patch-file" accept=".txt,text/plain" style="display:none;">
         </div>
       </div>
-      <p class="hint on-bg" style="margin:0 0 14px;">For typing up new words and phrases offline in Notepad (or any plain text editor), then bringing them all in at once — mix both in the same file. Download the template, fill in one line per entry using the <code>hanzi | meaning | type | notes</code> format described inside it, save the file, then Import patch. Meaning auto-translates if left blank; pinyin is always automatic. Nothing is ever duplicated: an entry already in My Words/My Phrases is skipped, and one that's already part of the built-in HSK library gets added straight to your Flashcards deck automatically (same as tapping +Add in the HSK Library tab), rather than creating a second copy. This always merges — it never touches or replaces what's already here.</p>
+      <p class="hint on-bg" style="margin:0 0 14px;">For typing up new words, phrases, and Q&amp;A pairs offline in Notepad (or any plain text editor), then bringing them all in at once — mix all three in the same file. Download the template, fill in one line per entry using the <code>hanzi | meaning | type | notes</code> format (Q&amp;A pairs use two extra fields for the answer) described inside it, save the file, then Import patch. Meaning auto-translates if left blank; pinyin is always automatic on every field. Nothing is ever duplicated: an entry already in My Words/My Phrases/Q&amp;A Pairs is skipped, and a word or phrase that's already part of the built-in HSK library gets added straight to your Flashcards deck automatically (same as tapping +Add in the HSK Library tab) rather than creating a second copy — your notes still get applied either way. This always merges — it never touches or replaces what's already here.</p>
       <div id="import-patch-feedback" class="on-bg" style="font-size:12px;margin-bottom:14px;"></div>
 
       <div id="import-choice-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:999;align-items:center;justify-content:center;">
@@ -7051,6 +7059,8 @@ function attachQaInlineEditHandlers(root){
           ${f('q','Question in Chinese')}${f('qp','Question pinyin')}${f('qm','Question meaning')}
           <span class="field-label" style="color:var(--ink);">Answer</span>
           ${f('a','Answer in Chinese')}${f('ap','Answer pinyin')}${f('am','Answer meaning')}
+          <span class="field-label" style="color:var(--ink);">Notes</span>
+          ${f('n','Your notes (optional)')}
           <div style="display:flex;gap:6px;">
             <button class="action btn-play small" data-qe-save="1" style="flex:1;">Save</button>
             <button class="action btn-reveal small" data-qe-cancel="1" style="flex:1;">Cancel</button>
@@ -7060,7 +7070,7 @@ function attachQaInlineEditHandlers(root){
       row.querySelector('[data-qe-cancel]').addEventListener('click', refreshQaLists);
       row.querySelector('[data-qe-save]').addEventListener('click', () => {
         if(!val('q') || !val('a')){ alert('Question and answer both need Chinese text.'); return; }
-        ['q','qp','qm','a','ap','am'].forEach(k => { pair[k] = val(k); });
+        ['q','qp','qm','a','ap','am','n'].forEach(k => { pair[k] = val(k); });
         saveQa(qaPairs);
         refreshQaPractice();
         refreshQaLists();
@@ -7313,6 +7323,7 @@ function renderCustomQaWords(){
         <input class="field" id="hsk-qa-a" placeholder="Answer (Chinese)" style="flex:1;min-width:110px;">
         <input class="field" id="hsk-qa-am" placeholder="Answer meaning (optional)" style="flex:1;min-width:110px;">
       </div>
+      <input class="field" id="hsk-qa-notes" placeholder="Your notes (optional)">
       <button class="action btn-play small" id="hsk-qa-add-btn" style="align-self:flex-start;">+ Add Q&amp;A pair</button>
     </div>`;
 
@@ -7335,6 +7346,7 @@ function renderCustomQaWords(){
             </span>
           </div>
           ${p.am ? `<div class="m">${p.am}</div>` : ''}
+          ${p.n ? `<div class="m" style="color:var(--muted);">📝 ${escapeHtml(p.n)}</div>` : ''}
         </div>
         <div style="display:flex;gap:6px;">
           <button class="action small" data-qa-inline-edit="${p.id}" title="Edit this Q&amp;A pair">✏️</button>
@@ -7351,11 +7363,12 @@ function renderCustomQaWords(){
     const a = document.getElementById('hsk-qa-a').value.trim();
     const qm = document.getElementById('hsk-qa-qm').value.trim();
     const am = document.getElementById('hsk-qa-am').value.trim();
+    const n = document.getElementById('hsk-qa-notes').value.trim();
     if(!q || !a){ alert('Please fill in both the question and the answer.'); return; }
     if(qaPairs.some(x => x.q === q)){ alert('That question is already saved.'); return; }
     const qp = autoPinyin(q);
     const ap = autoPinyin(a);
-    qaPairs.push({ q, qp, qm, a, ap, am, id: newId() });
+    qaPairs.push({ q, qp, qm, a, ap, am, n, id: newId() });
     saveQa(qaPairs);
     refreshQaPractice();
     renderHskList();
@@ -9539,7 +9552,9 @@ function renderCustomList(){
       }
       allWords.splice(i, 1);
       saveWords(allWords);
-      qaPairs.push({ q: w.h, qp: w.p || autoPinyin(w.h), qm: w.m, a: '', ap: '', am: '', id: newId() });
+      const movedPair = { q: w.h, qp: w.p || autoPinyin(w.h), qm: w.m, a: '', ap: '', am: '', id: newId() };
+      if(w.n) movedPair.n = w.n;
+      qaPairs.push(movedPair);
       saveQa(qaPairs);
       if(w.id) deleteRecordingBlob('word:' + w.id);
       qaEditingIndex = qaPairs.length - 1;
@@ -9670,10 +9685,11 @@ let qaShowQPinyin = false;
 let qaShowQMeaning = false;
 let qaShowAPinyin = false;
 let qaShowAMeaning = false;
+let qaShowNotes = false;
 
 function resetQaToggles(){
   qaShowAnswer = false; qaShowQPinyin = false; qaShowQMeaning = false;
-  qaShowAPinyin = false; qaShowAMeaning = false;
+  qaShowAPinyin = false; qaShowAMeaning = false; qaShowNotes = false;
   document.getElementById('qa-user-answer').value = '';
   document.getElementById('qa-user-answer-pinyin').textContent = '';
   const qaTransEl = document.getElementById('qa-user-answer-translation');
@@ -9720,6 +9736,8 @@ function renderQaCard(){
   document.getElementById('qa-toggle-qmeaning').classList.toggle('on', qaShowQMeaning);
   document.getElementById('qa-toggle-apinyin').classList.toggle('on', qaShowAPinyin);
   document.getElementById('qa-toggle-ameaning').classList.toggle('on', qaShowAMeaning);
+  document.getElementById('qa-notes').textContent = qaShowNotes ? (card.n || '(no notes yet — add some via ✏️ Edit in Q&A Pairs)') : '';
+  document.getElementById('qa-toggle-notes').classList.toggle('on', qaShowNotes);
 }
 document.getElementById('qa-play-q').addEventListener('click', () => { if(qaDeck.length) speak(qaDeck[qaIdx].q); });
 document.getElementById('qa-play-a').addEventListener('click', () => { if(qaDeck.length) speak(qaDeck[qaIdx].a); });
@@ -9728,6 +9746,7 @@ document.getElementById('qa-toggle-qpinyin').addEventListener('click', () => { q
 document.getElementById('qa-toggle-qmeaning').addEventListener('click', () => { qaShowQMeaning = !qaShowQMeaning; renderQaCard(); });
 document.getElementById('qa-toggle-apinyin').addEventListener('click', () => { qaShowAPinyin = !qaShowAPinyin; renderQaCard(); });
 document.getElementById('qa-toggle-ameaning').addEventListener('click', () => { qaShowAMeaning = !qaShowAMeaning; renderQaCard(); });
+document.getElementById('qa-toggle-notes').addEventListener('click', () => { qaShowNotes = !qaShowNotes; renderQaCard(); });
 
 // ---- Self-check: type your own attempt, get its pinyin generated live.
 // Translation only happens when you hit "Translate my sentence" — that's a
@@ -9918,6 +9937,7 @@ function renderQaManageList(){
             <button class="action btn-reveal small" data-qa-regen-ap="${i}" title="Regenerate from answer">🔄</button>
           </div>
           <input class="field" data-edit-am value="${qa.am || ''}" placeholder="Answer meaning (optional)">
+          <input class="field" data-edit-notes value="${escapeHtml(qa.n || '')}" placeholder="Your notes (optional)">
           <div style="display:flex;gap:6px;width:100%;">
             <button class="action btn-next small" data-qa-save="${i}">Save</button>
             <button class="action btn-reveal small" data-qa-cancel="${i}">Cancel</button>
@@ -9933,6 +9953,7 @@ function renderQaManageList(){
           <div style="margin-top:4px;"><span class="p" style="color:var(--jade);">A: ${qa.a}</span></div>
           ${qa.ap ? `<div class="p" style="margin-left:0;">${qa.ap}</div>` : ''}
           ${qa.am ? `<div class="m" style="margin-left:0;">${qa.am}</div>` : ''}
+          ${qa.n ? `<div class="m" style="margin-left:0;color:var(--muted);">📝 ${escapeHtml(qa.n)}</div>` : ''}
         </div>
         <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end;">
           <div style="display:flex;gap:4px;">
@@ -10029,8 +10050,9 @@ function renderQaManageList(){
       const a = row.querySelector('[data-edit-a]').value.trim();
       const ap = row.querySelector('[data-edit-ap]').value.trim();
       const am = row.querySelector('[data-edit-am]').value.trim();
+      const n = row.querySelector('[data-edit-notes]').value.trim();
       if(!q || !a) return;
-      qaPairs[i] = { q, qp, qm, a, ap, am, id: qaPairs[i].id || newId() };
+      qaPairs[i] = { q, qp, qm, a, ap, am, n, id: qaPairs[i].id || newId() };
       saveQa(qaPairs);
       qaEditingIndex = null;
       renderQaManageList();
@@ -10045,6 +10067,7 @@ document.getElementById('add-qa-submit').addEventListener('click', () => {
   const qm = document.getElementById('add-qm').value.trim();
   const a = document.getElementById('add-a').value.trim();
   const am = document.getElementById('add-am').value.trim();
+  const n = document.getElementById('add-qa-notes').value.trim();
   const fb = document.getElementById('qa-add-feedback');
   if(!q || !a){
     fb.textContent = 'Fill in at least the question and the answer (Chinese).';
@@ -10059,12 +10082,13 @@ document.getElementById('add-qa-submit').addEventListener('click', () => {
   }
   const qp = autoPinyin(q);
   const ap = autoPinyin(a);
-  qaPairs.push({ q, qp, qm, a, ap, am, id: newId() });
+  qaPairs.push({ q, qp, qm, a, ap, am, n, id: newId() });
   saveQa(qaPairs);
   document.getElementById('add-q').value = '';
   document.getElementById('add-qm').value = '';
   document.getElementById('add-a').value = '';
   document.getElementById('add-am').value = '';
+  document.getElementById('add-qa-notes').value = '';
   fb.textContent = (qp || ap) ? 'Added — pinyin generated automatically.' : 'Added — pinyin left blank (generator unavailable), fill in via Edit.';
   fb.style.color = '#3E7C59';
   renderQaManageList();
@@ -10106,53 +10130,64 @@ function downloadText(text, filename){
 // ---- Bulk add from a plain-text template (Notepad-friendly, separate from the
 // JSON backup above) — for typing up new words/phrases offline, then importing
 // them all at once. Always merges; never replaces anything already saved. ----
-const PATCH_TEMPLATE = `# Han Yu Learning — Bulk Word & Phrase Import Template
+const PATCH_TEMPLATE = `# Han Yu Learning — Bulk Word, Phrase & Q&A Import Template
 #
-# Mix single words AND full phrases/sentences in the same file — one entry per
-# line: hanzi | meaning | type | notes
+# Mix words, phrases, AND question/answer pairs in the same file — one entry
+# per line. Words and phrases use 4 fields; Q&A pairs use all 6:
 #
-#   hanzi    required  — the Chinese characters, e.g. 你好 or a whole sentence
-#                        like 你今天好吗
-#   meaning  optional  — English meaning. Leave blank and it auto-translates
-#                        when you import, same as leaving Meaning blank in
-#                        the Word Library's Add Word form.
-#   type     optional  — "word" or "phrase". Leave blank for "word".
-#                        Use "phrase" for anything that should land in the
-#                        Phrases practice tab rather than Flashcards.
-#   notes    optional  — anything you want: your own Vietnamese translation,
-#                        a mnemonic, whatever. Nothing is auto-filled here.
+#   hanzi | meaning | type | notes | answer | answer meaning     (qa only)
+#   hanzi | meaning | type | notes                               (word/phrase)
 #
-# Pinyin is always generated automatically — don't include it.
+#   hanzi          required  — the Chinese characters, or a whole sentence.
+#                              For type "qa" this is the QUESTION.
+#   meaning        optional  — English meaning. Leave blank and it auto-
+#                              translates when you import, same as leaving
+#                              Meaning blank in the Word Library's Add Word
+#                              form. For type "qa" this is the question's
+#                              meaning.
+#   type           optional  — "word", "phrase", or "qa". Leave blank for
+#                              "word". Use "phrase" for the Phrases practice
+#                              tab, "qa" for a Q&A Pairs question+answer.
+#   notes          optional  — anything you want: your own Vietnamese
+#                              translation, a mnemonic, whatever. Nothing is
+#                              auto-filled here.
+#   answer         required for "qa" only — the answer's Chinese characters.
+#   answer meaning optional, "qa" only — leave blank to auto-translate.
+#
+# Pinyin is always generated automatically for every field — don't include it.
 # Lines starting with # are ignored, so keep these instructions or delete
 # them, either is fine. Blank lines are ignored too.
 #
 # Duplicates are handled for you on import:
-#   - Already in My Words / My Phrases?        → skipped, not duplicated.
-#   - Already part of the built-in HSK list,
-#     just not added to your deck yet?          → added straight to your
-#                                                  Flashcards deck automatically
-#                                                  (same as tapping +Add in the
-#                                                  HSK Library tab), using the
-#                                                  HSK library's own pinyin
-#                                                  and meaning.
-#   - Not found anywhere?                       → added as a new custom word
-#                                                  or phrase, using whatever
-#                                                  you typed here.
+#   - Already in My Words / My Phrases / Q&A Pairs? → skipped, not duplicated.
+#   - A word/phrase already part of the built-in
+#     HSK list, just not added to your deck yet?    → added straight to your
+#                                                       Flashcards deck automatically
+#                                                       (same as tapping +Add in the
+#                                                       HSK Library tab), using the
+#                                                       HSK library's own pinyin
+#                                                       and meaning (your notes are
+#                                                       still kept).
+#   - Not found anywhere?                            → added as a new custom word,
+#                                                       phrase, or Q&A pair using
+#                                                       whatever you typed here.
 #
-# Examples — one word, one phrase (delete these, or leave them; they'll just
-# be skipped as duplicates the next time you import):
+# Examples — one word, one phrase, one Q&A pair (delete these, or leave them;
+# they'll just be skipped as duplicates the next time you import):
 # 你好 | hello | word |
 # 你好吗 | how are you | phrase | cau hoi tham suc khoe ban
+# 你叫什么名字 | what is your name | qa | note about this qa | 我叫小明 | my name is xiaoming
 
 `;
 document.getElementById('download-patch-template').addEventListener('click', () => {
   downloadText(PATCH_TEMPLATE, 'word-import-template.txt');
 });
 
-// Parses the pipe-delimited template format into plain {h, m, type, n} rows.
-// Deliberately tolerant: missing trailing fields are fine (a bare "hanzi |
-// meaning" line works), and a line that's just hanzi with no delimiter at all
-// still counts as a word with meaning auto-translated on import.
+// Parses the pipe-delimited template format into plain rows. Deliberately
+// tolerant: missing trailing fields are fine (a bare "hanzi | meaning" line
+// works), and a line that's just hanzi with no delimiter at all still counts
+// as a word with meaning auto-translated on import. "qa" rows additionally
+// use fields 5/6 for the answer and its meaning.
 function parsePatchText(text){
   const rows = [];
   const problems = [];
@@ -10164,8 +10199,15 @@ function parsePatchText(text){
     if(!h){ problems.push(`Line ${i + 1}: no hanzi found — skipped.`); return; }
     const m = parts[1] || '';
     const typeRaw = (parts[2] || '').toLowerCase();
-    const type = typeRaw === 'phrase' ? 'phrase' : 'word';
+    const type = typeRaw === 'phrase' ? 'phrase' : typeRaw === 'qa' ? 'qa' : 'word';
     const n = parts[3] || '';
+    if(type === 'qa'){
+      const answer = parts[4] || '';
+      if(!answer){ problems.push(`Line ${i + 1}: type is "qa" but no answer (5th field) was given — skipped.`); return; }
+      const answerMeaning = parts[5] || '';
+      rows.push({ h, m, type, n, answer, answerMeaning });
+      return;
+    }
     rows.push({ h, m, type, n });
   });
   return { rows, problems };
@@ -10182,17 +10224,38 @@ function findHskWordByHanzi(hanzi){
   return null;
 }
 
-// Applies parsed rows into allWords with three outcomes per row:
-//  - already in My Words/My Phrases            -> skipped
-//  - already in the built-in HSK library        -> "activated" into the deck
-//    using the HSK library's own pinyin/meaning, exactly like tapping +Add
-//    in the HSK Library tab — never a second, diverging copy of the same word
-//  - genuinely new                              -> added as a custom word or
-//    phrase using the row's own data, auto-translating a blank meaning
+// Applies parsed rows into allWords/qaPairs. Per row outcome:
+//  - "qa" rows go to qaPairs — skipped if that question already exists,
+//    otherwise added with auto pinyin on both sides and a blank meaning
+//    auto-translated on either side independently.
+//  - word/phrase rows already in My Words/My Phrases            -> skipped
+//  - word/phrase already in the built-in HSK library             -> "activated"
+//    into the deck using the HSK library's own pinyin/meaning, exactly like
+//    tapping +Add in the HSK Library tab — never a second, diverging copy —
+//    though your notes are still applied on top of that canonical entry.
+//  - genuinely new word/phrase                                    -> added as
+//    a custom word or phrase using the row's own data, auto-translating a
+//    blank meaning
 async function importPatchRows(rows){
   const existingHanzi = new Set(allWords.map(w => w.h));
-  let added = 0, addedFromHsk = 0, skipped = 0;
+  const existingQuestions = new Set(qaPairs.map(p => p.q));
+  let added = 0, addedFromHsk = 0, addedQa = 0, skipped = 0;
   for(const row of rows){
+    if(row.type === 'qa'){
+      if(existingQuestions.has(row.h)){ skipped++; continue; }
+      const qp = autoPinyin(row.h);
+      let qm = row.m;
+      if(!qm) qm = await getAutoEnglish(row.h);
+      const ap = autoPinyin(row.answer);
+      let am = row.answerMeaning;
+      if(!am) am = await getAutoEnglish(row.answer);
+      const pair = { q: row.h, qp, qm, a: row.answer, ap, am, id: newId() };
+      if(row.n) pair.n = row.n;
+      qaPairs.push(pair);
+      existingQuestions.add(row.h);
+      addedQa++;
+      continue;
+    }
     if(existingHanzi.has(row.h)){ skipped++; continue; }
     const hskMatch = findHskWordByHanzi(row.h);
     if(hskMatch){
@@ -10214,7 +10277,8 @@ async function importPatchRows(rows){
     added++;
   }
   saveWords(allWords);
-  return { added, addedFromHsk, skipped };
+  saveQa(qaPairs);
+  return { added, addedFromHsk, addedQa, skipped };
 }
 
 document.getElementById('import-patch-trigger').addEventListener('click', () => {
@@ -10235,11 +10299,12 @@ document.getElementById('import-patch-file').addEventListener('change', (e) => {
       e.target.value = '';
       return;
     }
-    const { added, addedFromHsk, skipped } = await importPatchRows(rows);
+    const { added, addedFromHsk, addedQa, skipped } = await importPatchRows(rows);
     const parts = [];
     if(added) parts.push(`${added} new custom ${added === 1 ? 'entry' : 'entries'} added`);
     if(addedFromHsk) parts.push(`${addedFromHsk} activated from the HSK library`);
-    if(!added && !addedFromHsk) parts.push('nothing new to add');
+    if(addedQa) parts.push(`${addedQa} new Q&A ${addedQa === 1 ? 'pair' : 'pairs'} added`);
+    if(!added && !addedFromHsk && !addedQa) parts.push('nothing new to add');
     if(skipped) parts.push(`${skipped} already in your deck (skipped)`);
     if(problems.length) parts.push(`${problems.length} line(s) ignored (no hanzi)`);
     feedback.textContent = parts.join(', ') + '.';
@@ -10247,6 +10312,7 @@ document.getElementById('import-patch-file').addEventListener('change', (e) => {
     renderCustomList();
     renderHskList();
     refreshAllDecks();
+    refreshQaPractice();
     e.target.value = '';
   };
   reader.readAsText(file);
