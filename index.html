@@ -134,6 +134,9 @@
   .card-audio button:hover, .card-audio button.action:hover{ background:rgba(111,168,138,.92); color:var(--ink); }
   .card-audio button.btn-danger, .card-audio button.action.btn-danger{ background:rgba(178,66,50,.62); }
   .card-audio button:active{ transform:scale(.94); }
+  /* Reveal toggles (pinyin, meaning & notes) moved into this same top-right
+     stack — this is their "on" state, since they no longer carry .btn-reveal. */
+  .card-audio button.on{ background:var(--brass); color:var(--ink); }
   /* the recorder emits a horizontal flex row — stand it up inside the stack */
   .card-audio > div, .card-audio > div > div{ display:flex !important; flex-direction:column !important;
     gap:5px !important; align-items:flex-end; flex-wrap:nowrap !important; }
@@ -416,6 +419,8 @@
           <button id="stroke-play" title="Play the word" aria-label="Play the word">🔊</button>
           <button id="stroke-pron-check" title="Check my pronunciation" aria-label="Check my pronunciation">🎤</button>
           <button id="stroke-animate" title="Show the stroke order" aria-label="Show the stroke order">✍️</button>
+          <button class="action" id="stroke-toggle-p" title="Show pinyin" aria-label="Show pinyin">拼</button>
+          <button class="action" id="stroke-toggle-m" title="Show meaning &amp; notes together" aria-label="Show meaning and notes">英</button>
         </div>
       <div id="stroke-guess-box" class="bee-box" style="display:none;margin-bottom:12px;">
         <div class="meaning" id="stroke-guess-meaning" style="font-size:16px;"></div>
@@ -469,10 +474,6 @@
       </div>
       </div><!-- /stroke-stage -->
       <div class="toolbar" id="stroke-writing-actions" style="display:none;"></div>
-      <div class="toolbar">
-        <button class="action btn-reveal hz" id="stroke-toggle-p" title="Show pinyin" aria-label="Show pinyin">拼</button>
-        <button class="action btn-reveal hz" id="stroke-toggle-m" title="Show meaning &amp; notes together" aria-label="Show meaning and notes">英📝</button>
-      </div>
       <div id="stroke-pron-row" style="display:none;"></div>
       <div id="stroke-pron-result" class="pron-result" style="display:none;"></div>
 
@@ -683,6 +684,8 @@
         <div class="card-audio">
           <button id="qa-play-q" title="Play the question" aria-label="Play the question">🔊</button>
           <button id="qa-pron-check" title="Check my pronunciation of the answer" aria-label="Check my pronunciation of the answer">🎤</button>
+          <button class="action" id="qa-toggle-qpinyin" title="Show Q Pinyin" aria-label="Show Q Pinyin">拼</button>
+          <button class="action" id="qa-toggle-qmeaning" title="Show Translation &amp; Notes" aria-label="Show Translation and Notes">英</button>
         </div>
       <div class="card">
         <div class="hz" id="qa-question" style="font-size:26px; line-height:1.4;">—</div>
@@ -695,10 +698,6 @@
       </div>
       </div><!-- /qa-stage -->
       <div id="qa-pron-result" class="pron-result" style="display:none;"></div>
-      <div class="row">
-        <button class="action btn-reveal" id="qa-toggle-qpinyin">Show Q Pinyin</button>
-        <button class="action btn-reveal" id="qa-toggle-qmeaning">Show Translation &amp; Notes</button>
-      </div>
 
       <div style="margin-top:14px;">
         <span class="field-label">Type your answer (optional — pinyin generates automatically as you type)</span>
