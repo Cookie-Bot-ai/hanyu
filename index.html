@@ -769,11 +769,12 @@
         <span class="section-title on-bg" style="margin:0;">Bulk add from a text file</span>
         <div style="display:flex;gap:6px;flex-wrap:wrap;">
           <button class="action btn-reveal small" id="download-patch-template">📋 Download template</button>
+          <button class="action btn-reveal small" id="export-patch-trigger">📤 Export everything</button>
           <button class="action btn-reveal small" id="import-patch-trigger">📥 Import patch</button>
           <input type="file" id="import-patch-file" accept=".txt,text/plain" style="display:none;">
         </div>
       </div>
-      <p class="hint on-bg" style="margin:0 0 14px;">For typing up new words, phrases, and Q&amp;A pairs offline in Notepad (or any plain text editor), then bringing them all in at once — mix all three in the same file. Download the template, fill in one line per entry using the <code>hanzi | meaning | type | notes</code> format (Q&amp;A pairs use two extra fields for the answer) described inside it, save the file, then Import patch. Meaning auto-translates if left blank; pinyin is always automatic on every field. Nothing is ever duplicated: an entry already in My Words/My Phrases/Q&amp;A Pairs is skipped, and a word or phrase that's already part of the built-in HSK library gets added straight to your Flashcards deck automatically (same as tapping +Add in the HSK Library tab) rather than creating a second copy — your notes still get applied either way. This always merges — it never touches or replaces what's already here.</p>
+      <p class="hint on-bg" style="margin:0 0 14px;">For typing up new words, phrases, and Q&amp;A pairs offline in Notepad (or any plain text editor), then bringing them all in at once — mix all three in the same file. Download the template, fill in one line per entry using the <code>hanzi | meaning | type | notes</code> format (Q&amp;A pairs use two extra fields for the answer) described inside it, save the file, then Import patch. Meaning auto-translates if left blank; pinyin is always automatic on every field. Nothing is ever duplicated: an entry already in My Words/My Phrases/Q&amp;A Pairs is skipped, and a word or phrase that's already part of the built-in HSK library gets added straight to your Flashcards deck automatically (same as tapping +Add in the HSK Library tab) rather than creating a second copy — your notes still get applied either way. This always merges — it never touches or replaces what's already here.<br><br><b>Export everything</b> writes every word, phrase, Q&amp;A pair, and added HSK word you currently have into that same patch format — edit meanings or add notes in Notepad, then Import patch to write any changes back in. Anything you leave untouched round-trips harmlessly, since unchanged lines are recognised as already up to date.</p>
       <div id="import-patch-feedback" class="on-bg" style="font-size:12px;margin-bottom:14px;"></div>
 
       <div id="import-choice-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:999;align-items:center;justify-content:center;">
@@ -10190,6 +10191,36 @@ const PATCH_TEMPLATE = `# Han Yu Learning — Bulk Word, Phrase & Q&A Import Tem
 document.getElementById('download-patch-template').addEventListener('click', () => {
   downloadText(PATCH_TEMPLATE, 'word-import-template.txt');
 });
+
+// Guards against a stray "|" inside a meaning/note breaking the pipe-delimited
+// format on a future re-import — swapped for the fullwidth version, which
+// reads identically but can't be mistaken for a field separator.
+function patchSafe(text){ return String(text || '').replace(/\|/g, '｜'); }
+
+// Writes every word, phrase, Q&A pair, and added HSK word into the same
+// pipe-delimited format the template uses, so the whole deck can be edited in
+// Notepad (adding/fixing notes especially) and brought back in via Import
+// patch — which already treats an unchanged line as up to date and a changed
+// one as an update, so round-tripping this file is always safe.
+function exportAllAsPatchText(){
+  const lines = [
+    '# Han Yu Learning — Full Export (bulk-editable)',
+    '# Generated ' + dateStamp() + ' — edit meanings or notes below, then Import patch to write changes back in.',
+    '# Format: hanzi | meaning | type | notes | answer | answer meaning   (last two: Q&A pairs only)',
+    ''
+  ];
+  allWords.forEach(w => {
+    const type = w.myCategory === 'phrase' ? 'phrase'
+      : w.myCategory === 'word' ? 'word'
+      : (isPhrase(w) ? 'phrase' : 'word'); // legacy entries saved before myCategory existed
+    lines.push([patchSafe(w.h), patchSafe(w.m), type, patchSafe(w.n)].join(' | '));
+  });
+  qaPairs.forEach(p => {
+    lines.push([patchSafe(p.q), patchSafe(p.qm), 'qa', patchSafe(p.n), patchSafe(p.a), patchSafe(p.am)].join(' | '));
+  });
+  downloadText(lines.join('\n') + '\n', 'hanyu-full-export-' + dateStamp() + '.txt');
+}
+document.getElementById('export-patch-trigger').addEventListener('click', exportAllAsPatchText);
 
 // Parses the pipe-delimited template format into plain rows. Deliberately
 // tolerant: missing trailing fields are fine (a bare "hanzi | meaning" line
