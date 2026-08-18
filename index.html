@@ -9362,21 +9362,29 @@ document.getElementById('stroke-shuffle').addEventListener('click', () => {
   document.getElementById('stroke-order').value = 'shuffle';
   strokeDeck = orderStrokeDeck(scopedVocab(strokeScope));
   strokeIdx = 0;
-  strokeRevealed = false; strokeGuessShowPinyin = false; resetPhraseRoundDisplay();
+  strokeRevealed = false; strokeGuessShowPinyin = false;
+  if(strokeReadOnly) phraseHanziVisible = true; // Phrases: keep your pinyin/meaning toggle as-is
+  else { strokeShowPinyin = false; strokeShowMeaning = false; } // Flashcards: each new card starts hidden
   renderStroke();
 });
 document.getElementById('stroke-prev').addEventListener('click', () => {
   if(strokeDeck.length === 0) return;
   strokeIdx = (strokeIdx - 1 + strokeDeck.length) % strokeDeck.length;
-  strokeShowPinyin = false; strokeShowMeaning = false;
-  strokeRevealed = false; strokeGuessShowPinyin = false; resetPhraseRoundDisplay();
+  strokeRevealed = false; strokeGuessShowPinyin = false;
+  // Phrases: browsing with ‹ › shouldn't undo a pinyin/meaning toggle you've
+  // turned on — that reset-per-card behavior belongs to the guided Start/
+  // Continuous Play sequence only, not plain manual navigation. Flashcards
+  // keeps the original behavior: each new card starts hidden for active recall.
+  if(strokeReadOnly) phraseHanziVisible = true;
+  else { strokeShowPinyin = false; strokeShowMeaning = false; }
   renderStroke();
 });
 document.getElementById('stroke-next').addEventListener('click', () => {
   if(strokeDeck.length === 0) return;
   strokeIdx = (strokeIdx + 1) % strokeDeck.length;
-  strokeShowPinyin = false; strokeShowMeaning = false;
-  strokeRevealed = false; strokeGuessShowPinyin = false; resetPhraseRoundDisplay();
+  strokeRevealed = false; strokeGuessShowPinyin = false;
+  if(strokeReadOnly) phraseHanziVisible = true;
+  else { strokeShowPinyin = false; strokeShowMeaning = false; }
   renderStroke();
 });
 document.getElementById('stroke-direction-toggle').addEventListener('click', () => {
