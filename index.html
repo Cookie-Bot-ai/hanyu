@@ -774,7 +774,7 @@
           <input type="file" id="import-patch-file" accept=".txt,text/plain" style="display:none;">
         </div>
       </div>
-      <p class="hint on-bg" style="margin:0 0 14px;">For typing up new words, phrases, and Q&amp;A pairs offline in Notepad (or any plain text editor), then bringing them all in at once — mix all three in the same file. Download the template, fill in one line per entry using the <code>hanzi | meaning | type | notes</code> format (Q&amp;A pairs use two extra fields for the answer) described inside it, save the file, then Import patch. Meaning auto-translates if left blank; pinyin is always automatic on every field. Nothing is ever duplicated: an entry already in My Words/My Phrases/Q&amp;A Pairs is skipped, and a word or phrase that's already part of the built-in HSK library gets added straight to your Flashcards deck automatically (same as tapping +Add in the HSK Library tab) rather than creating a second copy — your notes still get applied either way. This always merges — it never touches or replaces what's already here.<br><br><b>Export everything</b> writes every word, phrase, Q&amp;A pair, and added HSK word you currently have into that same patch format — edit meanings or add notes in Notepad, then Import patch to write any changes back in. Anything you leave untouched round-trips harmlessly, since unchanged lines are recognised as already up to date.</p>
+      <p class="hint on-bg" style="margin:0 0 14px;">For typing up new words, phrases, and Q&amp;A pairs offline in Notepad (or any plain text editor), then bringing them all in at once — mix all three in the same file. Download the template, fill in one line per entry using the <code>hanzi | meaning | type | notes</code> format (Q&amp;A pairs use two extra fields for the answer) described inside it, save the file, then Import patch. Meaning auto-translates if left blank; pinyin is always automatic on every field. Nothing is ever duplicated: an entry already in My Words/My Phrases/Q&amp;A Pairs is skipped, and a word or phrase that's already part of the built-in HSK library gets added straight to your Flashcards deck automatically (same as tapping +Add in the HSK Library tab) rather than creating a second copy — your notes still get applied either way. This always merges — it never touches or replaces what's already here.<br><br><b>Export everything</b> writes every word, phrase, Q&amp;A pair, and added HSK word you currently have into that same patch format — edit meanings or add notes in Notepad, then Import patch to write any changes back in. Anything you leave untouched round-trips harmlessly, since unchanged lines are recognised as already up to date. Added HSK words are clearly labelled by their level (<code>hsk1</code>, <code>hsk2</code>, etc.) in the type column instead of a generic "word", so you can tell them apart from ones you typed in yourself.</p>
       <div id="import-patch-feedback" class="on-bg" style="font-size:12px;margin-bottom:14px;"></div>
 
       <div id="import-choice-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:999;align-items:center;justify-content:center;">
@@ -10202,15 +10202,25 @@ function patchSafe(text){ return String(text || '').replace(/\|/g, '｜'); }
 // Notepad (adding/fixing notes especially) and brought back in via Import
 // patch — which already treats an unchanged line as up to date and a changed
 // one as an update, so round-tripping this file is always safe.
+// The "type" column doubles as a clear label: an entry that's actually part
+// of the built-in HSK library is marked "hsk1".."hsk6" (its real level)
+// instead of a generic "word", so it's obvious at a glance which lines are
+// HSK vocabulary versus something you typed in yourself. On re-import this
+// reads no differently to "word" (only "phrase"/"qa" are treated specially),
+// so it doesn't change how the row is handled — labelling only, not logic.
 function exportAllAsPatchText(){
   const lines = [
     '# Han Yu Learning — Full Export (bulk-editable)',
     '# Generated ' + dateStamp() + ' — edit meanings or notes below, then Import patch to write changes back in.',
     '# Format: hanzi | meaning | type | notes | answer | answer meaning   (last two: Q&A pairs only)',
+    '# "type" shows hsk1..hsk6 for words that are part of the built-in HSK library',
+    '# (which level they belong to), or "word"/"phrase" for ones you added yourself.',
     ''
   ];
   allWords.forEach(w => {
-    const type = w.myCategory === 'phrase' ? 'phrase'
+    const hskLevel = findHskLevelByHanzi(w.h);
+    const type = hskLevel ? ('hsk' + hskLevel)
+      : w.myCategory === 'phrase' ? 'phrase'
       : w.myCategory === 'word' ? 'word'
       : (isPhrase(w) ? 'phrase' : 'word'); // legacy entries saved before myCategory existed
     lines.push([patchSafe(w.h), patchSafe(w.m), type, patchSafe(w.n)].join(' | '));
@@ -10259,6 +10269,14 @@ function findHskWordByHanzi(hanzi){
   for(const lvl in HSK_WORDS){
     const found = HSK_WORDS[lvl].find(w => w.h === hanzi);
     if(found) return found;
+  }
+  return null;
+}
+// Same lookup, but returns which level it belongs to — used only for labelling
+// exports clearly, not for the import/activation logic above.
+function findHskLevelByHanzi(hanzi){
+  for(const lvl in HSK_WORDS){
+    if(HSK_WORDS[lvl].some(w => w.h === hanzi)) return lvl;
   }
   return null;
 }

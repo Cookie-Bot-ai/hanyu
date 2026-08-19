@@ -6,7 +6,7 @@
 // Format: hanyu-YYYY-MM-DD-V{n} — date stays the same all day, just increment V
 // each time you push again that day (V1, V2, V3...). Start a new date at V1 when
 // the day changes. Never reuse a full string, and never go backwards.
-const CACHE_VERSION = 'hanyu-2026-08-17-V7';
+const CACHE_VERSION = 'hanyu-2026-08-17-V8';
 
 // Same-origin app shell. These must all exist or the install step fails silently.
 const SHELL = [
