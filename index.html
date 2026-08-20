@@ -774,7 +774,7 @@
           <input type="file" id="import-patch-file" accept=".txt,text/plain" style="display:none;">
         </div>
       </div>
-      <p class="hint on-bg" style="margin:0 0 14px;">For typing up new words, phrases, and Q&amp;A pairs offline in Notepad (or any plain text editor), then bringing them all in at once — mix all three in the same file. Download the template, fill in one line per entry using the <code>hanzi | meaning | type | notes</code> format (Q&amp;A pairs use two extra fields for the answer) described inside it, save the file, then Import patch. Meaning auto-translates if left blank; pinyin is always automatic on every field. Nothing is ever duplicated: an entry already in My Words/My Phrases/Q&amp;A Pairs is skipped, and a word or phrase that's already part of the built-in HSK library gets added straight to your Flashcards deck automatically (same as tapping +Add in the HSK Library tab) rather than creating a second copy — your notes still get applied either way. This always merges — it never touches or replaces what's already here.<br><br><b>Export everything</b> writes every word, phrase, Q&amp;A pair, and added HSK word you currently have into that same patch format — edit meanings or add notes in Notepad, then Import patch to write any changes back in. Anything you leave untouched round-trips harmlessly, since unchanged lines are recognised as already up to date. Added HSK words are clearly labelled by their level (<code>hsk1</code>, <code>hsk2</code>, etc.) in the type column instead of a generic "word", so you can tell them apart from ones you typed in yourself.</p>
+      <p class="hint on-bg" style="margin:0 0 14px;">For typing up new words, phrases, and Q&amp;A pairs offline in Notepad (or any plain text editor), then bringing them all in at once — mix all three in the same file. Download the template, fill in one line per entry using the <code>hanzi | meaning | type | notes</code> format (Q&amp;A pairs use two extra fields for the answer) described inside it, save the file, then Import patch. Meaning auto-translates if left blank; pinyin is always automatic on every field. Nothing is ever duplicated: a word, phrase, or Q&amp;A pair already in your deck has its meaning/notes updated if the file's version is different (a blank field in the file leaves that field alone, it never gets wiped out), and one that's already part of the built-in HSK library gets added straight to your Flashcards deck automatically (same as tapping +Add in the HSK Library tab) rather than creating a second copy. This always merges — it never replaces or removes anything, only adds or updates.<br><br><b>Export everything</b> writes every word, phrase, Q&amp;A pair, and added HSK word you currently have into that same patch format — edit meanings or add notes in Notepad, then Import patch to write any changes back in. Added HSK words are clearly labelled by their level (<code>hsk1</code>, <code>hsk2</code>, etc.) in the type column instead of a generic "word", so you can tell them apart from ones you typed in yourself.</p>
       <div id="import-patch-feedback" class="on-bg" style="font-size:12px;margin-bottom:14px;"></div>
 
       <div id="import-choice-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:999;align-items:center;justify-content:center;">
@@ -8067,6 +8067,7 @@ document.querySelectorAll('.tab-btn:not(.subtab-btn)').forEach(btn => {
       const wasReadOnly = strokeReadOnly;
       strokeReadOnly = false;
       document.getElementById('stroke-scope').style.display = 'inline-block';
+      resetPhraseSession(); // fresh Start/Continuous state each time Flashcards opens, same as Phrases
       if(wasReadOnly) renderStroke();   // rebuild the tiles the reading view replaced
       if(strokeScope === 'myphrases'){
         document.getElementById('stroke-scope').value = 'all';
@@ -8475,17 +8476,19 @@ let strokeShowMeaning = false; // also gates Notes now — see renderNotesFor();
 // reveal — see resetPhraseRoundDisplay() below for how all three line up with
 // "hear it in / translate to".
 let phraseHanziVisible = true;
-// Sets the phrase card to "source shown, translation hidden" for a fresh round —
-// called at every card-navigation point (prev/next/shuffle/tab-switch), same as
-// the strokeRevealed reset just above each call site, never from inside
-// renderStroke() itself (that would erase an in-progress reveal on every
-// unrelated re-render, e.g. clicking the notes toggle mid-round).
+// Sets the fresh "hide the untranslated side, show the source side" state for a
+// new round — called at every card-navigation point (prev/next/shuffle/tab-switch)
+// and at the start of each practice round, same as the strokeRevealed reset just
+// above each call site, never from inside renderStroke() itself (that would erase
+// an in-progress reveal on every unrelated re-render, e.g. clicking a toggle
+// mid-round). Used identically by both Flashcards and Phrases now that Listen &
+// Translate Practice is available in both — the only difference is Flashcards
+// keeps its hanzi tiles always visible (they're not part of what's hidden here).
 function resetPhraseRoundDisplay(){
-  if(!strokeReadOnly){ phraseHanziVisible = true; return; } // Flashcards: unaffected, always show
   const sel = document.getElementById('phrase-source-lang');
   const sourceLang = sel ? sel.value : 'zh';
-  phraseHanziVisible = (sourceLang === 'zh');
-  strokeShowPinyin = phraseHanziVisible;
+  phraseHanziVisible = strokeReadOnly ? (sourceLang === 'zh') : true;
+  strokeShowPinyin = (sourceLang === 'zh');
   strokeShowMeaning = (sourceLang === 'en');
 }
 let strokeWriters = []; // HanziWriter instances for the characters in the current word
@@ -8515,14 +8518,14 @@ function setWritingControlsVisible(visible){
   if(dirRow) dirRow.style.display = strokeReadOnly ? 'none' : '';
   ['stroke-toggle-p', 'stroke-toggle-m', 'stroke-pron-check', 'stroke-recorder-row']
     .forEach(id => { const el = document.getElementById(id); if(el && strokeReadOnly) el.style.display = ''; });
-  // Listen & Translate Practice is a Phrases-only feature — Flashcards drills single
-  // characters/words, where "translate the whole sentence back" doesn't apply.
-  // It's nested inside #stroke-writing-card (merged into one card visually), so
-  // that card's own padding gets tightened at the same time via .phrase-merged.
+  // Listen & Translate Practice is now available in both Flashcards and Phrases —
+  // it's nested inside #stroke-writing-card (merged into one card visually), so
+  // that card's own padding is always tightened via .phrase-merged to make room
+  // for it, rather than only when strokeReadOnly.
   const phraseBlock = document.getElementById('phrase-practice-block');
-  if(phraseBlock) phraseBlock.style.display = strokeReadOnly ? '' : 'none';
+  if(phraseBlock) phraseBlock.style.display = '';
   const writingCardEl = document.getElementById('stroke-writing-card');
-  if(writingCardEl) writingCardEl.classList.toggle('phrase-merged', strokeReadOnly);
+  if(writingCardEl) writingCardEl.classList.add('phrase-merged');
 }
 let strokeRevealed = false; // in meaning-first mode: has the character been revealed for this card yet?
 let strokeGuessShowPinyin = false; // pinyin-hint toggle while guessing in meaning-first mode
@@ -8846,13 +8849,17 @@ document.getElementById('phrase-source-lang').addEventListener('change', () => {
 });
 syncPhraseLangSelectors();
 
-// A light-weight refresh of just the phrase card's own display (hanzi line +
-// pinyin + meaning) — deliberately NOT renderStroke(), which also calls
-// stopPhrasePractice() and would cancel the very round calling this.
+// A light-weight refresh of just the card's own display (hanzi line + pinyin +
+// meaning) — deliberately NOT renderStroke(), which also calls
+// stopPhrasePractice() and would cancel the very round calling this. In
+// Flashcards mode the character tiles are left alone entirely (they're not
+// part of what a Listen & Translate round hides/reveals there — only the
+// pinyin/meaning/notes fields are); rebuilding them is a Phrases-only concern,
+// since that's the one mode where the hanzi itself is the thing being hidden.
 function renderPhraseCardDisplay(){
   const card = strokeDeck[strokeIdx];
   if(!card) return;
-  buildStrokeTargets(card.h);
+  if(strokeReadOnly) buildStrokeTargets(card.h);
   document.getElementById('stroke-pinyin').textContent = strokeShowPinyin ? card.p : '';
   document.getElementById('stroke-meaning').textContent = strokeShowMeaning ? card.m : '';
   document.getElementById('stroke-toggle-p').classList.toggle('on', strokeShowPinyin);
@@ -10158,17 +10165,19 @@ const PATCH_TEMPLATE = `# Han Yu Learning — Bulk Word, Phrase & Q&A Import Tem
 # them, either is fine. Blank lines are ignored too.
 #
 # Duplicates never create a second copy — they're either left alone or patched:
-#   - Already in My Words / My Phrases / Q&A Pairs?  → left alone if nothing's
-#                                                       missing, or patched with
-#                                                       whichever fields are
-#                                                       currently blank there
-#                                                       (notes especially — handy
-#                                                       for re-importing after
-#                                                       adding a notes column to
-#                                                       words you already have).
-#                                                       Anything already filled
-#                                                       in locally is never
-#                                                       overwritten.
+#   - Already in My Words / My Phrases / Q&A Pairs?  → its meaning/notes are
+#                                                       updated if the value in
+#                                                       this file is different
+#                                                       from what's saved
+#                                                       (handy for re-importing
+#                                                       after fixing or adding
+#                                                       notes for words you
+#                                                       already have). A blank
+#                                                       field in this file never
+#                                                       wipes out something
+#                                                       already saved — leave a
+#                                                       field blank to leave it
+#                                                       alone.
 #   - A word/phrase already part of the built-in
 #     HSK list, just not added to your deck yet?    → added straight to your
 #                                                       Flashcards deck automatically
@@ -10182,7 +10191,7 @@ const PATCH_TEMPLATE = `# Han Yu Learning — Bulk Word, Phrase & Q&A Import Tem
 #                                                       whatever you typed here.
 #
 # Examples — one word, one phrase, one Q&A pair (delete these, or leave them;
-# they'll just be left alone the next time you import, since nothing's missing):
+# they'll just be recognised as already up to date the next time you import):
 # 你好 | hello | word |
 # 你好吗 | how are you | phrase | cau hoi tham suc khoe ban
 # 你叫什么名字 | what is your name | qa | note about this qa | 我叫小明 | my name is xiaoming
@@ -10285,12 +10294,13 @@ function findHskLevelByHanzi(hanzi){
 //  - "qa" rows go to qaPairs — a NEW question is added with auto pinyin on
 //    both sides and a blank meaning auto-translated on either side
 //    independently; an EXISTING question is patched with any field the row
-//    supplies that's currently blank locally (notes especially — re-importing
-//    the same file after adding a "notes" column fills in gaps rather than
-//    being skipped as an unchanged duplicate).
+//    supplies that differs from what's saved locally (notes especially — this
+//    is what makes the Export everything -> edit -> Import patch round trip
+//    actually write your edits back in, not just fill first-time gaps).
 //  - word/phrase rows already in My Words/My Phrases            -> patched the
-//    same way (fills in a blank note or meaning; never overwrites something
-//    already filled in, in case you'd customised it since)
+//    same way: any non-blank field in the row that differs from what's
+//    currently stored overwrites it. A blank field in the row never wipes out
+//    something already saved — leave it blank to leave that field alone.
 //  - word/phrase already in the built-in HSK library             -> "activated"
 //    into the deck using the HSK library's own pinyin/meaning, exactly like
 //    tapping +Add in the HSK Library tab — never a second, diverging copy —
@@ -10307,9 +10317,9 @@ async function importPatchRows(rows){
       const existingPair = existingQuestions.get(row.h);
       if(existingPair){
         let changed = false;
-        if(!existingPair.n && row.n){ existingPair.n = row.n; changed = true; }
-        if(!existingPair.qm && row.m){ existingPair.qm = row.m; changed = true; }
-        if(!existingPair.am && row.answerMeaning){ existingPair.am = row.answerMeaning; changed = true; }
+        if(row.n && row.n !== existingPair.n){ existingPair.n = row.n; changed = true; }
+        if(row.m && row.m !== existingPair.qm){ existingPair.qm = row.m; changed = true; }
+        if(row.answerMeaning && row.answerMeaning !== existingPair.am){ existingPair.am = row.answerMeaning; changed = true; }
         if(changed) updated++; else skipped++;
         continue;
       }
@@ -10329,8 +10339,8 @@ async function importPatchRows(rows){
     const existingWord = existingHanzi.get(row.h);
     if(existingWord){
       let changed = false;
-      if(!existingWord.n && row.n){ existingWord.n = row.n; changed = true; }
-      if(!existingWord.m && row.m){ existingWord.m = row.m; changed = true; }
+      if(row.n && row.n !== existingWord.n){ existingWord.n = row.n; changed = true; }
+      if(row.m && row.m !== existingWord.m){ existingWord.m = row.m; changed = true; }
       if(changed) updated++; else skipped++;
       continue;
     }
