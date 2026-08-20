@@ -8662,6 +8662,43 @@ function resetPhraseSession(){
   if(contBtn){ contBtn.textContent = '🔁 Continuous Play: Off'; contBtn.classList.remove('on'); }
 }
 
+// Builds the tile placeholders (or reading-mode line) for the CURRENT card and,
+// in Flashcards mode, wires up the HanziWriter quiz instances for it — this is
+// exactly what's needed whenever the card identity itself changes, not just
+// when re-rendering the same card's reveal state (that's renderPhraseCardDisplay,
+// which deliberately skips this in Flashcards mode to avoid disturbing an
+// in-progress trace). Shared by renderStroke() and advanceToNextPhraseCardSilently()
+// so Continuous Play's silent card-advance doesn't leave the hanzi tile stuck on
+// the previous word while pinyin/meaning move on to the new one.
+function rebuildStrokeTiles(card){
+  const chars = buildStrokeTargets(card.h);
+  strokeCompleted = chars.map(() => false);
+  strokeWriters = strokeReadOnly ? [] : chars.map((ch, i) => {
+    if(!isCjkChar(ch)) return null;
+    if(typeof HanziWriter === 'undefined') return null;
+    const writer = HanziWriter.create('stroke-target-' + i, ch, {
+      width: 130,
+      height: 130,
+      padding: 5,
+      showCharacter: false,
+      showOutline: true,
+      strokeAnimationSpeed: 1,
+      delayBetweenStrokes: 300,
+      strokeColor: '#1C231F',
+      outlineColor: '#C9CFC3',
+      drawingWidth: 8,
+      onLoadCharDataError: () => {
+        const el = document.getElementById('stroke-target-' + i);
+        if(el) el.innerHTML = `<div class="hint" style="padding:8px;font-size:11px;">No stroke data for "${ch}" — needs internet on first load, or isn't in the free stroke dataset.</div>`;
+      }
+    });
+    return writer;
+  });
+
+  // Default straight into Practice Writing, so it's ready to draw on without an extra click.
+  quizStrokeWord();
+}
+
 function renderStroke(){
   stopPhrasePractice();
   resetPronForNewCard();
@@ -8720,34 +8757,8 @@ function renderStroke(){
   feedback.textContent = '';
   playBtn.style.display = '';
 
-  const chars = buildStrokeTargets(card.h);
-  strokeCompleted = chars.map(() => false);
-  strokeWriters = strokeReadOnly ? [] : chars.map((ch, i) => {
-    if(!isCjkChar(ch)) return null;
-    if(typeof HanziWriter === 'undefined') return null;
-    const writer = HanziWriter.create('stroke-target-' + i, ch, {
-      width: 130,
-      height: 130,
-      padding: 5,
-      showCharacter: false,
-      showOutline: true,
-      strokeAnimationSpeed: 1,
-      delayBetweenStrokes: 300,
-      strokeColor: '#1C231F',
-      outlineColor: '#C9CFC3',
-      drawingWidth: 8,
-      onLoadCharDataError: () => {
-        const el = document.getElementById('stroke-target-' + i);
-        if(el) el.innerHTML = `<div class="hint" style="padding:8px;font-size:11px;">No stroke data for "${ch}" — needs internet on first load, or isn't in the free stroke dataset.</div>`;
-      }
-    });
-    return writer;
-  });
-
-  // Default straight into Practice Writing, so it's ready to draw on without an extra click.
-  quizStrokeWord();
+  rebuildStrokeTiles(card);
 }
-
 function animateStrokeWord(){
   strokeWriters.forEach((writer, i) => {
     setTimeout(() => { if(writer && writer.animateCharacter) writer.animateCharacter(); }, i * 1400);
@@ -8871,6 +8882,10 @@ function renderPhraseCardDisplay(){
 // used by Continuous Play, which needs to move on mid-chain. renderStroke()
 // can't be reused here for the same reason renderPhraseCardDisplay() exists:
 // it calls stopPhrasePractice() and would sever the very chain calling it.
+// Explicitly rebuilds the tiles (unlike renderPhraseCardDisplay, which skips
+// that in Flashcards mode) because the card itself is changing here — without
+// this, Continuous Play would update pinyin/meaning/notes each round but leave
+// the Flashcards hanzi tile stuck on the very first word.
 function advanceToNextPhraseCardSilently(){
   if(strokeDeck.length === 0) return;
   strokeIdx = (strokeIdx + 1) % strokeDeck.length;
@@ -8878,6 +8893,7 @@ function advanceToNextPhraseCardSilently(){
   resetPhraseRoundDisplay();
   resetPronForNewCard();
   updateStrokeStatusButtons();
+  rebuildStrokeTiles(strokeDeck[strokeIdx]);
   renderPhraseCardDisplay();
   document.getElementById('stroke-count').textContent = `Word ${strokeIdx + 1} / ${strokeDeck.length}`;
   document.getElementById('stroke-feedback').textContent = '';
