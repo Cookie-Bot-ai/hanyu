@@ -7168,6 +7168,7 @@ function renderCustomHskWords(){
         <div class="info"><span class="h hanzi">${w.h}</span><span class="p">${w.p}</span><span class="m">${w.m}</span>${w.n ? `<span class="m" style="color:var(--muted);">📝 ${escapeHtml(w.n)}</span>` : ''}</div>
         <div style="display:flex;gap:6px;align-items:center;">
           <button class="action small" data-custom-play="${w.id}" title="Play pronunciation">🔊</button>
+          <button class="action small" data-custom-goto="${w.h}" title="Open in Flashcards">🔗</button>
           <button class="action small" data-inline-edit="${w.id}" title="Edit this entry">✏️</button>
           <button class="action small" data-custom-move="${w.id}" title="Move to a different category">↔</button>
           <button class="action btn-danger small" data-custom-del="${w.id}">🗑</button>
@@ -7204,6 +7205,9 @@ function renderCustomHskWords(){
       const w = allWords.find(x => x.id === btn.dataset.customPlay);
       if(w) speak(w.h);
     });
+  });
+  list.querySelectorAll('[data-custom-goto]').forEach(btn => {
+    btn.addEventListener('click', () => goToFlashcard(btn.dataset.customGoto));
   });
   list.querySelectorAll('[data-custom-del]').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -7246,6 +7250,7 @@ function renderCustomPhrases(){
         <div class="info"><span class="h hanzi">${w.h}</span><span class="p">${w.p}</span><span class="m">${w.m}</span>${w.n ? `<span class="m" style="color:var(--muted);">📝 ${escapeHtml(w.n)}</span>` : ''}</div>
         <div style="display:flex;gap:6px;align-items:center;">
           <button class="action small" data-phrase-play="${w.id}" title="Play pronunciation">🔊</button>
+          <button class="action small" data-phrase-goto="${w.h}" title="Open in Flashcards">🔗</button>
           <button class="action small" data-inline-edit="${w.id}" title="Edit this entry">✏️</button>
           <button class="action small" data-phrase-move="${w.id}" title="Move to a different category">↔</button>
           <button class="action btn-danger small" data-phrase-del="${w.id}">🗑</button>
@@ -7282,6 +7287,9 @@ function renderCustomPhrases(){
       const w = allWords.find(x => x.id === btn.dataset.phrasePlay);
       if(w) speak(w.h);
     });
+  });
+  list.querySelectorAll('[data-phrase-goto]').forEach(btn => {
+    btn.addEventListener('click', () => goToFlashcard(btn.dataset.phraseGoto));
   });
   list.querySelectorAll('[data-phrase-del]').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -7475,6 +7483,7 @@ function renderHskList(){
       <div class="info">${w.lvl ? `<span class="lvl">HSK ${w.lvl}</span>` : ''}<span class="h hanzi">${w.h}</span><span class="p">${w.p}</span>${w.pos ? `<span class="pos">${w.pos}</span>` : ''}<span class="m">${w.m}</span>${mine && mine.n ? `<span class="m" style="color:var(--muted);">📝 ${escapeHtml(mine.n)}</span>` : ''}</div>
       <div style="display:flex;gap:6px;align-items:center;">
         <button class="action small" data-hsk-play="${w.h}" title="Play pronunciation">🔊</button>
+        <button class="action small" data-hsk-goto="${w.h}" title="Open in Flashcards">🔗</button>
         <button class="action ${already ? 'btn-danger' : 'btn-play'} small hsk-add-btn${already ? ' is-added' : ''}" ${already ? `data-hsk-remove="${w.h}"` : `data-hsk-add="${w.h}"`} title="${already ? 'Remove from my words' : 'Add to my words'}">${already ? 'Remove' : '+ Add'}</button>
       </div>
     </div>`;
@@ -7512,10 +7521,58 @@ function renderHskList(){
       renderHskList();
     });
   });
+  // Jump straight to this word in Flashcards. Already added? Go there directly.
+  // Not added yet? Ask first (via the same modal used for "move to category" —
+  // no confirm() dialog, which is unreliable inside installed/standalone PWAs),
+  // then add it and go, so it's the very card shown when the tab opens.
+  list.querySelectorAll('[data-hsk-goto]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const hanzi = btn.dataset.hskGoto;
+      if(allWords.some(x => x.h === hanzi)){
+        goToFlashcard(hanzi);
+        return;
+      }
+      const word = words.find(w => w.h === hanzi);
+      if(!word) return;
+      openMoveModal(`"${hanzi}" isn't in your Flashcards yet — add it?`, [
+        { label: '+ Add & open in Flashcards', onClick: () => {
+          allWords.push({ h: word.h, p: word.p, m: word.m, id: newId() });
+          saveWords(allWords);
+          refreshAllDecks();
+          renderHskList();
+          goToFlashcard(hanzi);
+        }}
+      ]);
+    });
+  });
 }
 document.getElementById('hsk-level').addEventListener('change', (e) => { hskLevel = e.target.value; renderHskList(); });
 document.getElementById('hsk-search').addEventListener('input', renderHskList);
 document.getElementById('hsk-sort').addEventListener('change', renderHskList);
+
+// Switches to the Flashcards tab with the deck scoped and positioned so the
+// given hanzi is the card actually showing — used by the HSK Library's 🔗
+// button. Picks "Phrases only" scope automatically if that's where the word
+// lives, otherwise "All words", so it's never left out of the active deck.
+function goToFlashcard(hanzi){
+  document.querySelectorAll('.tab-btn:not(.subtab-btn)').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelector('.tab-btn[data-tab="stroke"]').classList.add('active');
+  document.getElementById('panel-stroke').classList.add('active');
+  strokeReadOnly = false;
+  document.getElementById('stroke-scope').style.display = 'inline-block';
+  resetPhraseSession();
+
+  const word = allWords.find(w => w.h === hanzi);
+  const isPhraseWord = !!word && (word.myCategory === 'phrase' || (!word.myCategory && isPhrase(word) && !isHskWord(word.h)));
+  strokeScope = isPhraseWord ? 'phrases' : 'all';
+  document.getElementById('stroke-scope').value = strokeScope;
+  strokeDeck = orderStrokeDeck(scopedVocab(strokeScope));
+  const idx = strokeDeck.findIndex(w => w.h === hanzi);
+  strokeIdx = idx >= 0 ? idx : 0;
+  strokeRevealed = false; strokeGuessShowPinyin = false; resetPhraseRoundDisplay();
+  renderStroke();
+}
 
 function scopedVocab(scope){
   let list = fullVocab();
