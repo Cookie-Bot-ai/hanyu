@@ -95,58 +95,40 @@
      edges as chevrons, and playback sits in the card's top corner, so the row of
      judgement buttons stands alone. */
   .stage{ position:relative; }
-  /* Prev/Next now live in a normal row ABOVE the card (see .nav-row-top) instead
-     of overlaying its bottom corners — always visible without scrolling down to
-     find them, and it frees the audio/assess stacks from needing to share the
-     card with them on tall content (long phrases, Q&A cards). */
-  .nav-row-top{ display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
-  .card-nav{ position:static; z-index:auto;
-    width:38px; height:38px; padding:0; border:none; border-radius:10px; cursor:pointer;
-    background:rgba(16,21,26,.55); color:#F1EDE1; font-size:19px; line-height:1;
-    display:flex; align-items:center; justify-content:center;
-    box-shadow:0 2px 8px rgba(0,0,0,.28); transition:background .15s ease; }
-  .card-nav:hover{ background:rgba(178,66,50,.92); }
-  .card-nav:active{ transform:scale(.94); }
-  .card-nav:disabled{ opacity:.28; cursor:not-allowed; }
-
-  /* Mirror of .card-audio on the left edge: grade without leaving the card or
-     scrolling. Sits top-left now that the ‹ chevron has moved above the card. */
-  .card-assess{ position:absolute; top:10px; left:10px; z-index:3;
-    display:flex; flex-direction:column; gap:5px; align-items:flex-start; }
-  .card-assess button{ width:36px; height:36px; padding:0; margin:0; border:none;
-    border-radius:10px; cursor:pointer; font-size:16px; line-height:1;
-    display:inline-flex; align-items:center; justify-content:center; color:#FBF7EF;
-    box-shadow:0 2px 8px rgba(0,0,0,.28); transition:transform .12s ease, filter .15s ease; }
-  .card-assess button.ok{ background:var(--jade); }
-  .card-assess button.no{ background:var(--seal); }
-  .card-assess button:hover{ filter:brightness(1.18); }
-  .card-assess button:active{ transform:scale(.94); }
-  @media (max-width:420px){ .card-assess button{ width:32px; height:32px; font-size:15px; } }
-
-  .card-audio{ position:absolute; top:10px; right:10px; z-index:3;
-    display:flex; flex-direction:column; gap:5px; align-items:flex-end; }
-  .card-audio button, .card-audio button.action{ width:36px; height:36px; padding:0; margin:0;
-    border:none; border-radius:10px; cursor:pointer; flex:0 0 auto;
-    background:rgba(16,21,26,.55); color:#F1EDE1; font-size:15px; line-height:1;
+  /* All per-card controls (prev/next, audio, pinyin/meaning reveals, self-assess)
+     now live together in one row ABOVE the card, instead of floating over its
+     corners — always visible without scrolling, and content inside the card
+     (long phrases, Q&A text) can never run underneath and hide a button again. */
+  .nav-row-top{ display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:10px; flex-wrap:wrap; }
+  .nav-row-top .nav-icons{ display:flex; gap:6px; flex-wrap:wrap; justify-content:center; flex:1; }
+  .card-nav, .nav-icon-btn{ position:static; width:38px; height:38px; padding:0; margin:0; border:none;
+    border-radius:10px; cursor:pointer; flex:0 0 auto;
+    background:rgba(16,21,26,.55); color:#F1EDE1; font-size:16px; line-height:1;
     display:inline-flex; align-items:center; justify-content:center;
     box-shadow:0 2px 8px rgba(0,0,0,.28); transition:background .15s ease; }
-  .card-audio button:hover, .card-audio button.action:hover{ background:rgba(111,168,138,.92); color:var(--ink); }
-  .card-audio button.btn-danger, .card-audio button.action.btn-danger{ background:rgba(178,66,50,.62); }
-  .card-audio button:active{ transform:scale(.94); }
-  /* Reveal toggles (pinyin, meaning & notes) moved into this same top-right
-     stack — this is their "on" state, since they no longer carry .btn-reveal. */
-  .card-audio button.on{ background:var(--brass); color:var(--ink); }
-  /* the recorder emits a horizontal flex row — stand it up inside the stack */
-  .card-audio > div, .card-audio > div > div{ display:flex !important; flex-direction:column !important;
-    gap:5px !important; align-items:flex-end; flex-wrap:nowrap !important; }
+  .card-nav{ font-size:19px; }
+  .card-nav:hover{ background:rgba(178,66,50,.92); }
+  .nav-icon-btn:hover{ background:rgba(111,168,138,.92); color:var(--ink); }
+  .card-nav:active, .nav-icon-btn:active{ transform:scale(.94); }
+  .card-nav:disabled{ opacity:.28; cursor:not-allowed; }
+  /* Reveal toggles' (pinyin, meaning & notes) "on" state */
+  .nav-icon-btn.on{ background:var(--brass); color:var(--ink); }
+  .nav-icon-btn.btn-danger{ background:rgba(178,66,50,.62); }
+  /* Dictation's self-assess pair keeps its own always-on colours (not just hover),
+     since ✓/✗ are a judgement, not a toggle. */
+  .nav-icon-btn.assess-ok{ background:var(--jade); color:#FBF7EF; }
+  .nav-icon-btn.assess-no{ background:var(--seal); color:#FBF7EF; }
+  .nav-icon-btn.assess-ok:hover, .nav-icon-btn.assess-no:hover{ filter:brightness(1.18); }
 
-  /* Gutters the top-corner stacks live in, so card content never runs underneath
-     them — no bottom gutter needed any more since nav moved above the card. */
-  .stage .card, .stage .bee-box{ padding-left:54px; padding-right:54px; }
+  /* Test tab's self-mark row — same judgement colours as above, sized as a full
+     wide action button since this is the primary interaction each question. */
+  .btn-correct{ background:var(--jade); color:#FBF7EF; border:none; }
+  .btn-wrong{ background:var(--seal); color:#FBF7EF; border:none; }
+  .btn-correct:hover, .btn-wrong:hover{ filter:brightness(1.12); }
+
   @media (max-width:420px){
-    .card-nav{ width:34px; height:34px; font-size:17px; }
-    .card-audio button, .card-audio button.action{ width:32px; height:32px; font-size:14px; }
-    .stage .card, .stage .bee-box{ padding-left:44px; padding-right:44px; padding-bottom:50px; }
+    .card-nav, .nav-icon-btn{ width:32px; height:32px; font-size:14px; }
+    .card-nav{ font-size:17px; }
   }
 
   /* Active listening state for the 🎤 button. A state class of its own — the old code
@@ -380,6 +362,7 @@
       <button class="tab-btn" data-tab="bee">听写 <span class="sub">Dictation</span></button>
       <button class="tab-btn" data-tab="qa">问答 <span class="sub">Q&amp;A</span></button>
       <button class="tab-btn" data-tab="phrases">短语 <span class="sub">Phrases</span></button>
+      <button class="tab-btn" data-tab="test">测验 <span class="sub">Test</span></button>
       <button class="tab-btn" data-tab="hsk">HSK <span class="sub">Library</span></button>
     </div>
 
@@ -414,16 +397,16 @@
       </div>
       <div class="nav-row-top">
         <button class="card-nav prev" id="stroke-prev" title="Previous word" aria-label="Previous word">‹</button>
+        <div class="nav-icons">
+          <button class="nav-icon-btn" id="stroke-play" title="Play the word" aria-label="Play the word">🔊</button>
+          <button class="nav-icon-btn" id="stroke-pron-check" title="Check my pronunciation" aria-label="Check my pronunciation">🎤</button>
+          <button class="nav-icon-btn" id="stroke-animate" title="Show the stroke order" aria-label="Show the stroke order">✍️</button>
+          <button class="nav-icon-btn" id="stroke-toggle-p" title="Show pinyin" aria-label="Show pinyin">拼</button>
+          <button class="nav-icon-btn" id="stroke-toggle-m" title="Show meaning &amp; notes together" aria-label="Show meaning and notes">英</button>
+        </div>
         <button class="card-nav next" id="stroke-next" title="Next word" aria-label="Next word">›</button>
       </div>
       <div class="stage" id="stroke-stage">
-        <div class="card-audio" id="stroke-card-audio">
-          <button id="stroke-play" title="Play the word" aria-label="Play the word">🔊</button>
-          <button id="stroke-pron-check" title="Check my pronunciation" aria-label="Check my pronunciation">🎤</button>
-          <button id="stroke-animate" title="Show the stroke order" aria-label="Show the stroke order">✍️</button>
-          <button class="action" id="stroke-toggle-p" title="Show pinyin" aria-label="Show pinyin">拼</button>
-          <button class="action" id="stroke-toggle-m" title="Show meaning &amp; notes together" aria-label="Show meaning and notes">英</button>
-        </div>
       <div id="stroke-guess-box" class="bee-box" style="display:none;margin-bottom:12px;">
         <div class="meaning" id="stroke-guess-meaning" style="font-size:16px;"></div>
         <div class="pinyin" id="stroke-guess-pinyin"></div>
@@ -644,18 +627,18 @@
       <div id="bee-hint-text" class="on-bg" style="text-align:center;font-size:13px;min-height:18px;margin:2px auto 4px;"></div>
       <div class="nav-row-top">
         <button class="card-nav prev" id="bee-prev" title="Previous word" aria-label="Previous word">‹</button>
+        <div class="nav-icons">
+          <button class="nav-icon-btn" id="bee-play" title="Play the word" aria-label="Play the word">🔊</button>
+          <button class="nav-icon-btn" id="bee-pron-check" title="Check my pronunciation" aria-label="Check my pronunciation">🎤</button>
+          <div class="nav-icons" id="bee-selfassess-row" style="display:none;">
+            <button class="nav-icon-btn assess-ok" id="bee-got-it" title="I got it right" aria-label="I got it right">✓</button>
+            <button class="nav-icon-btn assess-no" id="bee-missed-it" title="I need more practice with this" aria-label="I need more practice with this">✗</button>
+          </div>
+        </div>
         <button class="card-nav next" id="bee-next" title="Next word" aria-label="Next word">›</button>
       </div>
       <div class="stage" id="bee-stage" style="margin:12px 0 6px;">
-        <div class="card-assess" id="bee-selfassess-row" style="display:none;">
-          <button id="bee-got-it" class="ok" title="I got it right" aria-label="I got it right">✓</button>
-          <button id="bee-missed-it" class="no" title="I need more practice with this" aria-label="I need more practice with this">✗</button>
-        </div>
-        <div class="card-audio">
-          <button id="bee-play" title="Play the word" aria-label="Play the word">🔊</button>
-          <button id="bee-pron-check" title="Check my pronunciation" aria-label="Check my pronunciation">🎤</button>
-        </div>
-      <div style="display:flex;gap:10px;flex-wrap:wrap;padding:0 40px;">
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
         <div style="flex:1;min-width:130px;">
           <div style="font-size:11px;color:var(--muted);text-align:center;margin-bottom:4px;">Your drawing</div>
           <canvas id="bee-canvas" style="width:100%;aspect-ratio:1/1;display:block;background:var(--paper);border:1px solid var(--border);border-radius:14px;touch-action:none;box-shadow:0 6px 18px rgba(0,0,0,.3);"></canvas>
@@ -684,15 +667,15 @@
       <div class="meta"><span id="qa-count">Question 1 / 0</span></div>
       <div class="nav-row-top">
         <button class="card-nav prev" id="qa-prev" title="Previous question" aria-label="Previous question">‹</button>
+        <div class="nav-icons">
+          <button class="nav-icon-btn" id="qa-play-q" title="Play the question" aria-label="Play the question">🔊</button>
+          <button class="nav-icon-btn" id="qa-pron-check" title="Check my pronunciation of the answer" aria-label="Check my pronunciation of the answer">🎤</button>
+          <button class="nav-icon-btn" id="qa-toggle-qpinyin" title="Show Q Pinyin" aria-label="Show Q Pinyin">拼</button>
+          <button class="nav-icon-btn" id="qa-toggle-qmeaning" title="Show Translation &amp; Notes" aria-label="Show Translation and Notes">英</button>
+        </div>
         <button class="card-nav next" id="qa-next" title="Next question" aria-label="Next question">›</button>
       </div>
       <div class="stage" id="qa-stage">
-        <div class="card-audio">
-          <button id="qa-play-q" title="Play the question" aria-label="Play the question">🔊</button>
-          <button id="qa-pron-check" title="Check my pronunciation of the answer" aria-label="Check my pronunciation of the answer">🎤</button>
-          <button class="action" id="qa-toggle-qpinyin" title="Show Q Pinyin" aria-label="Show Q Pinyin">拼</button>
-          <button class="action" id="qa-toggle-qmeaning" title="Show Translation &amp; Notes" aria-label="Show Translation and Notes">英</button>
-        </div>
       <div class="card">
         <div class="hz" id="qa-question" style="font-size:26px; line-height:1.4;">—</div>
         <div id="qa-question-pinyin" class="pinyin" style="margin-top:4px;"></div>
@@ -749,6 +732,73 @@
     </div>
 
 
+    <!-- TEST / EXAM: a fixed-length checkup pulling from ⭐ needs-practice and ✓
+         learned words/phrases, plus your Q&A pairs. Every question is self-checked
+         (attempt, reveal, mark yourself) — pronunciation, handwriting and open-ended
+         answers can't be graded reliably by the app, so it doesn't pretend to. -->
+    <div class="panel" id="panel-test">
+      <div id="test-setup">
+        <div class="card" style="padding:28px 24px;">
+          <div class="hz" style="font-size:32px;margin-bottom:6px;">测验</div>
+          <div class="meaning" style="margin-bottom:18px;">A quick self-checked review — speaking, pinyin, handwriting, and Q&amp;A, mixed together.</div>
+          <div style="font-size:12px;color:var(--muted);margin-bottom:16px;" id="test-pool-info">Loading…</div>
+          <div class="field-label" style="margin-bottom:8px;">How many questions?</div>
+          <div class="toolbar" style="margin-bottom:20px;">
+            <button class="action btn-reveal" data-test-len="10">10</button>
+            <button class="action btn-reveal on" data-test-len="20">20</button>
+            <button class="action btn-reveal" data-test-len="30">30</button>
+          </div>
+          <button class="action btn-play" id="test-start-btn" style="width:100%;">▶ Start Test</button>
+        </div>
+      </div>
+
+      <div id="test-active" style="display:none;">
+        <div class="top-controls">
+          <span class="on-bg" id="test-progress" style="font-size:12px;">Question 1 / 20</span>
+          <span class="on-bg" id="test-type-label" style="font-size:12px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);"></span>
+        </div>
+        <div class="card" id="test-card" style="padding:28px 24px;">
+          <div class="hz" id="test-prompt-hz" style="font-size:40px;display:none;"></div>
+          <div class="meaning" id="test-prompt-meaning" style="font-size:18px;display:none;"></div>
+          <div id="test-qa-block" style="display:none;">
+            <div class="hz" id="test-qa-question" style="font-size:26px;"></div>
+            <div class="pinyin" id="test-qa-question-pinyin" style="margin-top:4px;"></div>
+          </div>
+          <div id="test-input-block" style="display:none;margin-top:16px;">
+            <input class="field" id="test-pinyin-input" placeholder="Type the pinyin — tone marks or numbers, either is fine" style="width:100%;text-align:center;">
+          </div>
+          <div id="test-canvas-block" style="display:none;margin-top:16px;">
+            <canvas id="test-canvas" style="width:100%;aspect-ratio:1.6/1;display:block;background:var(--paper);border:1px solid var(--border);border-radius:14px;touch-action:none;box-shadow:0 6px 18px rgba(0,0,0,.3);"></canvas>
+            <button class="action btn-reveal small" id="test-canvas-clear" style="width:100%;margin-top:6px;">Clear</button>
+          </div>
+          <div class="reveal-area" id="test-reveal-area" style="display:none;margin-top:18px;border-top:1px solid #ddd5c4;padding-top:14px;">
+            <div class="hz" id="test-answer-hz" style="font-size:32px;display:none;"></div>
+            <div class="pinyin" id="test-answer-pinyin" style="display:none;"></div>
+            <div class="meaning" id="test-answer-meaning" style="display:none;"></div>
+            <div class="meaning" id="test-answer-notes" style="color:var(--muted);white-space:pre-wrap;display:none;"></div>
+          </div>
+        </div>
+        <div class="toolbar" style="margin-top:14px;">
+          <button class="action btn-play wide" id="test-reveal-btn">👀 Reveal Answer</button>
+        </div>
+        <div class="toolbar" id="test-mark-row" style="display:none;margin-top:10px;">
+          <button class="action btn-correct" id="test-mark-correct" style="flex:1;">✓ Got it</button>
+          <button class="action btn-wrong" id="test-mark-wrong" style="flex:1;">✗ Need practice</button>
+        </div>
+      </div>
+
+      <div id="test-results" style="display:none;">
+        <div class="card" style="padding:28px 24px;">
+          <div class="hz" style="font-size:28px;margin-bottom:10px;">Done!</div>
+          <div class="meaning" id="test-score-overall" style="font-size:20px;margin-bottom:16px;"></div>
+          <div id="test-score-breakdown" style="text-align:left;font-size:13px;color:var(--muted);"></div>
+        </div>
+        <div class="toolbar" style="margin-top:14px;">
+          <button class="action btn-play wide" id="test-retake-btn">🔁 Take Another Test</button>
+        </div>
+      </div>
+    </div>
+
     <!-- HSK WORD LIBRARY: browse by level, add straight into your vocab -->
     <div class="panel" id="panel-hsk">
       <!-- Backup: relocated here from the old per-tab word library -->
@@ -782,6 +832,25 @@
       </div>
       <p class="hint on-bg" style="margin:0 0 14px;">For typing up new words, phrases, and Q&amp;A pairs offline in Notepad (or any plain text editor), then bringing them all in at once — mix all three in the same file. Download the template, fill in one line per entry using the <code>hanzi | meaning | type | notes</code> format (Q&amp;A pairs use two extra fields for the answer) described inside it, save the file, then Import patch. Meaning auto-translates if left blank; pinyin is always automatic on every field. Nothing is ever duplicated: a word, phrase, or Q&amp;A pair already in your deck has its meaning/notes updated if the file's version is different (a blank field in the file leaves that field alone, it never gets wiped out), and one that's already part of the built-in HSK library gets added straight to your Flashcards deck automatically (same as tapping +Add in the HSK Library tab) rather than creating a second copy. This always merges — it never replaces or removes anything, only adds or updates.<br><br><b>Export everything</b> writes every word, phrase, Q&amp;A pair, and added HSK word you currently have into that same patch format — edit meanings or add notes in Notepad, then Import patch to write any changes back in. Added HSK words are clearly labelled by their level (<code>hsk1</code>, <code>hsk2</code>, etc.) in the type column instead of a generic "word", so you can tell them apart from ones you typed in yourself.</p>
       <div id="import-patch-feedback" class="on-bg" style="font-size:12px;margin-bottom:14px;"></div>
+
+      <!-- AI Q&A prompt export: no API key, no live call from this app — it builds
+           a ready-to-paste prompt plus your own word list, in the exact format
+           Import patch already understands, so whatever an AI chatbot hands back
+           can be saved as a .txt and imported with zero extra work. -->
+      <div class="top-controls" style="margin-bottom:8px;">
+        <span class="section-title on-bg" style="margin:0;">AI Q&amp;A prompt from my words</span>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <select class="mode" id="ai-qa-scope">
+            <option value="star">⭐ Needs practice only</option>
+            <option value="learned">✓ Learned only</option>
+            <option value="both">⭐ + ✓ (both)</option>
+            <option value="all">All words &amp; phrases</option>
+          </select>
+          <button class="action btn-reveal small" id="ai-qa-export-trigger">🤖 Download AI prompt</button>
+        </div>
+      </div>
+      <p class="hint on-bg" style="margin:0 0 14px;">Builds a ready-to-paste prompt plus a list of your chosen words, in the exact format Import patch already reads — no API key, nothing sent anywhere by this app. Paste the whole file into ChatGPT (or any AI chat), copy its reply back into a plain text file, and Import patch it straight into your Q&amp;A Pairs.</p>
+      <div id="ai-qa-export-feedback" class="on-bg" style="font-size:12px;margin-bottom:14px;"></div>
 
       <div id="import-choice-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:999;align-items:center;justify-content:center;">
         <div style="background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:22px;max-width:340px;text-align:center;box-shadow:0 20px 50px rgba(0,0,0,.5);">
@@ -8172,6 +8241,7 @@ document.querySelectorAll('.tab-btn:not(.subtab-btn)').forEach(btn => {
     if(tab === 'qa') renderQaCard();
     if(tab === 'bee') resizeBeeCanvas();
     if(tab === 'hsk') renderHskList();
+    if(tab === 'test' && document.getElementById('test-setup').style.display !== 'none') updateTestPoolInfo();
     if(tab === 'phrases'){
       strokeReadOnly = true;
       strokeDirection = 'char';   // the guess quiz doesn't apply to a whole phrase
@@ -10376,6 +10446,301 @@ function exportAllAsPatchText(){
   downloadText(lines.join('\n') + '\n', 'hanyu-full-export-' + dateStamp() + '.txt');
 }
 document.getElementById('export-patch-trigger').addEventListener('click', exportAllAsPatchText);
+
+// ---- Test / Exam ----
+// A fixed-length, self-checked review: attempt each question, reveal the answer,
+// mark yourself ✓/✗. Nothing here is auto-graded — pronunciation, handwriting and
+// open-ended Q&A answers can't be judged reliably by the app, so this mirrors how
+// Dictation's self-assess pair already works rather than pretending otherwise.
+// Marking a word ⭐/✓ here is deliberately NOT wired to change its star/learned
+// status — that stays a manual decision made in the Word Library, same as today.
+let testLength = 20;
+let testQueue = [];
+let testIdx = 0;
+let testResults = [];
+let testCtx = null;
+let testCanvasReady = false;
+let testDrawing = false;
+let testLastX = 0, testLastY = 0;
+const TEST_TYPE_LABELS = { speaking: '🗣️ Speaking', pinyin: '拼 Pinyin', handwriting: '✍️ Handwriting', qa: '❓ Q&A' };
+
+function testWordPool(){
+  return allWords.filter(w => w.status === 'star' || w.status === 'learned');
+}
+// Only Q&A pairs with an actual answer saved — "→ Q&A" (moving a word into Q&A
+// Pairs) creates a stub with a blank answer for you to fill in later, and testing
+// a question with no correct answer to reveal would just show an empty box.
+function testQaPool(){
+  return qaPairs.filter(p => p.a && p.a.trim());
+}
+function updateTestPoolInfo(){
+  const words = testWordPool();
+  const qaCount = testQaPool().length;
+  const incompleteQaCount = qaPairs.length - qaCount;
+  const info = document.getElementById('test-pool-info');
+  const startBtn = document.getElementById('test-start-btn');
+  if(words.length === 0 && qaCount === 0){
+    info.textContent = 'Mark some words ⭐ or ✓ first (or add Q&A pairs with an answer) — nothing to test yet.';
+    info.style.color = '#C9A227';
+    startBtn.disabled = true;
+  } else {
+    let text = `${words.length} word${words.length === 1 ? '' : 's'}/phrase${words.length === 1 ? '' : 's'} marked ⭐ or ✓, ${qaCount} Q&A pair${qaCount === 1 ? '' : 's'} available.`;
+    if(incompleteQaCount > 0) text += ` (${incompleteQaCount} Q&A pair${incompleteQaCount === 1 ? '' : 's'} skipped — no answer saved yet.)`;
+    info.textContent = text;
+    info.style.color = '';
+    startBtn.disabled = false;
+  }
+}
+document.querySelectorAll('[data-test-len]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    testLength = parseInt(btn.dataset.testLen, 10);
+    document.querySelectorAll('[data-test-len]').forEach(b => b.classList.toggle('on', b === btn));
+  });
+});
+
+// Builds the question queue by randomly choosing a type each question (skipping
+// any type whose pool is empty), then a random item from that type's pool.
+// Repeats are allowed — a review test is fine revisiting a word twice, especially
+// with a small ⭐/✓ pool — variety isn't worth the complexity of tracking "used" sets.
+function buildTestQueue(length){
+  const words = testWordPool();
+  const qaPool = testQaPool();
+  const types = [];
+  if(words.length > 0) types.push('speaking', 'pinyin', 'handwriting');
+  if(qaPool.length > 0) types.push('qa');
+  const queue = [];
+  for(let i = 0; i < length; i++){
+    const type = types[Math.floor(Math.random() * types.length)];
+    if(type === 'qa'){
+      queue.push({ type: 'qa', item: qaPool[Math.floor(Math.random() * qaPool.length)] });
+    } else {
+      const direction = Math.random() < 0.5 ? 'zh' : 'en'; // only used by 'speaking'
+      queue.push({ type, item: words[Math.floor(Math.random() * words.length)], direction });
+    }
+  }
+  return queue;
+}
+
+function startTest(){
+  testQueue = buildTestQueue(testLength);
+  testIdx = 0;
+  testResults = [];
+  document.getElementById('test-setup').style.display = 'none';
+  document.getElementById('test-results').style.display = 'none';
+  document.getElementById('test-active').style.display = '';
+  renderTestQuestion();
+}
+
+function renderTestQuestion(){
+  const q = testQueue[testIdx];
+  document.getElementById('test-progress').textContent = `Question ${testIdx + 1} / ${testQueue.length}`;
+  document.getElementById('test-type-label').textContent = TEST_TYPE_LABELS[q.type];
+
+  ['test-prompt-hz', 'test-prompt-meaning', 'test-qa-block', 'test-input-block', 'test-canvas-block', 'test-reveal-area',
+   'test-answer-hz', 'test-answer-pinyin', 'test-answer-meaning', 'test-answer-notes'].forEach(id => {
+    document.getElementById(id).style.display = 'none';
+  });
+  document.getElementById('test-reveal-btn').style.display = '';
+  document.getElementById('test-mark-row').style.display = 'none';
+
+  if(q.type === 'qa'){
+    document.getElementById('test-qa-block').style.display = '';
+    document.getElementById('test-qa-question').textContent = q.item.q;
+    document.getElementById('test-qa-question-pinyin').textContent = q.item.qp || '';
+  } else if(q.type === 'speaking'){
+    if(q.direction === 'zh'){
+      document.getElementById('test-prompt-hz').style.display = '';
+      document.getElementById('test-prompt-hz').textContent = q.item.h;
+    } else {
+      document.getElementById('test-prompt-meaning').style.display = '';
+      document.getElementById('test-prompt-meaning').textContent = q.item.m || '(no meaning saved)';
+    }
+  } else if(q.type === 'pinyin'){
+    document.getElementById('test-prompt-hz').style.display = '';
+    document.getElementById('test-prompt-hz').textContent = q.item.h;
+    document.getElementById('test-input-block').style.display = '';
+    document.getElementById('test-pinyin-input').value = '';
+  } else if(q.type === 'handwriting'){
+    document.getElementById('test-prompt-meaning').style.display = '';
+    document.getElementById('test-prompt-meaning').textContent = q.item.m || '(no meaning saved)';
+    document.getElementById('test-canvas-block').style.display = '';
+    setupTestCanvasIfNeeded();
+    clearTestCanvas();
+  }
+}
+
+function revealTestAnswer(){
+  const q = testQueue[testIdx];
+  document.getElementById('test-reveal-area').style.display = '';
+  document.getElementById('test-reveal-btn').style.display = 'none';
+  document.getElementById('test-mark-row').style.display = '';
+
+  if(q.type === 'qa'){
+    document.getElementById('test-answer-hz').style.display = '';
+    document.getElementById('test-answer-hz').textContent = q.item.a;
+    if(q.item.ap){ document.getElementById('test-answer-pinyin').style.display = ''; document.getElementById('test-answer-pinyin').textContent = q.item.ap; }
+    if(q.item.am){ document.getElementById('test-answer-meaning').style.display = ''; document.getElementById('test-answer-meaning').textContent = q.item.am; }
+    if(q.item.n){ document.getElementById('test-answer-notes').style.display = ''; document.getElementById('test-answer-notes').textContent = q.item.n; }
+  } else if(q.type === 'speaking'){
+    // Both sides shown regardless of direction — English meaning AND Vietnamese
+    // notes together, so either translation can be checked against what was said.
+    document.getElementById('test-answer-hz').style.display = '';
+    document.getElementById('test-answer-hz').textContent = q.item.h;
+    document.getElementById('test-answer-pinyin').style.display = '';
+    document.getElementById('test-answer-pinyin').textContent = q.item.p || '';
+    document.getElementById('test-answer-meaning').style.display = '';
+    document.getElementById('test-answer-meaning').textContent = q.item.m || '(no meaning saved)';
+    if(q.item.n){ document.getElementById('test-answer-notes').style.display = ''; document.getElementById('test-answer-notes').textContent = q.item.n; }
+  } else if(q.type === 'pinyin'){
+    document.getElementById('test-answer-pinyin').style.display = '';
+    document.getElementById('test-answer-pinyin').textContent = q.item.p || '(no pinyin saved)';
+  } else if(q.type === 'handwriting'){
+    document.getElementById('test-answer-hz').style.display = '';
+    document.getElementById('test-answer-hz').textContent = q.item.h;
+  }
+}
+
+function markTestQuestion(correct){
+  const q = testQueue[testIdx];
+  testResults.push({ type: q.type, correct });
+  testIdx++;
+  if(testIdx >= testQueue.length) renderTestResults();
+  else renderTestQuestion();
+}
+
+function renderTestResults(){
+  document.getElementById('test-active').style.display = 'none';
+  document.getElementById('test-results').style.display = '';
+  const total = testResults.length;
+  const correct = testResults.filter(r => r.correct).length;
+  document.getElementById('test-score-overall').textContent = `${correct} / ${total} correct`;
+  const byType = {};
+  testResults.forEach(r => {
+    if(!byType[r.type]) byType[r.type] = { correct: 0, total: 0 };
+    byType[r.type].total++;
+    if(r.correct) byType[r.type].correct++;
+  });
+  document.getElementById('test-score-breakdown').innerHTML = Object.entries(byType)
+    .map(([type, s]) => `<div style="margin-bottom:4px;">${TEST_TYPE_LABELS[type]}: ${s.correct} / ${s.total}</div>`)
+    .join('');
+}
+
+document.getElementById('test-start-btn').addEventListener('click', startTest);
+document.getElementById('test-reveal-btn').addEventListener('click', revealTestAnswer);
+document.getElementById('test-mark-correct').addEventListener('click', () => markTestQuestion(true));
+document.getElementById('test-mark-wrong').addEventListener('click', () => markTestQuestion(false));
+document.getElementById('test-retake-btn').addEventListener('click', () => {
+  document.getElementById('test-results').style.display = 'none';
+  document.getElementById('test-setup').style.display = '';
+  updateTestPoolInfo();
+});
+
+// A simple, self-contained canvas for the handwriting question type. No saved-
+// drawing persistence needed — each question is one-shot (write, reveal, mark,
+// move on), unlike Dictation's canvas which has to survive Prev/Next.
+function setupTestCanvasIfNeeded(){
+  const canvas = document.getElementById('test-canvas');
+  function resize(){
+    const rect = canvas.getBoundingClientRect();
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = Math.max(1, Math.round(rect.width * dpr));
+    canvas.height = Math.max(1, Math.round(rect.height * dpr));
+    testCtx = canvas.getContext('2d');
+    testCtx.setTransform(1, 0, 0, 1, 0, 0);
+    testCtx.scale(dpr, dpr);
+    testCtx.lineWidth = 6;
+    testCtx.lineCap = 'round';
+    testCtx.lineJoin = 'round';
+    testCtx.strokeStyle = '#1C231F';
+  }
+  resize();
+  if(testCanvasReady) return;
+  testCanvasReady = true;
+  function getPos(e){
+    const rect = canvas.getBoundingClientRect();
+    return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+  }
+  canvas.addEventListener('pointerdown', (e) => {
+    testDrawing = true;
+    const p = getPos(e);
+    testLastX = p.x; testLastY = p.y;
+    canvas.setPointerCapture(e.pointerId);
+  });
+  canvas.addEventListener('pointermove', (e) => {
+    if(!testDrawing || !testCtx) return;
+    const p = getPos(e);
+    testCtx.beginPath();
+    testCtx.moveTo(testLastX, testLastY);
+    testCtx.lineTo(p.x, p.y);
+    testCtx.stroke();
+    testLastX = p.x; testLastY = p.y;
+  });
+  canvas.addEventListener('pointerup', () => { testDrawing = false; });
+  canvas.addEventListener('pointercancel', () => { testDrawing = false; });
+  window.addEventListener('resize', () => {
+    if(document.getElementById('test-canvas-block').style.display !== 'none') resize();
+  });
+}
+function clearTestCanvas(){
+  const canvas = document.getElementById('test-canvas');
+  if(testCtx) testCtx.clearRect(0, 0, canvas.width, canvas.height);
+}
+document.getElementById('test-canvas-clear').addEventListener('click', clearTestCanvas);
+
+// Builds a copy-paste-ready prompt for an external AI chatbot (ChatGPT, etc.) to
+// generate Q&A pairs from a chosen slice of the user's own vocabulary — no API
+// key, no live call from this app. The output format matches the patch importer
+// exactly, so whatever the AI hands back can be saved as a .txt and Import
+// patched straight into Q&A Pairs with zero reformatting.
+function exportAiQaPrompt(){
+  const scope = document.getElementById('ai-qa-scope').value;
+  const feedback = document.getElementById('ai-qa-export-feedback');
+  let words = allWords;
+  if(scope === 'star') words = words.filter(w => w.status === 'star');
+  else if(scope === 'learned') words = words.filter(w => w.status === 'learned');
+  else if(scope === 'both') words = words.filter(w => w.status === 'star' || w.status === 'learned');
+  // scope === 'all': no filtering
+
+  if(words.length === 0){
+    feedback.textContent = 'No words match that filter — nothing to build a prompt from.';
+    feedback.style.color = '#C9A227';
+    return;
+  }
+
+  const wordLines = words.map(w => `${w.h} (${w.m || 'meaning unknown'})${w.n ? ` — notes: ${w.n}` : ''}`);
+  const prompt = `# Han Yu Learning — AI Q&A Generation Prompt
+#
+# How to use this file:
+#   1. Copy EVERYTHING below into ChatGPT (or any AI chat).
+#   2. Copy the AI's reply into a new plain text file (save as .txt).
+#   3. Come back here and use "Import patch" to bring it straight into Q&A Pairs —
+#      no reformatting needed, as long as the AI followed the format below.
+#
+# ---- COPY FROM HERE ----
+Please write simple, natural Mandarin Chinese question-and-answer pairs, one for
+each of the vocabulary words listed at the end of this message, using that word
+naturally in the question or the answer. Keep the Chinese conversational and
+appropriate for a learner at this level.
+
+Reply with ONLY the Q&A pairs, one per line, in EXACTLY this format — six fields
+separated by " | ", nothing else, no numbering, no extra commentary:
+
+question (Chinese) | question meaning (English) | qa | | answer (Chinese) | answer meaning (English)
+
+Example of the exact format to follow:
+你叫什么名字？ | What is your name? | qa | | 我叫小明。 | My name is Xiaoming.
+
+Here are the words to write one Q&A pair for, each with its meaning (and my own
+notes where I've added any — feel free to use those for context too):
+
+${wordLines.join('\n')}
+`;
+
+  downloadText(prompt, 'hanyu-ai-qa-prompt-' + dateStamp() + '.txt');
+  feedback.textContent = `Built a prompt covering ${words.length} word${words.length === 1 ? '' : 's'} — paste it into an AI chat, then Import patch its reply.`;
+  feedback.style.color = '#3E7C59';
+}
+document.getElementById('ai-qa-export-trigger').addEventListener('click', exportAiQaPrompt);
 
 // Parses the pipe-delimited template format into plain rows. Deliberately
 // tolerant: missing trailing fields are fine (a bare "hanzi | meaning" line
