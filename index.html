@@ -174,6 +174,10 @@
      so it's tightened here whenever the practice controls are also present. */
   #stroke-writing-card.phrase-merged{ padding:20px 20px 16px; }
   .hz{ color:var(--ink); }        /* base: every .hz sits on a light --paper container */
+  /* Tone sandhi highlight — a character whose spoken tone differs from its
+     dictionary tone (一/不 and third-tone changes), so it's visually obvious
+     which syllable to say differently from what the pinyin mark alone implies. */
+  .tone-sandhi{ color:var(--seal); }
   .card .hz{ font-size:64px; color:var(--ink); margin-bottom:18px; }
   .reveal-area{ min-height:46px; }
   .pinyin{ font-size:18px; color:var(--brass-ink); margin-bottom:4px; letter-spacing:.2px; }
@@ -552,6 +556,11 @@
             <option value="oldest">Oldest added first</option>
           </select>
         </div>
+        <div class="top-controls" style="margin-top:6px;">
+          <button class="action btn-reveal small" id="qa-regen-all-pinyin-btn">🔄 Regenerate all pinyin</button>
+        </div>
+        <p class="hint" style="margin:4px 0 10px;">Fixes any question/answer whose pinyin came out garbled — most often from an English hint in brackets (e.g. <code>找到了吗？(found it / not yet)</code>) that got romanized letter-by-letter along with the Chinese. Recomputes every pair's pinyin fresh, keeping any bracketed hint exactly as typed rather than romanizing it.</p>
+        <div id="qa-regen-all-feedback" style="font-size:12px;color:var(--muted);margin-bottom:10px;"></div>
         <input class="field" id="qa-search" placeholder="Search questions or answers…" style="margin-bottom:10px;">
         <div class="word-list" id="qa-list"></div>
       </div>
@@ -7502,8 +7511,8 @@ function renderCustomQaWords(){
     const n = document.getElementById('hsk-qa-notes').value.trim();
     if(!q || !a){ alert('Please fill in both the question and the answer.'); return; }
     if(qaPairs.some(x => x.q === q)){ alert('That question is already saved.'); return; }
-    const qp = autoPinyin(q);
-    const ap = autoPinyin(a);
+    const qp = autoPinyinWithHint(q);
+    const ap = autoPinyinWithHint(a);
     qaPairs.push({ q, qp, qm, a, ap, am, n, id: newId(), addedAt: Date.now() });
     saveQa(qaPairs);
     refreshQaPractice();
@@ -7741,6 +7750,58 @@ function autoPinyin(hanzi){
   }catch(e){
     return '';
   }
+}
+
+// For Q&A questions/answers that intentionally carry an English answer-hint in
+// brackets — e.g. "找到了吗？(found it / not yet)" — so the hint guides how to
+// answer without being mistaken for Chinese and romanized letter-by-letter.
+// Splits off a trailing (...) before generating pinyin for the Chinese part,
+// then reattaches the hint exactly as typed, untouched, afterward.
+function autoPinyinWithHint(text){
+  if(!text) return '';
+  const match = text.match(/^(.*?)(\s*\([^)]*\)\s*)$/);
+  if(match){
+    const chinese = match[1];
+    const hint = match[2].trim();
+    const pinyin = autoPinyin(chinese);
+    return hint ? (pinyin ? `${pinyin} ${hint}` : hint) : pinyin;
+  }
+  return autoPinyin(text);
+}
+
+// Tone sandhi (一/不 and third-tone changes) — compares pinyin-pro's dictionary
+// reading against its spoken (sandhi-applied) reading, character by character.
+// Wherever they differ is exactly where the spoken tone changes from what's
+// written, e.g. 一 in 一个 reads as yí (2nd tone) instead of its dictionary yī.
+// Returns a Set of character indices (matching Array.from(hanzi)) to highlight.
+// Deliberately computed fresh from pinyin-pro's own algorithm rather than
+// hand-rolled 一/不 rules, so it also catches third-tone sandhi for free and
+// never drifts out of sync with whatever pinyin-pro considers correct.
+function getSandhiIndices(hanzi){
+  if(!hanzi || !pinyinAvailable()) return new Set();
+  try{
+    const dict = window.pinyinPro.pinyin(hanzi, { type: 'array', toneType: 'symbol', toneSandhi: false });
+    const spoken = window.pinyinPro.pinyin(hanzi, { type: 'array', toneType: 'symbol', toneSandhi: true });
+    if(!Array.isArray(dict) || !Array.isArray(spoken) || dict.length !== spoken.length) return new Set();
+    const indices = new Set();
+    for(let i = 0; i < dict.length; i++){
+      if(dict[i] !== spoken[i]) indices.add(i);
+    }
+    return indices;
+  }catch(e){
+    return new Set(); // pinyin-pro not loaded, or this pinyin-pro build lacks toneSandhi — fail quiet, no highlight
+  }
+}
+// Renders a hanzi string as HTML with tone-sandhi characters wrapped in a
+// coloured span — used anywhere the character is shown as plain text (Phrases'
+// reading line, Test's revealed answers). Flashcards' own writing tiles use a
+// separate approach (see rebuildStrokeTiles) since those render via HanziWriter
+// SVG, not plain text.
+function hanziWithSandhiHtml(hanzi){
+  const indices = getSandhiIndices(hanzi);
+  return Array.from(hanzi).map((ch, i) =>
+    indices.has(i) ? `<span class="tone-sandhi">${escapeHtml(ch)}</span>` : escapeHtml(ch)
+  ).join('');
 }
 
 // ---- CC-CEDICT dictionary: loaded once, used for (a) plain dictionary-lookup
@@ -8739,7 +8800,7 @@ function buildStrokeTargets(hanzi){
     line.className = 'hanzi phrase-read';
     line.style.fontSize = size + 'px';
     if(phraseHanziVisible){
-      line.textContent = hanzi;
+      line.innerHTML = hanziWithSandhiHtml(hanzi);
     } else {
       // Chinese is the translation being practiced this round — kept out of sight
       // until the reveal step so hearing the source and guessing means something.
@@ -8862,10 +8923,12 @@ function resetPhraseSession(){
 // the previous word while pinyin/meaning move on to the new one.
 function rebuildStrokeTiles(card){
   const chars = buildStrokeTargets(card.h);
+  const sandhiIndices = getSandhiIndices(card.h);
   strokeCompleted = chars.map(() => false);
   strokeWriters = strokeReadOnly ? [] : chars.map((ch, i) => {
     if(!isCjkChar(ch)) return null;
     if(typeof HanziWriter === 'undefined') return null;
+    const sandhi = sandhiIndices.has(i);
     const writer = HanziWriter.create('stroke-target-' + i, ch, {
       width: 130,
       height: 130,
@@ -8874,8 +8937,11 @@ function rebuildStrokeTiles(card){
       showOutline: true,
       strokeAnimationSpeed: 1,
       delayBetweenStrokes: 300,
-      strokeColor: '#1C231F',
-      outlineColor: '#C9CFC3',
+      // Tone-sandhi character: tinted red even in outline form (before tracing
+      // or animating), so it's visible at a glance which syllable's spoken
+      // tone differs from what's written — not just once it's drawn.
+      strokeColor: sandhi ? '#B24232' : '#1C231F',
+      outlineColor: sandhi ? '#E3B3AC' : '#C9CFC3',
       drawingWidth: 8,
       onLoadCharDataError: () => {
         const el = document.getElementById('stroke-target-' + i);
@@ -10231,7 +10297,7 @@ function renderQaManageList(){
       const row = btn.closest('.word-row');
       const qInput = row.querySelector('[data-edit-q]');
       const qpInput = row.querySelector('[data-edit-qp]');
-      const generated = autoPinyin(qInput.value.trim());
+      const generated = autoPinyinWithHint(qInput.value.trim());
       if(generated) qpInput.value = generated;
       else alert('Pinyin generator is unavailable right now (needs internet on first load). Type it in manually instead.');
     });
@@ -10241,7 +10307,7 @@ function renderQaManageList(){
       const row = btn.closest('.word-row');
       const aInput = row.querySelector('[data-edit-a]');
       const apInput = row.querySelector('[data-edit-ap]');
-      const generated = autoPinyin(aInput.value.trim());
+      const generated = autoPinyinWithHint(aInput.value.trim());
       if(generated) apInput.value = generated;
       else alert('Pinyin generator is unavailable right now (needs internet on first load). Type it in manually instead.');
     });
@@ -10292,8 +10358,8 @@ document.getElementById('add-qa-submit').addEventListener('click', () => {
     fb.style.color = '#A6332B';
     return;
   }
-  const qp = autoPinyin(q);
-  const ap = autoPinyin(a);
+  const qp = autoPinyinWithHint(q);
+  const ap = autoPinyinWithHint(a);
   qaPairs.push({ q, qp, qm, a, ap, am, n, id: newId(), addedAt: Date.now() });
   saveQa(qaPairs);
   document.getElementById('add-q').value = '';
@@ -10307,6 +10373,34 @@ document.getElementById('add-qa-submit').addEventListener('click', () => {
   refreshQaPractice();
 });
 document.getElementById('qa-search').addEventListener('input', () => renderQaManageList());
+
+// One-click fix for pairs whose pinyin got corrupted by an English hint in
+// brackets being romanized letter-by-letter along with the Chinese (see
+// autoPinyinWithHint) — recomputes every pair from scratch. Safe to run
+// anytime: pairs that are already correct just get regenerated to the same
+// value.
+document.getElementById('qa-regen-all-pinyin-btn').addEventListener('click', () => {
+  const feedback = document.getElementById('qa-regen-all-feedback');
+  if(!pinyinAvailable()){
+    feedback.textContent = 'Pinyin generator is unavailable right now (needs internet on first load) — try again once it loads.';
+    feedback.style.color = '#C9A227';
+    return;
+  }
+  let changed = 0;
+  qaPairs.forEach(p => {
+    const newQp = autoPinyinWithHint(p.q);
+    const newAp = autoPinyinWithHint(p.a);
+    if(newQp && newQp !== p.qp){ p.qp = newQp; changed++; }
+    if(newAp && newAp !== p.ap){ p.ap = newAp; changed++; }
+  });
+  saveQa(qaPairs);
+  refreshQaPractice();
+  renderQaManageList();
+  feedback.textContent = changed > 0
+    ? `Updated ${changed} pinyin field${changed === 1 ? '' : 's'} across your Q&A pairs.`
+    : 'Everything already matches — nothing needed updating.';
+  feedback.style.color = '#3E7C59';
+});
 
 renderQaManageList();
 
@@ -10575,9 +10669,12 @@ function revealTestAnswer(){
   document.getElementById('test-reveal-btn').style.display = 'none';
   document.getElementById('test-mark-row').style.display = '';
 
+  // Tone-sandhi colouring only ever appears here, in the revealed answer — never
+  // in the question/prompt above, since that would hint at the answer before
+  // you've had a chance to say/type/write it yourself.
   if(q.type === 'qa'){
     document.getElementById('test-answer-hz').style.display = '';
-    document.getElementById('test-answer-hz').textContent = q.item.a;
+    document.getElementById('test-answer-hz').innerHTML = hanziWithSandhiHtml(q.item.a);
     if(q.item.ap){ document.getElementById('test-answer-pinyin').style.display = ''; document.getElementById('test-answer-pinyin').textContent = q.item.ap; }
     if(q.item.am){ document.getElementById('test-answer-meaning').style.display = ''; document.getElementById('test-answer-meaning').textContent = q.item.am; }
     if(q.item.n){ document.getElementById('test-answer-notes').style.display = ''; document.getElementById('test-answer-notes').textContent = q.item.n; }
@@ -10585,7 +10682,7 @@ function revealTestAnswer(){
     // Both sides shown regardless of direction — English meaning AND Vietnamese
     // notes together, so either translation can be checked against what was said.
     document.getElementById('test-answer-hz').style.display = '';
-    document.getElementById('test-answer-hz').textContent = q.item.h;
+    document.getElementById('test-answer-hz').innerHTML = hanziWithSandhiHtml(q.item.h);
     document.getElementById('test-answer-pinyin').style.display = '';
     document.getElementById('test-answer-pinyin').textContent = q.item.p || '';
     document.getElementById('test-answer-meaning').style.display = '';
@@ -10596,7 +10693,7 @@ function revealTestAnswer(){
     document.getElementById('test-answer-pinyin').textContent = q.item.p || '(no pinyin saved)';
   } else if(q.type === 'handwriting'){
     document.getElementById('test-answer-hz').style.display = '';
-    document.getElementById('test-answer-hz').textContent = q.item.h;
+    document.getElementById('test-answer-hz').innerHTML = hanziWithSandhiHtml(q.item.h);
   }
 }
 
@@ -10824,10 +10921,10 @@ async function importPatchRows(rows){
         if(changed) updated++; else skipped++;
         continue;
       }
-      const qp = autoPinyin(row.h);
+      const qp = autoPinyinWithHint(row.h);
       let qm = row.m;
       if(!qm) qm = await getAutoEnglish(row.h);
-      const ap = autoPinyin(row.answer);
+      const ap = autoPinyinWithHint(row.answer);
       let am = row.answerMeaning;
       if(!am) am = await getAutoEnglish(row.answer);
       const pair = { q: row.h, qp, qm, a: row.answer, ap, am, id: newId(), addedAt: Date.now() };
