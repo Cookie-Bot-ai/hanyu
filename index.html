@@ -100,7 +100,11 @@
      corners — always visible without scrolling, and content inside the card
      (long phrases, Q&A text) can never run underneath and hide a button again. */
   .nav-row-top{ display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:10px; flex-wrap:wrap; }
-  .nav-row-top .nav-icons{ display:flex; gap:6px; flex-wrap:wrap; justify-content:center; flex:1; }
+  .nav-row-top .nav-icons{ display:flex; gap:6px; flex-wrap:wrap; justify-content:center; flex:1; align-items:center; }
+  /* Thin divider between grouped icons in the same row — e.g. question controls
+     vs answer controls in Q&A — so the grouping reads clearly without needing
+     different icons or extra labels. */
+  .nav-icon-sep{ width:1px; align-self:stretch; background:rgba(255,255,255,.18); margin:2px 2px; }
   .card-nav, .nav-icon-btn{ position:static; width:38px; height:38px; padding:0; margin:0; border:none;
     border-radius:10px; cursor:pointer; flex:0 0 auto;
     background:rgba(16,21,26,.55); color:#F1EDE1; font-size:16px; line-height:1;
@@ -681,6 +685,9 @@
           <button class="nav-icon-btn" id="qa-pron-check" title="Check my pronunciation of the answer" aria-label="Check my pronunciation of the answer">🎤</button>
           <button class="nav-icon-btn" id="qa-toggle-qpinyin" title="Show Q Pinyin" aria-label="Show Q Pinyin">拼</button>
           <button class="nav-icon-btn" id="qa-toggle-qmeaning" title="Show Translation &amp; Notes" aria-label="Show Translation and Notes">英</button>
+          <span class="nav-icon-sep"></span>
+          <button class="nav-icon-btn" id="qa-toggle-answer" title="Reveal the answer — hanzi, pinyin &amp; translation together" aria-label="Reveal the answer">👁</button>
+          <button class="nav-icon-btn" id="qa-play-a" title="Play the answer" aria-label="Play the answer" style="display:none;">🔊</button>
         </div>
         <button class="card-nav next" id="qa-next" title="Next question" aria-label="Next question">›</button>
       </div>
@@ -724,14 +731,6 @@
         </details>
       </div>
 
-      <div class="row" style="margin-top:14px;">
-        <button class="action btn-reveal" id="qa-toggle-answer">Show Answer</button>
-        <button class="action btn-reveal" id="qa-toggle-apinyin">Show A Pinyin</button>
-        <button class="action btn-reveal" id="qa-toggle-ameaning">Show A Translation</button>
-      </div>
-      <div class="row">
-        <button class="action btn-play" id="qa-play-a" style="display:none;">🔊 Play answer</button>
-      </div>
       <div class="toolbar">
         <button class="action btn-reveal wide" id="qa-shuffle" title="Shuffle">🔀 Shuffle</button>
       </div>
@@ -9976,15 +9975,12 @@ if(ensureIds(qaPairs)) saveQa(qaPairs);
 // ---- Practice mode ----
 let qaDeck = shuffle(qaPairs);
 let qaIdx = 0;
-let qaShowAnswer = false;
+let qaShowAnswer = false; // also gates answer pinyin & translation — merged into one "Reveal answer" toggle
 let qaShowQPinyin = false;
 let qaShowQMeaning = false; // also gates Notes now — merged into "Show Translation & Notes"
-let qaShowAPinyin = false;
-let qaShowAMeaning = false;
 
 function resetQaToggles(){
   qaShowAnswer = false; qaShowQPinyin = false; qaShowQMeaning = false;
-  qaShowAPinyin = false; qaShowAMeaning = false;
   document.getElementById('qa-user-answer').value = '';
   document.getElementById('qa-user-answer-pinyin').textContent = '';
   const qaTransEl = document.getElementById('qa-user-answer-translation');
@@ -10019,18 +10015,17 @@ function renderQaCard(){
   qmEl.textContent = qaShowQMeaning ? (card.qm || '') : '';
 
   let html = '';
-  if(qaShowAnswer) html += `<div class="pinyin hanzi" style="font-size:20px;">${card.a}</div>`;
-  if(qaShowAPinyin && card.ap) html += `<div class="pinyin">${card.ap}</div>`;
-  if(qaShowAMeaning && card.am) html += `<div class="meaning">${card.am}</div>`;
+  if(qaShowAnswer){
+    html += `<div class="pinyin hanzi" style="font-size:20px;">${card.a}</div>`;
+    if(card.ap) html += `<div class="pinyin">${card.ap}</div>`;
+    if(card.am) html += `<div class="meaning">${card.am}</div>`;
+  }
   revealArea.innerHTML = html || `<div class="hint">think of your answer, then reveal below</div>`;
-  const showingAnswer = qaShowAnswer || qaShowAPinyin || qaShowAMeaning;
-  playAnswerBtn.style.display = showingAnswer ? '' : 'none';
+  playAnswerBtn.style.display = qaShowAnswer ? '' : 'none';
 
   document.getElementById('qa-toggle-answer').classList.toggle('on', qaShowAnswer);
   document.getElementById('qa-toggle-qpinyin').classList.toggle('on', qaShowQPinyin);
   document.getElementById('qa-toggle-qmeaning').classList.toggle('on', qaShowQMeaning);
-  document.getElementById('qa-toggle-apinyin').classList.toggle('on', qaShowAPinyin);
-  document.getElementById('qa-toggle-ameaning').classList.toggle('on', qaShowAMeaning);
   document.getElementById('qa-notes').textContent = qaShowQMeaning ? (card.n || '(no notes yet — add some via ✏️ Edit in Q&A Pairs)') : '';
 }
 document.getElementById('qa-play-q').addEventListener('click', () => { if(qaDeck.length) speak(qaDeck[qaIdx].q); });
@@ -10038,8 +10033,6 @@ document.getElementById('qa-play-a').addEventListener('click', () => { if(qaDeck
 document.getElementById('qa-toggle-answer').addEventListener('click', () => { qaShowAnswer = !qaShowAnswer; renderQaCard(); });
 document.getElementById('qa-toggle-qpinyin').addEventListener('click', () => { qaShowQPinyin = !qaShowQPinyin; renderQaCard(); });
 document.getElementById('qa-toggle-qmeaning').addEventListener('click', () => { qaShowQMeaning = !qaShowQMeaning; renderQaCard(); });
-document.getElementById('qa-toggle-apinyin').addEventListener('click', () => { qaShowAPinyin = !qaShowAPinyin; renderQaCard(); });
-document.getElementById('qa-toggle-ameaning').addEventListener('click', () => { qaShowAMeaning = !qaShowAMeaning; renderQaCard(); });
 
 // ---- Self-check: type your own attempt, get its pinyin generated live.
 // Translation only happens when you hit "Translate my sentence" — that's a
