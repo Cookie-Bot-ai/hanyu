@@ -8203,8 +8203,17 @@ document.getElementById('voice-select').addEventListener('change', (e) => {
 // insert a dead pause. Keep only letters and digits: that drops CJK punctuation
 // (。，、；：？！「」（）《》…—) and ASCII alike, plus whitespace and emoji, in one pass.
 // Pinyin diacritics survive because à/ē/ǔ are all \p{L}.
+//
+// Before that filter runs, strip out any bracketed answer-hint entirely — e.g.
+// "找到了吗？[found it / not yet]" — since the letter/digit filter alone would
+// otherwise happily keep the hint's English letters and read them aloud
+// character-by-character right along with the Chinese. Recognises [square]
+// brackets (the standard) and legacy (round) / （full-width round） ones too.
+function stripSpeechHint(text){
+  return (text || '').replace(/\s*(?:\[[^\]]*\]|[（(][^）)]*[）)])\s*/g, ' ').trim();
+}
 function speechChars(text){
-  return Array.from(text).filter(ch => /[\p{L}\p{N}]/u.test(ch));
+  return Array.from(stripSpeechHint(text)).filter(ch => /[\p{L}\p{N}]/u.test(ch));
 }
 
 function speak(text){
