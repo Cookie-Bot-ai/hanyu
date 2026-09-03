@@ -7752,14 +7752,20 @@ function autoPinyin(hanzi){
   }
 }
 
-// For Q&A questions/answers that intentionally carry an English answer-hint in
-// brackets — e.g. "找到了吗？(found it / not yet)" — so the hint guides how to
-// answer without being mistaken for Chinese and romanized letter-by-letter.
-// Splits off a trailing (...) before generating pinyin for the Chinese part,
-// then reattaches the hint exactly as typed, untouched, afterward.
+// For Q&A questions/answers that intentionally carry an English answer-hint —
+// e.g. "找到了吗？[found it / not yet]" — so the hint guides how to answer
+// without being mistaken for Chinese and romanized letter-by-letter. [Square
+// brackets] are the recommended style going forward, since round/full-width
+// parens can legitimately show up elsewhere in Chinese or English text (e.g. a
+// vocab gloss like "半 (half)"), making them ambiguous as a hint marker —
+// square brackets are unambiguous. Round "(...)" and full-width "（...）" are
+// still recognised too, for hints typed before this convention. Splits off a
+// trailing bracketed group (any of the three styles) before generating pinyin
+// for the Chinese part, then reattaches the hint exactly as typed, untouched,
+// afterward.
 function autoPinyinWithHint(text){
   if(!text) return '';
-  const match = text.match(/^(.*?)(\s*\([^)]*\)\s*)$/);
+  const match = text.match(/^(.*?)(\s*(?:\[[^\]]*\]|[（(][^）)]*[）)])\s*)$/);
   if(match){
     const chinese = match[1];
     const hint = match[2].trim();
@@ -10461,6 +10467,14 @@ const PATCH_TEMPLATE = `# Han Yu Learning — Bulk Word, Phrase & Q&A Import Tem
 #   answer meaning optional, "qa" only — leave blank to auto-translate.
 #
 # Pinyin is always generated automatically for every field — don't include it.
+# For "qa" questions/answers, you can add your own short English answer-hint
+# at the end using SQUARE BRACKETS, e.g. 你好吗？[very well] — this keeps the
+# hint out of the pinyin (it won't get romanized along with the Chinese) and
+# still shows right there in the question when you practise. Use square
+# brackets [ ] for this, not round ( ) or full-width （） ones — those are
+# still read as a hint too for anything typed before this convention, but
+# square brackets are the one style guaranteed not to clash with anything
+# else that might legitimately appear in Chinese or English text.
 # Lines starting with # are ignored, so keep these instructions or delete
 # them, either is fine. Blank lines are ignored too.
 #
@@ -10490,11 +10504,12 @@ const PATCH_TEMPLATE = `# Han Yu Learning — Bulk Word, Phrase & Q&A Import Tem
 #                                                       phrase, or Q&A pair using
 #                                                       whatever you typed here.
 #
-# Examples — one word, one phrase, one Q&A pair (delete these, or leave them;
-# they'll just be recognised as already up to date the next time you import):
+# Examples — one word, one phrase, one Q&A pair with an answer-hint (delete
+# these, or leave them; they'll just be recognised as already up to date the
+# next time you import):
 # 你好 | hello | word |
 # 你好吗 | how are you | phrase | cau hoi tham suc khoe ban
-# 你叫什么名字 | what is your name | qa | note about this qa | 我叫小明 | my name is xiaoming
+# 你叫什么名字？[Xiaoming] | what is your name | qa | note about this qa | 我叫小明。 | my name is xiaoming
 
 `;
 document.getElementById('download-patch-template').addEventListener('click', () => {
@@ -10819,13 +10834,21 @@ each of the vocabulary words listed at the end of this message, using that word
 naturally in the question or the answer. Keep the Chinese conversational and
 appropriate for a learner at this level.
 
+At the end of each question, add a short English answer-hint in SQUARE BRACKETS
+— e.g. a couple of key words showing what kind of answer is expected, or the
+short "yes / no" style options — to guide how to answer without giving the full
+answer away. Use square brackets [ ] for this every time, never round brackets
+( ) or full-width Chinese brackets （）, since those are reserved for other use
+in this app and only square brackets are read as an answer-hint.
+
 Reply with ONLY the Q&A pairs, one per line, in EXACTLY this format — six fields
 separated by " | ", nothing else, no numbering, no extra commentary:
 
-question (Chinese) | question meaning (English) | qa | | answer (Chinese) | answer meaning (English)
+question (Chinese) [hint] | question meaning (English) | qa | | answer (Chinese) | answer meaning (English)
 
 Example of the exact format to follow:
-你叫什么名字？ | What is your name? | qa | | 我叫小明。 | My name is Xiaoming.
+你叫什么名字？[Xiaoming] | What is your name? | qa | | 我叫小明。 | My name is Xiaoming.
+你好吗？[very well] | How are you? | qa | | 我很好，谢谢。 | I'm very well, thank you.
 
 Here are the words to write one Q&A pair for, each with its meaning (and my own
 notes where I've added any — feel free to use those for context too):
