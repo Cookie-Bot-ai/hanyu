@@ -151,6 +151,35 @@
   }
 
   .tabs{ display:flex; flex-wrap:wrap; justify-content:center; gap:6px; margin-bottom:14px; }
+
+  /* Global search: a single persistent entry point above the tabs, always
+     reachable regardless of which tab is open — the per-tab search boxes
+     only ever search within whatever section is currently open. */
+  .global-search-row{ display:flex; justify-content:center; margin-bottom:12px; }
+  #global-search-open-btn{ width:100%; max-width:420px; }
+  #global-search-modal{ position:fixed; inset:0; z-index:1000; background:rgba(0,0,0,.72);
+    display:flex; align-items:flex-start; justify-content:center; padding:40px 14px; }
+  .global-search-panel{ background:var(--panel); border:1px solid var(--border); border-radius:16px;
+    padding:16px; width:100%; max-width:480px; max-height:80vh; display:flex; flex-direction:column;
+    box-shadow:0 20px 50px rgba(0,0,0,.5); }
+  .global-search-input-row{ display:flex; gap:8px; margin-bottom:10px; }
+  .global-search-input-row input{ flex:1; }
+  #global-search-results{ overflow-y:auto; display:flex; flex-direction:column; gap:6px; }
+  .global-search-result{ display:flex; align-items:center; gap:10px; padding:10px 12px;
+    background:var(--panel-2, rgba(255,255,255,.04)); border:1px solid var(--border);
+    border-radius:10px; cursor:pointer; text-align:left; width:100%; color:inherit; }
+  .global-search-result:hover{ background:rgba(111,168,138,.18); }
+  .global-search-result .h{ font-size:20px; color:var(--ink,#1C231F); flex:0 0 auto; }
+  .global-search-result .details{ flex:1; min-width:0; }
+  .global-search-result .details .p{ font-size:12px; color:var(--brass-ink); }
+  .global-search-result .details .m{ font-size:12px; color:var(--muted); overflow:hidden;
+    text-overflow:ellipsis; white-space:nowrap; }
+  .global-search-result .badge{ font-size:10px; text-transform:uppercase; letter-spacing:.5px;
+    padding:3px 7px; border-radius:6px; background:rgba(111,168,138,.25); color:var(--jade);
+    flex:0 0 auto; white-space:nowrap; }
+  .global-search-result .badge.not-added{ background:rgba(178,66,50,.2); color:var(--seal); }
+  .global-search-result .badge.qa{ background:rgba(201,162,39,.22); color:var(--brass); }
+  .global-search-empty{ font-size:13px; color:var(--muted); text-align:center; padding:20px; }
   .tab-btn{ background:var(--panel); border:1px solid var(--border); border-radius:10px; color:var(--muted);
     padding:9px 14px; cursor:pointer; font-size:15px; font-family:'STZhongsong','SimSun',serif;
     box-shadow:0 2px 6px rgba(0,0,0,.22);
@@ -187,6 +216,16 @@
   .pinyin{ font-size:18px; color:var(--brass-ink); margin-bottom:4px; letter-spacing:.2px; }
   .meaning{ font-size:14px; color:#3E463F; }
   .hint{ font-size:13px; color:#5F6A5F; }   /* was #A6AFA3 = 1.92:1 on --paper, unreadable */
+  /* Long explanatory text collapsed to one line by default — tap to expand.
+     Native <details>/<summary> needs no JS and keeps state per-element. The
+     paragraph inside keeps whatever colour class it's given (usually .on-bg,
+     since these sit on the dark photo background, not the light paper). */
+  .hint-collapsible{ margin-bottom:14px; }
+  .hint-collapsible summary{ font-size:13px; cursor:pointer; list-style:none;
+    color:var(--muted); user-select:none; }
+  .hint-collapsible summary::-webkit-details-marker{ display:none; }
+  .hint-collapsible .expand-mark{ display:inline-block; transition:transform .15s ease; }
+  .hint-collapsible[open] .expand-mark{ transform:rotate(90deg); }
 
   .row{ display:flex; gap:10px; margin-top:16px; flex-wrap:wrap; }
   .row button.action{ flex:1; min-width:100px; }
@@ -364,6 +403,22 @@
         </div>
       </div>
     </details>
+
+    <!-- Global search: works from any tab, across My Words, My Phrases, the
+         built-in HSK library, and Q&A pairs at once — since the per-tab
+         search boxes only ever search within whatever's currently open. -->
+    <div class="global-search-row">
+      <button class="action" id="global-search-open-btn" title="Search all words, phrases &amp; Q&amp;A" aria-label="Search everything">🔍 Search everything</button>
+    </div>
+    <div id="global-search-modal" style="display:none;">
+      <div class="global-search-panel">
+        <div class="global-search-input-row">
+          <input id="global-search-input" placeholder="Search hanzi, pinyin, or meaning…" autocomplete="off">
+          <button class="action" id="global-search-close-btn" aria-label="Close search">✕</button>
+        </div>
+        <div id="global-search-results"></div>
+      </div>
+    </div>
 
     <div class="tabs">
       <button class="tab-btn active" data-tab="stroke">闪卡 <span class="sub">Flashcards</span></button>
@@ -822,7 +877,10 @@
           <input type="file" id="import-all-file" accept="application/json" style="display:none;">
         </div>
       </div>
-      <p class="hint on-bg" style="margin:0 0 14px;">"Export words" is one file with everything: My Words, My Phrases, and My Q&amp;A together, plus any HSK word you've added and its ⭐/✓ status. HSK vocabulary itself never needs exporting; it's already built into this file wherever you open it.<br><br><b>Merge</b> adds anything new and leaves what's already here alone — safe, but words you deleted or edited on your PC won't change. <b>Replace</b> wipes this device's words, Q&amp;A and recordings and loads the file exactly as-is, so this copy becomes an exact mirror of the PC. Use Replace on a phone you only practise on.</p>
+      <details class="hint-collapsible">
+        <summary class="on-bg">Backup, Merge &amp; Replace explained… <span class="expand-mark">▸</span></summary>
+        <p class="on-bg" style="margin:8px 0 14px;">"Export words" is one file with everything: My Words, My Phrases, and My Q&amp;A together, plus any HSK word you've added and its ⭐/✓ status. HSK vocabulary itself never needs exporting; it's already built into this file wherever you open it.<br><br><b>Merge</b> adds anything new and leaves what's already here alone — safe, but words you deleted or edited on your PC won't change. <b>Replace</b> wipes this device's words, Q&amp;A and recordings and loads the file exactly as-is, so this copy becomes an exact mirror of the PC. Use Replace on a phone you only practise on.</p>
+      </details>
       <div id="import-all-feedback" class="on-bg" style="font-size:12px;margin-bottom:14px;"></div>
 
       <!-- Offline bulk-add: separate from the JSON backup above. Download a plain-text
@@ -838,27 +896,11 @@
           <input type="file" id="import-patch-file" accept=".txt,text/plain" style="display:none;">
         </div>
       </div>
-      <p class="hint on-bg" style="margin:0 0 14px;">For typing up new words, phrases, and Q&amp;A pairs offline in Notepad (or any plain text editor), then bringing them all in at once — mix all three in the same file. Download the template, fill in one line per entry using the <code>hanzi | meaning | type | notes</code> format (Q&amp;A pairs use two extra fields for the answer) described inside it, save the file, then Import patch. Meaning auto-translates if left blank; pinyin is always automatic on every field. Nothing is ever duplicated: a word, phrase, or Q&amp;A pair already in your deck has its meaning/notes updated if the file's version is different (a blank field in the file leaves that field alone, it never gets wiped out), and one that's already part of the built-in HSK library gets added straight to your Flashcards deck automatically (same as tapping +Add in the HSK Library tab) rather than creating a second copy. This always merges — it never replaces or removes anything, only adds or updates.<br><br><b>Export everything</b> writes every word, phrase, Q&amp;A pair, and added HSK word you currently have into that same patch format — edit meanings or add notes in Notepad, then Import patch to write any changes back in. Added HSK words are clearly labelled by their level (<code>hsk1</code>, <code>hsk2</code>, etc.) in the type column instead of a generic "word", so you can tell them apart from ones you typed in yourself.</p>
+      <details class="hint-collapsible">
+        <summary class="on-bg">Bulk add, Export everything &amp; how duplicates are handled… <span class="expand-mark">▸</span></summary>
+        <p class="on-bg" style="margin:8px 0 14px;">For typing up new words, phrases, and Q&amp;A pairs offline in Notepad (or any plain text editor), then bringing them all in at once — mix all three in the same file. Download the template, fill in one line per entry using the <code>hanzi | meaning | type | notes</code> format (Q&amp;A pairs use two extra fields for the answer) described inside it, save the file, then Import patch. Meaning auto-translates if left blank; pinyin is always automatic on every field. Nothing is ever duplicated: a word, phrase, or Q&amp;A pair already in your deck has its meaning/notes updated if the file's version is different (a blank field in the file leaves that field alone, it never gets wiped out), and one that's already part of the built-in HSK library gets added straight to your Flashcards deck automatically (same as tapping +Add in the HSK Library tab) rather than creating a second copy. This always merges — it never replaces or removes anything, only adds or updates.<br><br><b>Export everything</b> writes every word, phrase, Q&amp;A pair, and added HSK word you currently have into that same patch format — edit meanings or add notes in Notepad, then Import patch to write any changes back in. Added HSK words are clearly labelled by their level (<code>hsk1</code>, <code>hsk2</code>, etc.) in the type column instead of a generic "word", so you can tell them apart from ones you typed in yourself.</p>
+      </details>
       <div id="import-patch-feedback" class="on-bg" style="font-size:12px;margin-bottom:14px;"></div>
-
-      <!-- AI Q&A prompt export: no API key, no live call from this app — it builds
-           a ready-to-paste prompt plus your own word list, in the exact format
-           Import patch already understands, so whatever an AI chatbot hands back
-           can be saved as a .txt and imported with zero extra work. -->
-      <div class="top-controls" style="margin-bottom:8px;">
-        <span class="section-title on-bg" style="margin:0;">AI Q&amp;A prompt from my words</span>
-        <div style="display:flex;gap:6px;flex-wrap:wrap;">
-          <select class="mode" id="ai-qa-scope">
-            <option value="star">⭐ Needs practice only</option>
-            <option value="learned">✓ Learned only</option>
-            <option value="both">⭐ + ✓ (both)</option>
-            <option value="all">All words &amp; phrases</option>
-          </select>
-          <button class="action btn-reveal small" id="ai-qa-export-trigger">🤖 Download AI prompt</button>
-        </div>
-      </div>
-      <p class="hint on-bg" style="margin:0 0 14px;">Builds a ready-to-paste prompt plus a list of your chosen words, in the exact format Import patch already reads — no API key, nothing sent anywhere by this app. Paste the whole file into ChatGPT (or any AI chat), copy its reply back into a plain text file, and Import patch it straight into your Q&amp;A Pairs.</p>
-      <div id="ai-qa-export-feedback" class="on-bg" style="font-size:12px;margin-bottom:14px;"></div>
 
       <div id="import-choice-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:999;align-items:center;justify-content:center;">
         <div style="background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:22px;max-width:340px;text-align:center;box-shadow:0 20px 50px rgba(0,0,0,.5);">
@@ -901,7 +943,8 @@
           <option value="not-added-first">Not added first</option>
         </select>
       </div>
-      <input class="field" id="hsk-search" placeholder="Search this level…" style="margin-bottom:10px;">
+      <!-- No per-level search box here any more — use 🔍 Search everything above
+           the tabs instead, which searches this and every other section at once. -->
       <div class="word-list" id="hsk-list" style="max-height:420px;"></div>
       <p class="hint on-bg" style="margin-top:10px;">Adding a word here puts it straight into your Flashcards deck with its pinyin and default meaning already filled in. Head to Flashcards → 📚 Word Library any time afterwards to edit the meaning or record your own voice for it.</p>
     </div>
@@ -7275,7 +7318,7 @@ function renderCustomHskWords(){
   const list = document.getElementById('hsk-list');
   const prevFilter = document.getElementById('hsk-review-filter') ? document.getElementById('hsk-review-filter').value : 'all';
   const prevSort = document.getElementById('hsk-review-sort') ? document.getElementById('hsk-review-sort').value : 'newest';
-  const term = normalizeSearch(document.getElementById('hsk-search').value.trim());
+  const term = ''; // per-level search removed — use 🔍 Search everything instead
   let customWords = allWords.filter(w => !isHskWord(w.h) && (w.myCategory === 'word' || (!w.myCategory && !isPhrase(w))));
   document.getElementById('hsk-count').textContent = `${customWords.length} word(s)`;
   if(term){
@@ -7363,7 +7406,7 @@ function renderCustomPhrases(){
   const list = document.getElementById('hsk-list');
   const prevFilter = document.getElementById('hsk-review-filter') ? document.getElementById('hsk-review-filter').value : 'all';
   const prevSort = document.getElementById('hsk-review-sort') ? document.getElementById('hsk-review-sort').value : 'newest';
-  const term = normalizeSearch(document.getElementById('hsk-search').value.trim());
+  const term = ''; // per-level search removed — use 🔍 Search everything instead
   let phrases = allWords.filter(w => !isHskWord(w.h) && (w.myCategory === 'phrase' || (!w.myCategory && isPhrase(w))));
   document.getElementById('hsk-count').textContent = `${phrases.length} phrase(s)`;
   if(term){
@@ -7449,7 +7492,7 @@ function renderCustomPhrases(){
 
 function renderCustomQaWords(){
   const list = document.getElementById('hsk-list');
-  const term = normalizeSearch(document.getElementById('hsk-search').value.trim());
+  const term = ''; // per-level search removed — use 🔍 Search everything instead
   let pairs = qaPairs.slice();
   document.getElementById('hsk-count').textContent = `${pairs.length} pair(s)`;
   if(term){
@@ -7578,16 +7621,13 @@ function renderHskList(){
     return;
   }
   const list = document.getElementById('hsk-list');
-  document.getElementById('hsk-search').placeholder = hskLevel === 'all'
-    ? 'Search every HSK level…'
-    : 'Search this level…';
   // 'all' pools every loaded HSK level (never My Words/Phrases/Q&A) so one search
   // covers the whole syllabus. Each entry keeps a .lvl tag so rows can be badged.
   const allLevels = Object.keys(HSK_WORDS).filter(k => HSK_WORDS[k].length);
   const words = hskLevel === 'all'
     ? allLevels.flatMap(lvl => HSK_WORDS[lvl].map(w => ({ ...w, lvl })))
     : (HSK_WORDS[hskLevel] || []);
-  const term = normalizeSearch(document.getElementById('hsk-search').value.trim());
+  const term = ''; // per-level search removed — use 🔍 Search everything instead
   let filtered = term
     ? words.filter(w => normalizeSearch(w.h).includes(term) || normalizeSearch(w.p).includes(term) || normalizeSearch(w.m).includes(term) || normalizeSearch(w.pos || '').includes(term))
     : words.slice();
@@ -7613,7 +7653,7 @@ function renderHskList(){
     return;
   }
   if(filtered.length === 0){
-    list.innerHTML = `<div class="empty-note">No matches for "${document.getElementById('hsk-search').value}".</div>`;
+    list.innerHTML = `<div class="empty-note">No matches.</div>`;
     return;
   }
   list.innerHTML = filtered.map(w => {
@@ -7676,10 +7716,14 @@ function renderHskList(){
       if(!word) return;
       openMoveModal(`"${hanzi}" isn't in your Flashcards yet — add it?`, [
         { label: '+ Add & open in Flashcards', onClick: () => {
-          allWords.push({ h: word.h, p: word.p, m: word.m, id: newId(), addedAt: Date.now() });
-          saveWords(allWords);
-          refreshAllDecks();
-          renderHskList();
+          // Guards against a duplicate if the hanzi actually was already
+          // there and only the "not added" check above missed it somehow.
+          if(!allWords.some(x => x.h === hanzi)){
+            allWords.push({ h: word.h, p: word.p, m: word.m, id: newId(), addedAt: Date.now() });
+            saveWords(allWords);
+            refreshAllDecks();
+            renderHskList();
+          }
           goToFlashcard(hanzi);
         }}
       ]);
@@ -7687,7 +7731,6 @@ function renderHskList(){
   });
 }
 document.getElementById('hsk-level').addEventListener('change', (e) => { hskLevel = e.target.value; renderHskList(); });
-document.getElementById('hsk-search').addEventListener('input', renderHskList);
 document.getElementById('hsk-sort').addEventListener('change', renderHskList);
 
 // Switches to the Flashcards tab with the deck scoped and positioned so the
@@ -7713,6 +7756,138 @@ function goToFlashcard(hanzi){
   strokeRevealed = false; strokeGuessShowPinyin = false; resetPhraseRoundDisplay();
   renderStroke();
 }
+
+// Same idea as goToFlashcard(), for a specific Q&A pair by id.
+function goToQaPair(id){
+  document.querySelectorAll('.tab-btn:not(.subtab-btn)').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelector('.tab-btn[data-tab="qa"]').classList.add('active');
+  document.getElementById('panel-qa').classList.add('active');
+  qaDeck = qaPairs;
+  const idx = qaDeck.findIndex(p => p.id === id);
+  qaIdx = idx >= 0 ? idx : 0;
+  resetQaToggles();
+  renderQaCard();
+}
+
+// ---- Global search: searches My Words, My Phrases, the built-in HSK
+// library, and Q&A pairs all at once, from any tab — the per-tab search
+// boxes only ever search whatever's already open in that tab. ----
+function globalSearchResults(term){
+  const t = normalizeSearch(term);
+  if(!t) return [];
+  const results = [];
+  const seenHanzi = new Set();
+
+  allWords.forEach(w => {
+    if(normalizeSearch(w.h).includes(t) || normalizeSearch(w.p || '').includes(t) || normalizeSearch(w.m || '').includes(t)){
+      const lvl = findHskLevelByHanzi(w.h);
+      const isPhraseWord = w.myCategory === 'phrase' || (!w.myCategory && isPhrase(w) && !lvl);
+      const badge = lvl ? `HSK ${lvl}` : (isPhraseWord ? 'My Phrase' : 'My Word');
+      results.push({ kind: 'word', hanzi: w.h, pinyin: w.p, meaning: w.m, badge, added: true });
+      seenHanzi.add(w.h);
+    }
+  });
+
+  for(const lvl in HSK_WORDS){
+    for(const w of HSK_WORDS[lvl]){
+      if(seenHanzi.has(w.h)) continue;
+      if(normalizeSearch(w.h).includes(t) || normalizeSearch(w.p || '').includes(t) || normalizeSearch(w.m || '').includes(t)){
+        results.push({ kind: 'word', hanzi: w.h, pinyin: w.p, meaning: w.m, badge: `HSK ${lvl}`, added: false });
+        if(results.length >= 200) break; // safety cap while scanning the full library
+      }
+    }
+  }
+
+  qaPairs.forEach(p => {
+    if(normalizeSearch(p.q).includes(t) || normalizeSearch(p.a || '').includes(t) ||
+       normalizeSearch(p.qm || '').includes(t) || normalizeSearch(p.am || '').includes(t)){
+      results.push({ kind: 'qa', hanzi: p.q, pinyin: p.qp, meaning: p.qm, badge: 'Q&A', id: p.id });
+    }
+  });
+
+  return results.slice(0, 60);
+}
+
+// Current results list, kept in sync with the last render — read by the
+// delegated click handler below rather than each button carrying its own
+// listener, so there's never a stale/duplicate listener left over from a
+// previous keystroke's re-render to worry about.
+let currentGlobalSearchResults = [];
+
+function renderGlobalSearchResults(term){
+  const container = document.getElementById('global-search-results');
+  currentGlobalSearchResults = globalSearchResults(term);
+  if(!term.trim()){
+    container.innerHTML = '<div class="global-search-empty">Start typing to search across My Words, My Phrases, the HSK library, and Q&amp;A pairs.</div>';
+    return;
+  }
+  if(currentGlobalSearchResults.length === 0){
+    container.innerHTML = '<div class="global-search-empty">No matches.</div>';
+    return;
+  }
+  container.innerHTML = currentGlobalSearchResults.map((r, i) => `
+    <button class="global-search-result" data-result-index="${i}">
+      <span class="h">${escapeHtml(r.hanzi)}</span>
+      <span class="details">
+        ${r.pinyin ? `<div class="p">${escapeHtml(r.pinyin)}</div>` : ''}
+        <div class="m">${escapeHtml(r.meaning || '')}</div>
+      </span>
+      <span class="badge${r.kind === 'word' && !r.added ? ' not-added' : ''}${r.kind === 'qa' ? ' qa' : ''}">${escapeHtml(r.badge)}</span>
+    </button>`).join('');
+}
+
+function openGlobalSearch(){
+  document.getElementById('global-search-modal').style.display = 'flex';
+  const input = document.getElementById('global-search-input');
+  input.value = '';
+  renderGlobalSearchResults('');
+  setTimeout(() => input.focus(), 0);
+}
+function closeGlobalSearch(){
+  document.getElementById('global-search-modal').style.display = 'none';
+}
+document.getElementById('global-search-open-btn').addEventListener('click', openGlobalSearch);
+document.getElementById('global-search-close-btn').addEventListener('click', closeGlobalSearch);
+document.getElementById('global-search-modal').addEventListener('click', (e) => {
+  if(e.target.id === 'global-search-modal') closeGlobalSearch(); // click on the backdrop, not the panel
+});
+document.getElementById('global-search-input').addEventListener('input', (e) => renderGlobalSearchResults(e.target.value));
+
+// One delegated listener on the results container, attached once and never
+// re-attached — reads whichever result was actually tapped from
+// currentGlobalSearchResults (always in sync with what's on screen) rather
+// than relying on a closure captured at render time.
+document.getElementById('global-search-results').addEventListener('click', (e) => {
+  const btn = e.target.closest('[data-result-index]');
+  if(!btn) return;
+  const r = currentGlobalSearchResults[parseInt(btn.dataset.resultIndex, 10)];
+  if(!r) return;
+  closeGlobalSearch();
+  if(r.kind === 'qa'){
+    goToQaPair(r.id);
+    return;
+  }
+  if(r.added){
+    goToFlashcard(r.hanzi);
+    return;
+  }
+  // Not yet added HSK word — same "add it first?" prompt used by the
+  // HSK Library tab's own 🔗 button, so behaviour stays consistent.
+  openMoveModal(`"${r.hanzi}" isn't in your Flashcards yet — add it?`, [
+    { label: '+ Add & open in Flashcards', onClick: () => {
+      // Guards against a duplicate if the hanzi actually was already there
+      // and only the "not added" check above missed it somehow (e.g. a
+      // pinyin-formatting mismatch that broke matching before the fix).
+      if(!allWords.some(x => x.h === r.hanzi)){
+        allWords.push({ h: r.hanzi, p: r.pinyin, m: r.meaning, id: newId(), addedAt: Date.now() });
+        saveWords(allWords);
+        refreshAllDecks();
+      }
+      goToFlashcard(r.hanzi);
+    }}
+  ]);
+});
 
 function scopedVocab(scope){
   let list = fullVocab();
@@ -8215,28 +8390,60 @@ function speechChars(text){
   return Array.from(stripSpeechHint(text)).filter(ch => /[\p{L}\p{N}]/u.test(ch));
 }
 
+// For the natural, whole-phrase playback path only (see speak() below) — unlike
+// speechChars() above, this KEEPS pause-inducing punctuation instead of
+// stripping it entirely, mapped to its plain ASCII equivalent first. ASCII
+// ，、。！？；： reliably make TTS engines insert a brief natural pause without
+// ever being announced aloud as "comma"/"period" — unlike some voices' handling
+// of the full-width CJK marks themselves, which is why punctuation was being
+// stripped in the first place. But stripping it entirely also strips the pause
+// a longer phrase needs at its clause boundaries, which is what made multi-
+// character phrases and Q&A sentences read as one rushed run-on.
+function naturalSpeechText(text){
+  const withAsciiPauses = stripSpeechHint(text)
+    .replace(/[，、]/g, ', ')
+    .replace(/。/g, '. ')
+    .replace(/！/g, '! ')
+    .replace(/？/g, '? ')
+    .replace(/；/g, '; ')
+    .replace(/：/g, ': ');
+  return Array.from(withAsciiPauses)
+    .filter(ch => /[\p{L}\p{N},.!?;:\s]/u.test(ch))
+    .join('')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
 function speak(text){
   // Un-stick a jammed queue: Chrome can leave synthesis paused after an interruption,
   // and every later speak() then silently does nothing.
   try{ if(speechSynthesis.paused) speechSynthesis.resume(); }catch(e){}
   speechSynthesis.cancel();
-  const chars = speechChars(text); // punctuation-free, split by code point — safe for CJK
-  if(chars.length === 0) return;
   const pause = pauseForRate(speechRate);
 
   // No gap requested: hand the whole phrase over in one go so the voice can apply its own
   // prosody and tone transitions. Splitting it would force an artificial break per syllable.
   if(pause === 0){
-    const u = new SpeechSynthesisUtterance(chars.join(''));
+    const naturalText = naturalSpeechText(text);
+    if(!naturalText) return;
+    // Longer phrases/sentences get a touch more breathing room than a single
+    // word — full native rate on a whole sentence reads as rushed for a learner
+    // even at the "standard" (1.0x) slider position, which is otherwise meant
+    // to sound fully natural for single words.
+    const wordCount = Array.from(naturalText).filter(ch => /[\p{L}\p{N}]/u.test(ch)).length;
+    const isLong = wordCount > 4;
+    const u = new SpeechSynthesisUtterance(naturalText);
     u.lang = zhVoice ? zhVoice.lang : 'zh-CN';
     if(zhVoice) u.voice = zhVoice;
-    u.rate = Math.min(1.5, speechRate);
+    u.rate = Math.min(1.5, isLong ? speechRate * 0.82 : speechRate);
     u.volume = 1.0;
     u.pitch = 1.0;
     speechSynthesis.speak(u);
     return;
   }
 
+  const chars = speechChars(text); // punctuation-free, split by code point — safe for CJK
+  if(chars.length === 0) return;
   let i = 0;
   function speakNext(){
     if(i >= chars.length) return;
@@ -9759,8 +9966,15 @@ function escapeHtml(s){
     .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
+// Strips diacritics (à → a) and case for forgiving search matching. Also
+// collapses whitespace entirely: pinyin for the same word can be stored with
+// or without a space between syllables depending on where it came from (e.g.
+// "bà ba" vs "bàba" for 爸爸), so a search for "baba" needs to match both —
+// otherwise the same hanzi can inconsistently look "already added" in one
+// data source but "not added" in another, since a mismatch here previously
+// broke the check that's meant to recognise a word already exists.
 function normalizeSearch(s){
-  return s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+  return s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/\s+/g, '');
 }
 
 function renderCustomList(){
@@ -10800,69 +11014,6 @@ function clearTestCanvas(){
   if(testCtx) testCtx.clearRect(0, 0, canvas.width, canvas.height);
 }
 document.getElementById('test-canvas-clear').addEventListener('click', clearTestCanvas);
-
-// Builds a copy-paste-ready prompt for an external AI chatbot (ChatGPT, etc.) to
-// generate Q&A pairs from a chosen slice of the user's own vocabulary — no API
-// key, no live call from this app. The output format matches the patch importer
-// exactly, so whatever the AI hands back can be saved as a .txt and Import
-// patched straight into Q&A Pairs with zero reformatting.
-function exportAiQaPrompt(){
-  const scope = document.getElementById('ai-qa-scope').value;
-  const feedback = document.getElementById('ai-qa-export-feedback');
-  let words = allWords;
-  if(scope === 'star') words = words.filter(w => w.status === 'star');
-  else if(scope === 'learned') words = words.filter(w => w.status === 'learned');
-  else if(scope === 'both') words = words.filter(w => w.status === 'star' || w.status === 'learned');
-  // scope === 'all': no filtering
-
-  if(words.length === 0){
-    feedback.textContent = 'No words match that filter — nothing to build a prompt from.';
-    feedback.style.color = '#C9A227';
-    return;
-  }
-
-  const wordLines = words.map(w => `${w.h} (${w.m || 'meaning unknown'})${w.n ? ` — notes: ${w.n}` : ''}`);
-  const prompt = `# Han Yu Learning — AI Q&A Generation Prompt
-#
-# How to use this file:
-#   1. Copy EVERYTHING below into ChatGPT (or any AI chat).
-#   2. Copy the AI's reply into a new plain text file (save as .txt).
-#   3. Come back here and use "Import patch" to bring it straight into Q&A Pairs —
-#      no reformatting needed, as long as the AI followed the format below.
-#
-# ---- COPY FROM HERE ----
-Please write simple, natural Mandarin Chinese question-and-answer pairs, one for
-each of the vocabulary words listed at the end of this message, using that word
-naturally in the question or the answer. Keep the Chinese conversational and
-appropriate for a learner at this level.
-
-At the end of each question, add a short English answer-hint in SQUARE BRACKETS
-— e.g. a couple of key words showing what kind of answer is expected, or the
-short "yes / no" style options — to guide how to answer without giving the full
-answer away. Use square brackets [ ] for this every time, never round brackets
-( ) or full-width Chinese brackets （）, since those are reserved for other use
-in this app and only square brackets are read as an answer-hint.
-
-Reply with ONLY the Q&A pairs, one per line, in EXACTLY this format — six fields
-separated by " | ", nothing else, no numbering, no extra commentary:
-
-question (Chinese) [hint] | question meaning (English) | qa | | answer (Chinese) | answer meaning (English)
-
-Example of the exact format to follow:
-你叫什么名字？[Xiaoming] | What is your name? | qa | | 我叫小明。 | My name is Xiaoming.
-你好吗？[very well] | How are you? | qa | | 我很好，谢谢。 | I'm very well, thank you.
-
-Here are the words to write one Q&A pair for, each with its meaning (and my own
-notes where I've added any — feel free to use those for context too):
-
-${wordLines.join('\n')}
-`;
-
-  downloadText(prompt, 'hanyu-ai-qa-prompt-' + dateStamp() + '.txt');
-  feedback.textContent = `Built a prompt covering ${words.length} word${words.length === 1 ? '' : 's'} — paste it into an AI chat, then Import patch its reply.`;
-  feedback.style.color = '#3E7C59';
-}
-document.getElementById('ai-qa-export-trigger').addEventListener('click', exportAiQaPrompt);
 
 // Parses the pipe-delimited template format into plain rows. Deliberately
 // tolerant: missing trailing fields are fine (a bare "hanzi | meaning" line
