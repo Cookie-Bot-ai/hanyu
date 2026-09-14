@@ -943,8 +943,7 @@
           <option value="not-added-first">Not added first</option>
         </select>
       </div>
-      <!-- No per-level search box here any more — use 🔍 Search everything above
-           the tabs instead, which searches this and every other section at once. -->
+      <input class="field" id="hsk-search" placeholder="Search this level…" style="margin-bottom:10px;">
       <div class="word-list" id="hsk-list" style="max-height:420px;"></div>
       <p class="hint on-bg" style="margin-top:10px;">Adding a word here puts it straight into your Flashcards deck with its pinyin and default meaning already filled in. Head to Flashcards → 📚 Word Library any time afterwards to edit the meaning or record your own voice for it.</p>
     </div>
@@ -7318,7 +7317,7 @@ function renderCustomHskWords(){
   const list = document.getElementById('hsk-list');
   const prevFilter = document.getElementById('hsk-review-filter') ? document.getElementById('hsk-review-filter').value : 'all';
   const prevSort = document.getElementById('hsk-review-sort') ? document.getElementById('hsk-review-sort').value : 'newest';
-  const term = ''; // per-level search removed — use 🔍 Search everything instead
+  const term = normalizeSearch(document.getElementById('hsk-search').value.trim());
   let customWords = allWords.filter(w => !isHskWord(w.h) && (w.myCategory === 'word' || (!w.myCategory && !isPhrase(w))));
   document.getElementById('hsk-count').textContent = `${customWords.length} word(s)`;
   if(term){
@@ -7406,7 +7405,7 @@ function renderCustomPhrases(){
   const list = document.getElementById('hsk-list');
   const prevFilter = document.getElementById('hsk-review-filter') ? document.getElementById('hsk-review-filter').value : 'all';
   const prevSort = document.getElementById('hsk-review-sort') ? document.getElementById('hsk-review-sort').value : 'newest';
-  const term = ''; // per-level search removed — use 🔍 Search everything instead
+  const term = normalizeSearch(document.getElementById('hsk-search').value.trim());
   let phrases = allWords.filter(w => !isHskWord(w.h) && (w.myCategory === 'phrase' || (!w.myCategory && isPhrase(w))));
   document.getElementById('hsk-count').textContent = `${phrases.length} phrase(s)`;
   if(term){
@@ -7492,7 +7491,7 @@ function renderCustomPhrases(){
 
 function renderCustomQaWords(){
   const list = document.getElementById('hsk-list');
-  const term = ''; // per-level search removed — use 🔍 Search everything instead
+  const term = normalizeSearch(document.getElementById('hsk-search').value.trim());
   let pairs = qaPairs.slice();
   document.getElementById('hsk-count').textContent = `${pairs.length} pair(s)`;
   if(term){
@@ -7621,13 +7620,16 @@ function renderHskList(){
     return;
   }
   const list = document.getElementById('hsk-list');
+  document.getElementById('hsk-search').placeholder = hskLevel === 'all'
+    ? 'Search every HSK level…'
+    : 'Search this level…';
   // 'all' pools every loaded HSK level (never My Words/Phrases/Q&A) so one search
   // covers the whole syllabus. Each entry keeps a .lvl tag so rows can be badged.
   const allLevels = Object.keys(HSK_WORDS).filter(k => HSK_WORDS[k].length);
   const words = hskLevel === 'all'
     ? allLevels.flatMap(lvl => HSK_WORDS[lvl].map(w => ({ ...w, lvl })))
     : (HSK_WORDS[hskLevel] || []);
-  const term = ''; // per-level search removed — use 🔍 Search everything instead
+  const term = normalizeSearch(document.getElementById('hsk-search').value.trim());
   let filtered = term
     ? words.filter(w => normalizeSearch(w.h).includes(term) || normalizeSearch(w.p).includes(term) || normalizeSearch(w.m).includes(term) || normalizeSearch(w.pos || '').includes(term))
     : words.slice();
@@ -7653,7 +7655,7 @@ function renderHskList(){
     return;
   }
   if(filtered.length === 0){
-    list.innerHTML = `<div class="empty-note">No matches.</div>`;
+    list.innerHTML = `<div class="empty-note">No matches for "${document.getElementById('hsk-search').value}".</div>`;
     return;
   }
   list.innerHTML = filtered.map(w => {
@@ -7731,25 +7733,44 @@ function renderHskList(){
   });
 }
 document.getElementById('hsk-level').addEventListener('change', (e) => { hskLevel = e.target.value; renderHskList(); });
+document.getElementById('hsk-search').addEventListener('input', renderHskList);
 document.getElementById('hsk-sort').addEventListener('change', renderHskList);
 
 // Switches to the Flashcards tab with the deck scoped and positioned so the
 // given hanzi is the card actually showing — used by the HSK Library's 🔗
 // button. Picks "Phrases only" scope automatically if that's where the word
 // lives, otherwise "All words", so it's never left out of the active deck.
+// Jumps to a specific word or phrase from anywhere in the app (search results,
+// the HSK Library's 🔗 button). A plain word activates the Flashcards tab
+// exactly as clicking it would; a phrase needs the SEPARATE 短语 Phrases tab's
+// own activation sequence instead (strokeReadOnly, hidden scope selector,
+// 'myphrases' scope) — reusing the Flashcards tab's own activation for a
+// phrase leaves strokeReadOnly off, which tries to render a whole sentence
+// through the character-writing-tile view instead of the phrase reading view.
 function goToFlashcard(hanzi){
-  document.querySelectorAll('.tab-btn:not(.subtab-btn)').forEach(b => b.classList.remove('active'));
-  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-  document.querySelector('.tab-btn[data-tab="stroke"]').classList.add('active');
-  document.getElementById('panel-stroke').classList.add('active');
-  strokeReadOnly = false;
-  document.getElementById('stroke-scope').style.display = 'inline-block';
-  resetPhraseSession();
-
   const word = allWords.find(w => w.h === hanzi);
   const isPhraseWord = !!word && (word.myCategory === 'phrase' || (!word.myCategory && isPhrase(word) && !isHskWord(word.h)));
-  strokeScope = isPhraseWord ? 'phrases' : 'all';
-  document.getElementById('stroke-scope').value = strokeScope;
+
+  document.querySelectorAll('.tab-btn:not(.subtab-btn)').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('panel-stroke').classList.add('active');
+
+  if(isPhraseWord){
+    document.querySelector('.tab-btn[data-tab="phrases"]').classList.add('active');
+    strokeReadOnly = true;
+    strokeDirection = 'char';
+    strokeScope = 'myphrases';
+    document.getElementById('stroke-scope').style.display = 'none';
+    resetPhraseSession();
+  } else {
+    document.querySelector('.tab-btn[data-tab="stroke"]').classList.add('active');
+    strokeReadOnly = false;
+    strokeScope = 'all';
+    document.getElementById('stroke-scope').style.display = 'inline-block';
+    document.getElementById('stroke-scope').value = strokeScope;
+    resetPhraseSession();
+  }
+
   strokeDeck = orderStrokeDeck(scopedVocab(strokeScope));
   const idx = strokeDeck.findIndex(w => w.h === hanzi);
   strokeIdx = idx >= 0 ? idx : 0;
@@ -7768,6 +7789,21 @@ function goToQaPair(id){
   qaIdx = idx >= 0 ? idx : 0;
   resetQaToggles();
   renderQaCard();
+}
+
+// For an HSK word that isn't in the user's own deck yet — takes them to the
+// HSK Library tab, on the right level, filtered down to just that word (via
+// the per-level search box) so they can see it in context and +Add it
+// themselves if they want it, rather than adding it on their behalf.
+function goToHskLibraryEntry(hanzi, lvl){
+  document.querySelectorAll('.tab-btn:not(.subtab-btn)').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelector('.tab-btn[data-tab="hsk"]').classList.add('active');
+  document.getElementById('panel-hsk').classList.add('active');
+  hskLevel = lvl;
+  document.getElementById('hsk-level').value = lvl;
+  document.getElementById('hsk-search').value = hanzi;
+  renderHskList();
 }
 
 // ---- Global search: searches My Words, My Phrases, the built-in HSK
@@ -7793,7 +7829,7 @@ function globalSearchResults(term){
     for(const w of HSK_WORDS[lvl]){
       if(seenHanzi.has(w.h)) continue;
       if(normalizeSearch(w.h).includes(t) || normalizeSearch(w.p || '').includes(t) || normalizeSearch(w.m || '').includes(t)){
-        results.push({ kind: 'word', hanzi: w.h, pinyin: w.p, meaning: w.m, badge: `HSK ${lvl}`, added: false });
+        results.push({ kind: 'word', hanzi: w.h, pinyin: w.p, meaning: w.m, badge: `HSK ${lvl}`, added: false, lvl });
         if(results.length >= 200) break; // safety cap while scanning the full library
       }
     }
@@ -7872,21 +7908,10 @@ document.getElementById('global-search-results').addEventListener('click', (e) =
     goToFlashcard(r.hanzi);
     return;
   }
-  // Not yet added HSK word — same "add it first?" prompt used by the
-  // HSK Library tab's own 🔗 button, so behaviour stays consistent.
-  openMoveModal(`"${r.hanzi}" isn't in your Flashcards yet — add it?`, [
-    { label: '+ Add & open in Flashcards', onClick: () => {
-      // Guards against a duplicate if the hanzi actually was already there
-      // and only the "not added" check above missed it somehow (e.g. a
-      // pinyin-formatting mismatch that broke matching before the fix).
-      if(!allWords.some(x => x.h === r.hanzi)){
-        allWords.push({ h: r.hanzi, p: r.pinyin, m: r.meaning, id: newId(), addedAt: Date.now() });
-        saveWords(allWords);
-        refreshAllDecks();
-      }
-      goToFlashcard(r.hanzi);
-    }}
-  ]);
+  // Not yet in the user's own deck — just an HSK library entry so far. Take
+  // them to it in the HSK Library tab, filtered to just that word, rather
+  // than adding it on their behalf.
+  goToHskLibraryEntry(r.hanzi, r.lvl);
 });
 
 function scopedVocab(scope){
