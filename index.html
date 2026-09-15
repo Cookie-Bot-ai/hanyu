@@ -830,6 +830,7 @@
         <div class="top-controls">
           <span class="on-bg" id="test-progress" style="font-size:12px;">Question 1 / 20</span>
           <span class="on-bg" id="test-type-label" style="font-size:12px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);"></span>
+          <button class="action btn-danger small" id="test-end-btn" title="End this test and go back to setup">✕ End Test</button>
         </div>
         <div class="card" id="test-card" style="padding:28px 24px;">
           <div class="hz" id="test-prompt-hz" style="font-size:40px;display:none;"></div>
@@ -874,7 +875,12 @@
         <div class="card" style="padding:28px 24px;">
           <div class="hz" style="font-size:28px;margin-bottom:10px;">Done!</div>
           <div class="meaning" id="test-score-overall" style="font-size:20px;margin-bottom:16px;"></div>
-          <div id="test-score-breakdown" style="text-align:left;font-size:13px;color:var(--muted);"></div>
+          <div id="test-score-breakdown" style="text-align:left;font-size:13px;color:var(--muted);margin-bottom:16px;"></div>
+          <div id="test-results-list" style="text-align:left;font-size:13px;"></div>
+        </div>
+        <div class="card" id="test-bulk-promote-row" style="display:none;margin-top:14px;padding:16px;text-align:center;">
+          <div id="test-bulk-promote-text" style="margin-bottom:10px;font-size:14px;"></div>
+          <button class="action btn-play wide" id="test-bulk-promote-btn"></button>
         </div>
         <div class="toolbar" style="margin-top:14px;">
           <button class="action btn-play wide" id="test-retake-btn">🔁 Take Another Test</button>
@@ -11069,7 +11075,7 @@ function revealTestAnswer(){
 
 function markTestQuestion(correct){
   const q = testQueue[testIdx];
-  testResults.push({ type: q.type, correct });
+  testResults.push({ type: q.type, correct, item: q.item });
   document.getElementById('test-mark-row').style.display = 'none';
 
   // Offer to update the word's ⭐/✓ status right here, rather than making you
@@ -11135,7 +11141,62 @@ function renderTestResults(){
   document.getElementById('test-score-breakdown').innerHTML = Object.entries(byType)
     .map(([type, s]) => `<div style="margin-bottom:4px;">${TEST_TYPE_LABELS[type]}: ${s.correct} / ${s.total}</div>`)
     .join('');
+
+  // Per-question breakdown — which specific items were right vs wrong, not
+  // just a per-type tally. Q&A pairs are labelled by their question text
+  // since they don't have a single "hanzi" the way words do.
+  document.getElementById('test-results-list').innerHTML = testResults.map(r => {
+    const label = r.type === 'qa' ? r.item.q : r.item.h;
+    const icon = r.correct ? '✓' : '✗';
+    const color = r.correct ? 'var(--jade)' : 'var(--seal)';
+    return `<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border);">
+      <span>${escapeHtml(label)}</span><span style="color:${color};font-weight:600;">${icon}</span>
+    </div>`;
+  }).join('');
+
+  // Bulk offer: any ⭐ needs-practice word answered correctly here (and still
+  // ⭐ — it may already have been promoted one-at-a-time during the test) can
+  // move to ✓ Learned in one tap, instead of doing each individually.
+  const promotable = [];
+  const seenHanzi = new Set();
+  testResults.forEach(r => {
+    if(r.type === 'qa' || !r.correct) return;
+    const current = allWords.find(w => w.h === r.item.h);
+    if(current && current.status === 'star' && !seenHanzi.has(current.h)){
+      seenHanzi.add(current.h);
+      promotable.push(current);
+    }
+  });
+  const promoteRow = document.getElementById('test-bulk-promote-row');
+  if(promotable.length > 0){
+    promoteRow.style.display = '';
+    promoteRow.dataset.pendingHanzi = promotable.map(w => w.h).join('\u0001');
+    document.getElementById('test-bulk-promote-text').textContent =
+      `You got ${promotable.length} needs-practice word${promotable.length === 1 ? '' : 's'} right: ${promotable.map(w => w.h).join('、')}`;
+    document.getElementById('test-bulk-promote-btn').textContent =
+      `Move ${promotable.length === 1 ? 'it' : 'all'} to ✓ Learned`;
+  } else {
+    promoteRow.style.display = 'none';
+  }
 }
+document.getElementById('test-bulk-promote-btn').addEventListener('click', () => {
+  const promoteRow = document.getElementById('test-bulk-promote-row');
+  const hanziList = (promoteRow.dataset.pendingHanzi || '').split('\u0001').filter(Boolean);
+  hanziList.forEach(h => {
+    const w = allWords.find(x => x.h === h);
+    if(w) w.status = 'learned';
+  });
+  saveWords(allWords);
+  refreshAllDecks();
+  promoteRow.style.display = 'none';
+});
+
+document.getElementById('test-end-btn').addEventListener('click', () => {
+  document.getElementById('test-active').style.display = 'none';
+  document.getElementById('test-status-offer-row').style.display = 'none';
+  document.getElementById('test-setup').style.display = '';
+  updateTestPoolInfo();
+});
 
 document.getElementById('test-start-btn').addEventListener('click', startTest);
 document.getElementById('test-reveal-btn').addEventListener('click', revealTestAnswer);
