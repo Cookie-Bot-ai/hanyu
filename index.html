@@ -600,8 +600,12 @@
             <input class="field" id="add-am" placeholder="e.g. My name is Kim Cuc.">
           </div>
           <div class="full">
-            <span class="field-label">Your notes (optional)</span>
-            <input class="field" id="add-qa-notes" placeholder="e.g. your own Vietnamese translation, a mnemonic, anything">
+            <span class="field-label">Question notes (optional)</span>
+            <input class="field" id="add-qa-notes" placeholder="e.g. your own Vietnamese translation of the question, a mnemonic, anything">
+          </div>
+          <div class="full">
+            <span class="field-label">Answer notes (optional)</span>
+            <input class="field" id="add-qa-answer-notes" placeholder="e.g. your own Vietnamese translation of the answer">
           </div>
         </div>
         <div style="font-size:11px;color:var(--muted);margin:-4px 0 10px;">Pinyin for both question and answer is generated automatically.</div>
@@ -805,11 +809,18 @@
           <div class="hz" style="font-size:32px;margin-bottom:6px;">测验</div>
           <div class="meaning" style="margin-bottom:18px;">A quick self-checked review — speaking, pinyin, handwriting, and Q&amp;A, mixed together.</div>
           <div style="font-size:12px;color:var(--muted);margin-bottom:16px;" id="test-pool-info">Loading…</div>
+          <div class="field-label" style="margin-bottom:8px;">Test which words?</div>
+          <div class="toolbar" style="margin-bottom:20px;">
+            <button class="action btn-reveal" data-test-scope="star">⭐ Needs practice</button>
+            <button class="action btn-reveal" data-test-scope="learned">✓ Learned</button>
+            <button class="action btn-reveal on" data-test-scope="both">Both</button>
+          </div>
           <div class="field-label" style="margin-bottom:8px;">How many questions?</div>
           <div class="toolbar" style="margin-bottom:20px;">
             <button class="action btn-reveal" data-test-len="10">10</button>
             <button class="action btn-reveal on" data-test-len="20">20</button>
             <button class="action btn-reveal" data-test-len="30">30</button>
+            <button class="action btn-reveal" data-test-len="all">All</button>
           </div>
           <button class="action btn-play" id="test-start-btn" style="width:100%;">▶ Start Test</button>
         </div>
@@ -826,6 +837,7 @@
           <div id="test-qa-block" style="display:none;">
             <div class="hz" id="test-qa-question" style="font-size:26px;"></div>
             <div class="pinyin" id="test-qa-question-pinyin" style="margin-top:4px;"></div>
+            <div class="meaning" id="test-qa-question-notes" style="color:var(--muted);display:none;"></div>
           </div>
           <div id="test-input-block" style="display:none;margin-top:16px;">
             <input class="field" id="test-pinyin-input" placeholder="Type the pinyin — tone marks or numbers, either is fine" style="width:100%;text-align:center;">
@@ -839,6 +851,7 @@
             <div class="pinyin" id="test-answer-pinyin" style="display:none;"></div>
             <div class="meaning" id="test-answer-meaning" style="display:none;"></div>
             <div class="meaning" id="test-answer-notes" style="color:var(--muted);white-space:pre-wrap;display:none;"></div>
+            <button class="action btn-reveal" id="test-answer-play" style="display:none;margin-top:10px;">🔊 Play correct pronunciation</button>
           </div>
         </div>
         <div class="toolbar" style="margin-top:14px;">
@@ -847,6 +860,13 @@
         <div class="toolbar" id="test-mark-row" style="display:none;margin-top:10px;">
           <button class="action btn-correct" id="test-mark-correct" style="flex:1;">✓ Got it</button>
           <button class="action btn-wrong" id="test-mark-wrong" style="flex:1;">✗ Need practice</button>
+        </div>
+        <div class="card" id="test-status-offer-row" style="display:none;margin-top:10px;padding:16px;text-align:center;">
+          <div id="test-status-offer-text" style="margin-bottom:10px;font-size:14px;"></div>
+          <div class="toolbar">
+            <button class="action btn-play" id="test-status-offer-yes" style="flex:1;">Yes</button>
+            <button class="action btn-reveal" id="test-status-offer-no" style="flex:1;">Not now</button>
+          </div>
         </div>
       </div>
 
@@ -7509,7 +7529,10 @@ function renderCustomQaWords(){
         <input class="field" id="hsk-qa-a" placeholder="Answer (Chinese)" style="flex:1;min-width:110px;">
         <input class="field" id="hsk-qa-am" placeholder="Answer meaning (optional)" style="flex:1;min-width:110px;">
       </div>
-      <input class="field" id="hsk-qa-notes" placeholder="Your notes (optional)">
+      <div style="display:flex;gap:6px;flex-wrap:wrap;">
+        <input class="field" id="hsk-qa-notes" placeholder="Question notes (optional)" style="flex:1;min-width:110px;">
+        <input class="field" id="hsk-qa-answer-notes" placeholder="Answer notes (optional)" style="flex:1;min-width:110px;">
+      </div>
       <button class="action btn-play small" id="hsk-qa-add-btn" style="align-self:flex-start;">+ Add Q&amp;A pair</button>
     </div>`;
 
@@ -7550,11 +7573,12 @@ function renderCustomQaWords(){
     const qm = document.getElementById('hsk-qa-qm').value.trim();
     const am = document.getElementById('hsk-qa-am').value.trim();
     const n = document.getElementById('hsk-qa-notes').value.trim();
+    const an = document.getElementById('hsk-qa-answer-notes').value.trim();
     if(!q || !a){ alert('Please fill in both the question and the answer.'); return; }
     if(qaPairs.some(x => x.q === q)){ alert('That question is already saved.'); return; }
     const qp = autoPinyinWithHint(q);
     const ap = autoPinyinWithHint(a);
-    qaPairs.push({ q, qp, qm, a, ap, am, n, id: newId(), addedAt: Date.now() });
+    qaPairs.push({ q, qp, qm, a, ap, am, n, an, id: newId(), addedAt: Date.now() });
     saveQa(qaPairs);
     refreshQaPractice();
     renderHskList();
@@ -10258,6 +10282,7 @@ function renderQaCard(){
     html += `<div class="pinyin hanzi" style="font-size:20px;">${card.a}</div>`;
     if(card.ap) html += `<div class="pinyin">${card.ap}</div>`;
     if(card.am) html += `<div class="meaning">${card.am}</div>`;
+    if(card.an) html += `<div class="meaning" style="color:var(--muted);">📝 ${escapeHtml(card.an)}</div>`;
   }
   revealArea.innerHTML = html || `<div class="hint">think of your answer, then reveal below</div>`;
   playAnswerBtn.style.display = qaShowAnswer ? '' : 'none';
@@ -10462,7 +10487,8 @@ function renderQaManageList(){
             <button class="action btn-reveal small" data-qa-regen-ap="${i}" title="Regenerate from answer">🔄</button>
           </div>
           <input class="field" data-edit-am value="${qa.am || ''}" placeholder="Answer meaning (optional)">
-          <input class="field" data-edit-notes value="${escapeHtml(qa.n || '')}" placeholder="Your notes (optional)">
+          <input class="field" data-edit-notes value="${escapeHtml(qa.n || '')}" placeholder="Question notes (optional)">
+          <input class="field" data-edit-answer-notes value="${escapeHtml(qa.an || '')}" placeholder="Answer notes (optional)">
           <div style="display:flex;gap:6px;width:100%;">
             <button class="action btn-next small" data-qa-save="${i}">Save</button>
             <button class="action btn-reveal small" data-qa-cancel="${i}">Cancel</button>
@@ -10475,10 +10501,11 @@ function renderQaManageList(){
           <div><span class="h hanzi" style="font-size:14px;">Q: ${qa.q}</span></div>
           ${qa.qp ? `<div class="p" style="margin-left:0;">${qa.qp}</div>` : ''}
           ${qa.qm ? `<div class="m" style="margin-left:0;">${qa.qm}</div>` : ''}
+          ${qa.n ? `<div class="m" style="margin-left:0;color:var(--muted);">📝 ${escapeHtml(qa.n)}</div>` : ''}
           <div style="margin-top:4px;"><span class="p" style="color:var(--jade);">A: ${qa.a}</span></div>
           ${qa.ap ? `<div class="p" style="margin-left:0;">${qa.ap}</div>` : ''}
           ${qa.am ? `<div class="m" style="margin-left:0;">${qa.am}</div>` : ''}
-          ${qa.n ? `<div class="m" style="margin-left:0;color:var(--muted);">📝 ${escapeHtml(qa.n)}</div>` : ''}
+          ${qa.an ? `<div class="m" style="margin-left:0;color:var(--muted);">📝 ${escapeHtml(qa.an)}</div>` : ''}
         </div>
         <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end;">
           <div style="display:flex;gap:4px;">
@@ -10576,8 +10603,9 @@ function renderQaManageList(){
       const ap = row.querySelector('[data-edit-ap]').value.trim();
       const am = row.querySelector('[data-edit-am]').value.trim();
       const n = row.querySelector('[data-edit-notes]').value.trim();
+      const an = row.querySelector('[data-edit-answer-notes]').value.trim();
       if(!q || !a) return;
-      qaPairs[i] = { q, qp, qm, a, ap, am, n, id: qaPairs[i].id || newId() };
+      qaPairs[i] = { ...qaPairs[i], q, qp, qm, a, ap, am, n, an, id: qaPairs[i].id || newId() };
       saveQa(qaPairs);
       qaEditingIndex = null;
       renderQaManageList();
@@ -10593,6 +10621,7 @@ document.getElementById('add-qa-submit').addEventListener('click', () => {
   const a = document.getElementById('add-a').value.trim();
   const am = document.getElementById('add-am').value.trim();
   const n = document.getElementById('add-qa-notes').value.trim();
+  const an = document.getElementById('add-qa-answer-notes').value.trim();
   const fb = document.getElementById('qa-add-feedback');
   if(!q || !a){
     fb.textContent = 'Fill in at least the question and the answer (Chinese).';
@@ -10607,13 +10636,14 @@ document.getElementById('add-qa-submit').addEventListener('click', () => {
   }
   const qp = autoPinyinWithHint(q);
   const ap = autoPinyinWithHint(a);
-  qaPairs.push({ q, qp, qm, a, ap, am, n, id: newId(), addedAt: Date.now() });
+  qaPairs.push({ q, qp, qm, a, ap, am, n, an, id: newId(), addedAt: Date.now() });
   saveQa(qaPairs);
   document.getElementById('add-q').value = '';
   document.getElementById('add-qm').value = '';
   document.getElementById('add-a').value = '';
   document.getElementById('add-am').value = '';
   document.getElementById('add-qa-notes').value = '';
+  document.getElementById('add-qa-answer-notes').value = '';
   fb.textContent = (qp || ap) ? 'Added — pinyin generated automatically.' : 'Added — pinyin left blank (generator unavailable), fill in via Edit.';
   fb.style.color = '#3E7C59';
   renderQaManageList();
@@ -10686,10 +10716,10 @@ function downloadText(text, filename){
 const PATCH_TEMPLATE = `# Han Yu Learning — Bulk Word, Phrase & Q&A Import Template
 #
 # Mix words, phrases, AND question/answer pairs in the same file — one entry
-# per line. Words and phrases use 4 fields; Q&A pairs use all 6:
+# per line. Words and phrases use 4 fields; Q&A pairs use up to 7:
 #
-#   hanzi | meaning | type | notes | answer | answer meaning     (qa only)
-#   hanzi | meaning | type | notes                               (word/phrase)
+#   hanzi | meaning | type | notes | answer | answer meaning | answer notes   (qa only)
+#   hanzi | meaning | type | notes                                           (word/phrase)
 #
 #   hanzi          required  — the Chinese characters, or a whole sentence.
 #                              For type "qa" this is the QUESTION.
@@ -10703,9 +10733,13 @@ const PATCH_TEMPLATE = `# Han Yu Learning — Bulk Word, Phrase & Q&A Import Tem
 #                              tab, "qa" for a Q&A Pairs question+answer.
 #   notes          optional  — anything you want: your own Vietnamese
 #                              translation, a mnemonic, whatever. Nothing is
-#                              auto-filled here.
+#                              auto-filled here. For "qa" this is specifically
+#                              the QUESTION's note.
 #   answer         required for "qa" only — the answer's Chinese characters.
 #   answer meaning optional, "qa" only — leave blank to auto-translate.
+#   answer notes   optional, "qa" only — a note for the ANSWER specifically
+#                              (e.g. its own Vietnamese translation), separate
+#                              from the question's note above.
 #
 # Pinyin is always generated automatically for every field — don't include it.
 # For "qa" questions/answers, you can add your own short English answer-hint
@@ -10750,7 +10784,7 @@ const PATCH_TEMPLATE = `# Han Yu Learning — Bulk Word, Phrase & Q&A Import Tem
 # next time you import):
 # 你好 | hello | word |
 # 你好吗 | how are you | phrase | cau hoi tham suc khoe ban
-# 你叫什么名字？[Xiaoming] | what is your name | qa | note about this qa | 我叫小明。 | my name is xiaoming
+# 你叫什么名字？[Xiaoming] | what is your name | qa | note about the question | 我叫小明。 | my name is xiaoming | note about the answer
 
 `;
 document.getElementById('download-patch-template').addEventListener('click', () => {
@@ -10777,7 +10811,7 @@ function exportAllAsPatchText(){
   const lines = [
     '# Han Yu Learning — Full Export (bulk-editable)',
     '# Generated ' + dateStamp() + ' — edit meanings or notes below, then Import patch to write changes back in.',
-    '# Format: hanzi | meaning | type | notes | answer | answer meaning   (last two: Q&A pairs only)',
+    '# Format: hanzi | meaning | type | notes | answer | answer meaning | answer notes   (last three: Q&A pairs only)',
     '# "type" shows hsk1..hsk6 for words that are part of the built-in HSK library',
     '# (which level they belong to), or "word"/"phrase" for ones you added yourself.',
     ''
@@ -10791,7 +10825,7 @@ function exportAllAsPatchText(){
     lines.push([patchSafe(w.h), patchSafe(w.m), type, patchSafe(w.n)].join(' | '));
   });
   qaPairs.forEach(p => {
-    lines.push([patchSafe(p.q), patchSafe(p.qm), 'qa', patchSafe(p.n), patchSafe(p.a), patchSafe(p.am)].join(' | '));
+    lines.push([patchSafe(p.q), patchSafe(p.qm), 'qa', patchSafe(p.n), patchSafe(p.a), patchSafe(p.am), patchSafe(p.an)].join(' | '));
   });
   downloadText(lines.join('\n') + '\n', 'hanyu-full-export-' + dateStamp() + '.txt');
 }
@@ -10814,12 +10848,16 @@ let testDrawing = false;
 let testLastX = 0, testLastY = 0;
 const TEST_TYPE_LABELS = { speaking: '🗣️ Speaking', pinyin: '拼 Pinyin', handwriting: '✍️ Handwriting', qa: '❓ Q&A' };
 
+let testScope = 'both'; // 'star' | 'learned' | 'both' — which pool to draw word-based questions from
 function testWordPool(){
+  if(testScope === 'star') return allWords.filter(w => w.status === 'star');
+  if(testScope === 'learned') return allWords.filter(w => w.status === 'learned');
   return allWords.filter(w => w.status === 'star' || w.status === 'learned');
 }
 // Only Q&A pairs with an actual answer saved — "→ Q&A" (moving a word into Q&A
 // Pairs) creates a stub with a blank answer for you to fill in later, and testing
 // a question with no correct answer to reveal would just show an empty box.
+// Q&A pairs have no ⭐/✓ status of their own, so testScope never filters these out.
 function testQaPool(){
   return qaPairs.filter(p => p.a && p.a.trim());
 }
@@ -10830,20 +10868,29 @@ function updateTestPoolInfo(){
   const info = document.getElementById('test-pool-info');
   const startBtn = document.getElementById('test-start-btn');
   if(words.length === 0 && qaCount === 0){
-    info.textContent = 'Mark some words ⭐ or ✓ first (or add Q&A pairs with an answer) — nothing to test yet.';
+    const scopeLabel = testScope === 'star' ? '⭐ Needs practice' : testScope === 'learned' ? '✓ Learned' : '⭐ or ✓';
+    info.textContent = `No words marked ${scopeLabel} yet (and no Q&A pairs with an answer) — nothing to test yet.`;
     info.style.color = '#C9A227';
     startBtn.disabled = true;
   } else {
-    let text = `${words.length} word${words.length === 1 ? '' : 's'}/phrase${words.length === 1 ? '' : 's'} marked ⭐ or ✓, ${qaCount} Q&A pair${qaCount === 1 ? '' : 's'} available.`;
+    const scopeLabel = testScope === 'star' ? 'marked ⭐ Needs practice' : testScope === 'learned' ? 'marked ✓ Learned' : 'marked ⭐ or ✓';
+    let text = `${words.length} word${words.length === 1 ? '' : 's'}/phrase${words.length === 1 ? '' : 's'} ${scopeLabel}, ${qaCount} Q&A pair${qaCount === 1 ? '' : 's'} available.`;
     if(incompleteQaCount > 0) text += ` (${incompleteQaCount} Q&A pair${incompleteQaCount === 1 ? '' : 's'} skipped — no answer saved yet.)`;
     info.textContent = text;
     info.style.color = '';
     startBtn.disabled = false;
   }
 }
+document.querySelectorAll('[data-test-scope]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    testScope = btn.dataset.testScope;
+    document.querySelectorAll('[data-test-scope]').forEach(b => b.classList.toggle('on', b === btn));
+    updateTestPoolInfo();
+  });
+});
 document.querySelectorAll('[data-test-len]').forEach(btn => {
   btn.addEventListener('click', () => {
-    testLength = parseInt(btn.dataset.testLen, 10);
+    testLength = btn.dataset.testLen === 'all' ? 'all' : parseInt(btn.dataset.testLen, 10);
     document.querySelectorAll('[data-test-len]').forEach(b => b.classList.toggle('on', b === btn));
   });
 });
@@ -10855,14 +10902,36 @@ document.querySelectorAll('[data-test-len]').forEach(btn => {
 function buildTestQueue(length){
   const words = testWordPool();
   const qaPool = testQaPool();
+  const wordTypes = ['speaking', 'pinyin', 'handwriting'];
+
+  if(length === 'all'){
+    // One question per item, covering the whole pool exactly once instead of
+    // a fixed count with repeats — every word/phrase gets asked (via a random
+    // one of its three question types), and every Q&A pair gets asked too.
+    const queue = [];
+    words.forEach(w => {
+      const type = wordTypes[Math.floor(Math.random() * wordTypes.length)];
+      const direction = Math.random() < 0.5 ? 'zh' : 'en'; // only used by 'speaking'
+      queue.push({ type, item: w, direction });
+    });
+    qaPool.forEach(p => {
+      const qaDirection = Math.random() < 0.5 ? 'hz' : 'py';
+      queue.push({ type: 'qa', item: p, direction: qaDirection });
+    });
+    return shuffle(queue); // don't run every word first then every Q&A in a block
+  }
+
   const types = [];
-  if(words.length > 0) types.push('speaking', 'pinyin', 'handwriting');
+  if(words.length > 0) types.push(...wordTypes);
   if(qaPool.length > 0) types.push('qa');
   const queue = [];
   for(let i = 0; i < length; i++){
     const type = types[Math.floor(Math.random() * types.length)];
     if(type === 'qa'){
-      queue.push({ type: 'qa', item: qaPool[Math.floor(Math.random() * qaPool.length)] });
+      // Shown as hanzi OR pinyin, never both — showing both would give the
+      // pinyin away as a free hint sitting right next to the character.
+      const qaDirection = Math.random() < 0.5 ? 'hz' : 'py';
+      queue.push({ type: 'qa', item: qaPool[Math.floor(Math.random() * qaPool.length)], direction: qaDirection });
     } else {
       const direction = Math.random() < 0.5 ? 'zh' : 'en'; // only used by 'speaking'
       queue.push({ type, item: words[Math.floor(Math.random() * words.length)], direction });
@@ -10886,17 +10955,35 @@ function renderTestQuestion(){
   document.getElementById('test-progress').textContent = `Question ${testIdx + 1} / ${testQueue.length}`;
   document.getElementById('test-type-label').textContent = TEST_TYPE_LABELS[q.type];
 
-  ['test-prompt-hz', 'test-prompt-meaning', 'test-qa-block', 'test-input-block', 'test-canvas-block', 'test-reveal-area',
-   'test-answer-hz', 'test-answer-pinyin', 'test-answer-meaning', 'test-answer-notes'].forEach(id => {
+  ['test-prompt-hz', 'test-prompt-meaning', 'test-qa-block', 'test-qa-question', 'test-qa-question-pinyin', 'test-qa-question-notes', 'test-input-block', 'test-canvas-block', 'test-reveal-area',
+   'test-answer-hz', 'test-answer-pinyin', 'test-answer-meaning', 'test-answer-notes', 'test-answer-play'].forEach(id => {
     document.getElementById(id).style.display = 'none';
   });
   document.getElementById('test-reveal-btn').style.display = '';
   document.getElementById('test-mark-row').style.display = 'none';
+  document.getElementById('test-status-offer-row').style.display = 'none';
 
   if(q.type === 'qa'){
     document.getElementById('test-qa-block').style.display = '';
-    document.getElementById('test-qa-question').textContent = q.item.q;
-    document.getElementById('test-qa-question-pinyin').textContent = q.item.qp || '';
+    // Shown as hanzi OR pinyin, never both — see buildTestQueue for why.
+    // Pinyin is still fair game once you reveal the answer below.
+    if(q.direction === 'py'){
+      document.getElementById('test-qa-question-pinyin').style.display = '';
+      document.getElementById('test-qa-question-pinyin').textContent = q.item.qp || '(no pinyin saved)';
+    } else {
+      document.getElementById('test-qa-question').style.display = '';
+      document.getElementById('test-qa-question').textContent = q.item.q;
+    }
+    if(q.item.n){
+      document.getElementById('test-qa-question-notes').style.display = '';
+      document.getElementById('test-qa-question-notes').textContent = '📝 ' + q.item.n;
+    }
+    // Same free-text box the pinyin question type uses — type an attempt in
+    // Chinese or pinyin, self-check against the revealed answer, nothing
+    // graded automatically either way.
+    document.getElementById('test-input-block').style.display = '';
+    document.getElementById('test-pinyin-input').placeholder = 'Type your answer — Chinese characters or pinyin, either is fine';
+    document.getElementById('test-pinyin-input').value = '';
   } else if(q.type === 'speaking'){
     if(q.direction === 'zh'){
       document.getElementById('test-prompt-hz').style.display = '';
@@ -10909,6 +10996,7 @@ function renderTestQuestion(){
     document.getElementById('test-prompt-hz').style.display = '';
     document.getElementById('test-prompt-hz').textContent = q.item.h;
     document.getElementById('test-input-block').style.display = '';
+    document.getElementById('test-pinyin-input').placeholder = 'Type the pinyin — tone marks or numbers, either is fine';
     document.getElementById('test-pinyin-input').value = '';
   } else if(q.type === 'handwriting'){
     document.getElementById('test-prompt-meaning').style.display = '';
@@ -10925,20 +11013,31 @@ function revealTestAnswer(){
   document.getElementById('test-reveal-btn').style.display = 'none';
   document.getElementById('test-mark-row').style.display = '';
 
+  // Whatever the reveal shows as the "correct" hanzi also gets a play button,
+  // so pronunciation can be checked against what was actually said —
+  // particularly useful for 'speaking', but just as handy for the others.
+  let textToSpeak = '';
+
   // Tone-sandhi colouring only ever appears here, in the revealed answer — never
   // in the question/prompt above, since that would hint at the answer before
   // you've had a chance to say/type/write it yourself.
   if(q.type === 'qa'){
     document.getElementById('test-answer-hz').style.display = '';
     document.getElementById('test-answer-hz').innerHTML = hanziWithSandhiHtml(q.item.a);
+    textToSpeak = q.item.a;
     if(q.item.ap){ document.getElementById('test-answer-pinyin').style.display = ''; document.getElementById('test-answer-pinyin').textContent = q.item.ap; }
     if(q.item.am){ document.getElementById('test-answer-meaning').style.display = ''; document.getElementById('test-answer-meaning').textContent = q.item.am; }
-    if(q.item.n){ document.getElementById('test-answer-notes').style.display = ''; document.getElementById('test-answer-notes').textContent = q.item.n; }
+    // The question's own note is already shown up in the prompt (see
+    // renderTestQuestion) — this is specifically the ANSWER's note, so both
+    // sides get their own Vietnamese translation instead of the answer
+    // silently reusing the question's.
+    if(q.item.an){ document.getElementById('test-answer-notes').style.display = ''; document.getElementById('test-answer-notes').textContent = q.item.an; }
   } else if(q.type === 'speaking'){
     // Both sides shown regardless of direction — English meaning AND Vietnamese
     // notes together, so either translation can be checked against what was said.
     document.getElementById('test-answer-hz').style.display = '';
     document.getElementById('test-answer-hz').innerHTML = hanziWithSandhiHtml(q.item.h);
+    textToSpeak = q.item.h;
     document.getElementById('test-answer-pinyin').style.display = '';
     document.getElementById('test-answer-pinyin').textContent = q.item.p || '';
     document.getElementById('test-answer-meaning').style.display = '';
@@ -10947,19 +11046,79 @@ function revealTestAnswer(){
   } else if(q.type === 'pinyin'){
     document.getElementById('test-answer-pinyin').style.display = '';
     document.getElementById('test-answer-pinyin').textContent = q.item.p || '(no pinyin saved)';
+    textToSpeak = q.item.h;
   } else if(q.type === 'handwriting'){
+    // Character, pinyin, and meaning together — not just the character —
+    // so you can check both what you drew and how it's actually said/means.
     document.getElementById('test-answer-hz').style.display = '';
     document.getElementById('test-answer-hz').innerHTML = hanziWithSandhiHtml(q.item.h);
+    textToSpeak = q.item.h;
+    document.getElementById('test-answer-pinyin').style.display = '';
+    document.getElementById('test-answer-pinyin').textContent = q.item.p || '(no pinyin saved)';
+    document.getElementById('test-answer-meaning').style.display = '';
+    document.getElementById('test-answer-meaning').textContent = q.item.m || '(no meaning saved)';
+    if(q.item.n){ document.getElementById('test-answer-notes').style.display = ''; document.getElementById('test-answer-notes').textContent = q.item.n; }
+  }
+
+  if(textToSpeak){
+    const playBtn = document.getElementById('test-answer-play');
+    playBtn.style.display = '';
+    playBtn.onclick = () => speak(textToSpeak);
   }
 }
 
 function markTestQuestion(correct){
   const q = testQueue[testIdx];
   testResults.push({ type: q.type, correct });
+  document.getElementById('test-mark-row').style.display = 'none';
+
+  // Offer to update the word's ⭐/✓ status right here, rather than making you
+  // go back to Flashcards later to do it — but only when it's actually
+  // relevant: passing a "needs practice" word, or missing a "learned" one.
+  // Q&A pairs carry no status of their own, so this never applies to those.
+  if(q.type !== 'qa'){
+    const item = q.item;
+    if(correct && item.status === 'star'){
+      showTestStatusOffer(item, 'learned', `Nice! Mark "${item.h}" as ✓ Learned?`);
+      return; // the offer's own Yes/No buttons advance to the next question
+    }
+    if(!correct && item.status === 'learned'){
+      showTestStatusOffer(item, 'star', `Move "${item.h}" back to ⭐ Needs practice?`);
+      return;
+    }
+  }
+  advanceTestQuestion();
+}
+
+function showTestStatusOffer(item, newStatus, message){
+  const offerRow = document.getElementById('test-status-offer-row');
+  document.getElementById('test-status-offer-text').textContent = message;
+  offerRow.style.display = '';
+  offerRow.dataset.pendingHanzi = item.h;
+  offerRow.dataset.pendingStatus = newStatus;
+}
+
+function advanceTestQuestion(){
   testIdx++;
   if(testIdx >= testQueue.length) renderTestResults();
   else renderTestQuestion();
 }
+
+document.getElementById('test-status-offer-yes').addEventListener('click', () => {
+  const offerRow = document.getElementById('test-status-offer-row');
+  const w = allWords.find(x => x.h === offerRow.dataset.pendingHanzi);
+  if(w){
+    w.status = offerRow.dataset.pendingStatus;
+    saveWords(allWords);
+    refreshAllDecks();
+  }
+  offerRow.style.display = 'none';
+  advanceTestQuestion();
+});
+document.getElementById('test-status-offer-no').addEventListener('click', () => {
+  document.getElementById('test-status-offer-row').style.display = 'none';
+  advanceTestQuestion();
+});
 
 function renderTestResults(){
   document.getElementById('test-active').style.display = 'none';
@@ -11062,7 +11221,8 @@ function parsePatchText(text){
       const answer = parts[4] || '';
       if(!answer){ problems.push(`Line ${i + 1}: type is "qa" but no answer (5th field) was given — skipped.`); return; }
       const answerMeaning = parts[5] || '';
-      rows.push({ h, m, type, n, answer, answerMeaning });
+      const answerNotes = parts[6] || '';
+      rows.push({ h, m, type, n, answer, answerMeaning, answerNotes });
       return;
     }
     rows.push({ h, m, type, n });
@@ -11119,6 +11279,7 @@ async function importPatchRows(rows){
         if(row.n && row.n !== existingPair.n){ existingPair.n = row.n; changed = true; }
         if(row.m && row.m !== existingPair.qm){ existingPair.qm = row.m; changed = true; }
         if(row.answerMeaning && row.answerMeaning !== existingPair.am){ existingPair.am = row.answerMeaning; changed = true; }
+        if(row.answerNotes && row.answerNotes !== existingPair.an){ existingPair.an = row.answerNotes; changed = true; }
         if(changed) updated++; else skipped++;
         continue;
       }
@@ -11130,6 +11291,7 @@ async function importPatchRows(rows){
       if(!am) am = await getAutoEnglish(row.answer);
       const pair = { q: row.h, qp, qm, a: row.answer, ap, am, id: newId(), addedAt: Date.now() };
       if(row.n) pair.n = row.n;
+      if(row.answerNotes) pair.an = row.answerNotes;
       qaPairs.push(pair);
       existingQuestions.set(row.h, pair);
       addedQa++;
