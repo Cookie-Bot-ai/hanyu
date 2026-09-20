@@ -43,11 +43,11 @@
   h1{ font-family:'STZhongsong','SimSun','Songti SC',serif; font-size:25px; margin:3px 0 0; letter-spacing:1px; }
   .eyebrow{ font-size:10px; letter-spacing:2.5px; text-transform:uppercase; color:var(--muted); }
   .wrap{ width:100%; max-width:640px; }
-  /* Three-column shell: reference rails left and right, app in the middle.
-     The rails are sticky so they stay readable while the middle column scrolls.
-     Widened from the original 1260px/300px-rail layout so the tone-sandhi and
-     radical reference panels sit further out at the edges on wide screens,
-     instead of crowding the center card. */
+  /* Three-column shell: radical reference on the left, app in the middle,
+     the user's own Notepad on the right. The rails are sticky so they stay
+     readable while the middle column scrolls. Widened from the original
+     1260px/300px-rail layout so both rails sit further out at the edges on
+     wide screens, instead of crowding the center card. */
   .shell{ display:grid; gap:32px; align-items:start; width:100%; max-width:1640px;
     grid-template-columns:minmax(260px,380px) minmax(0,640px) minmax(260px,380px);
     justify-content:center; }
@@ -57,6 +57,45 @@
   .side::-webkit-scrollbar{ width:8px; }
   .side::-webkit-scrollbar-thumb{ background:var(--border); border-radius:8px; }
   .side .card{ margin:0; }
+
+  /* Notepad — a lightweight rich-text area for the user's own notes, styled
+     like the rest of the app's dark toolbar buttons. Uses the browser's
+     built-in contenteditable + execCommand, which is all a Bold/Italic/
+     color-highlight notepad like this actually needs — no editor library. */
+  .notepad-toolbar{ display:flex; flex-wrap:wrap; align-items:center; gap:5px; margin-bottom:8px; }
+  .notepad-btn{ width:32px; height:32px; padding:0; border:none; border-radius:8px; cursor:pointer;
+    background:rgba(16,21,26,.55); color:#F1EDE1; font-size:14px; line-height:1;
+    display:inline-flex; align-items:center; justify-content:center;
+    box-shadow:0 1px 4px rgba(0,0,0,.2); transition:background .15s ease; }
+  .notepad-btn:hover{ background:rgba(111,168,138,.7); }
+  .notepad-btn:active{ transform:scale(.94); }
+  .notepad-sep{ width:1px; height:22px; background:var(--border); margin:0 2px; }
+  .notepad-color-label{ position:relative; width:32px; height:32px; border-radius:8px; cursor:pointer;
+    background:rgba(16,21,26,.55); color:#F1EDE1; font-size:13px; font-weight:700;
+    display:inline-flex; align-items:center; justify-content:center; overflow:hidden;
+    box-shadow:0 1px 4px rgba(0,0,0,.2); }
+  .notepad-color-label.notepad-highlight-icon{ font-size:14px; font-weight:400; }
+  .notepad-color-label input[type="color"]{ position:absolute; inset:0; width:100%; height:100%;
+    opacity:0; cursor:pointer; border:none; padding:0; }
+
+  /* Two-column ruled layout — same fixed line-height and ruled-line spacing on
+     both sides so a row on the left always sits level with the same row on
+     the right, like an exercise book. background-attachment:local is the key
+     part: it makes the ruled lines scroll WITH the text instead of staying
+     fixed to the box, so a line always stays under whatever's written on it.
+     Scroll is also synced between the two columns in JS for the same reason —
+     independent scrolling would break the row-to-row correspondence the
+     lines exist for, even though the underlying text positions never move. */
+  .notepad-columns{ display:flex; gap:10px; }
+  .notepad-col{ flex:1; min-width:0; display:flex; flex-direction:column; }
+  .notepad-col-label{ font-size:11px; text-transform:uppercase; letter-spacing:1px; color:var(--muted); margin-bottom:4px; }
+  .notepad-lined{ min-height:280px; max-height:55vh; overflow-y:auto; background-color:var(--paper);
+    color:var(--ink); border:1px solid var(--border); border-radius:10px; padding:8px 10px 0;
+    font-size:14px; line-height:32px; outline:none; cursor:text;
+    background-image:repeating-linear-gradient(to bottom, transparent, transparent 31px, var(--border) 31px, var(--border) 32px);
+    background-attachment:local; }
+  .notepad-lined ul{ margin:0 0 0 20px; padding:0; }
+  .notepad-lined > div{ min-height:32px; line-height:32px; }
   .side summary{ font-size:14px; }
   .side table{ font-size:12px; }
   /* Not enough width for rails — stack them below the app instead of squashing it */
@@ -198,6 +237,17 @@
   .speed-row label{ font-size:12px; color:var(--muted); white-space:nowrap; }
   .speed-row input[type=range]{ flex:1; accent-color:var(--gold); }
   .speed-val{ font-size:12px; color:#E7EAE3; width:38px; text-align:right; }
+
+  /* Status filter — tick any combination of ⭐/✓/🆕, or "All", to focus practice
+     on just those words/phrases/Q&A pairs. One shared setting (same tick-boxes,
+     same state) across Flashcards, Translate, Dictation, and Q&A, so the focus
+     you set carries with you as you move between them instead of resetting. */
+  .status-filter{ display:flex; flex-wrap:wrap; gap:6px 14px; justify-content:center;
+    background:var(--panel); border:1px solid var(--border); border-radius:12px;
+    padding:10px 14px; margin-bottom:12px; box-shadow:0 2px 8px rgba(0,0,0,.18); }
+  .status-filter label{ display:flex; align-items:center; gap:5px; font-size:12.5px;
+    color:var(--muted); white-space:nowrap; cursor:pointer; }
+  .status-filter input[type=checkbox]{ accent-color:var(--gold); cursor:pointer; }
 
   .card{ position:relative; background:var(--paper); border-radius:16px; padding:56px 24px; text-align:center;
     box-shadow:0 14px 34px rgba(0,0,0,.4), 0 2px 8px rgba(0,0,0,.25); min-height:220px; overflow:hidden; }
@@ -354,30 +404,22 @@
   <aside class="side side-left">
       <div class="card" style="text-align:left;padding:18px;">
         <details open>
-          <summary style="cursor:pointer;font-size:15px;color:var(--ink);font-weight:600;">🎵 Tone Changes — written vs. spoken</summary>
+          <summary style="cursor:pointer;font-size:15px;color:var(--ink);font-weight:600;">部 Radicals — memorizing characters faster</summary>
           <div style="margin-top:12px;font-size:13.5px;line-height:1.65;color:#3A3A34;">
-            <p>Pinyin tone marks show the <b>dictionary tone</b> — but in fast, natural speech a few common patterns change how a syllable actually comes out. These are called <b>tone sandhi</b>.</p>
+            <p>A <b>radical</b> (部首) is a recurring building-block inside a character. Most characters are a semantic-phonetic compound: one part hints at <b>meaning</b> (the radical), the other hints at <b>sound</b>. Learning to spot radicals turns an intimidating character into a small, memorable combination instead of a random shape.</p>
 
-            <p><b>1. Third tone + third tone → second + third</b><br>
-            When two 3rd-tone syllables sit next to each other, the first one is spoken as a 2nd tone.<br>
-            Written: <span class="hanzi">你好</span> nǐ hǎo &nbsp;→&nbsp; Spoken: ní hǎo</p>
+            <table style="width:100%;border-collapse:collapse;font-size:13px;margin:12px 0;">
+              <tr style="border-bottom:1px solid var(--border);">
+                <th style="text-align:left;padding:6px 4px;">Radical</th>
+                <th style="text-align:left;padding:6px 4px;">Meaning</th>
+                <th style="text-align:left;padding:6px 4px;">Examples</th>
+              </tr>
+              <tbody id="radical-reference-tbody"></tbody>
+            </table>
 
-            <p><b>2. The "half" third tone</b><br>
-            Before a 1st, 2nd, or 4th tone, a 3rd tone is often just a low dip with no rise back up — lighter than the full dip-and-rise you hear when a 3rd tone is said alone.</p>
+            <p><b>How to use this:</b> when you meet a new character, ask "what's the left/top part, and what's the right/bottom part?" Often one piece is a radical you already know (a meaning clue), and the other piece sounds similar to another character you know (a sound clue). Spotting the pattern sticks far better than memorizing the character as an unrelated picture.</p>
 
-            <p><b>3. 一 (yī) changes</b><br>
-            Alone, or at the end of a word, 一 stays 1st tone (yī).<br>
-            Before a 4th tone, it becomes 2nd tone: <span class="hanzi">一个</span> yí gè.<br>
-            Before a 1st, 2nd, or 3rd tone, it becomes 4th tone: <span class="hanzi">一天</span> yì tiān, <span class="hanzi">一年</span> yì nián, <span class="hanzi">一起</span> yì qǐ.</p>
-
-            <p><b>4. 不 (bù) changes</b><br>
-            Stays 4th tone (bù) before a 1st, 2nd, or 3rd tone.<br>
-            Becomes 2nd tone before another 4th tone: <span class="hanzi">不是</span> bú shì, <span class="hanzi">不对</span> bú duì.</p>
-
-            <p><b>5. Neutral tone (轻声)</b><br>
-            Some syllables lose their tone entirely and go light/toneless — grammar particles like 的, 了, 吗, 呢, and the second syllable of many everyday words such as <span class="hanzi">谢谢</span> xièxie or <span class="hanzi">妈妈</span> māma.</p>
-
-            <p class="hint">This app's pinyin and audio always reflect the written/dictionary tone — worth knowing these patterns so spoken Mandarin doesn't feel "off" from what you've memorized.</p>
+            <p class="hint">Tip: while practicing on the Flashcards tab, glance at repeated components across different words — the same radicals keep showing up.</p>
           </div>
         </details>
       </div>
@@ -440,12 +482,13 @@
         <select class="mode" id="stroke-scope" style="display:inline-block;">
           <option value="all">All words (my words + HSK)</option>
           <option value="phrases">Phrases only</option>
-          <option value="star">⭐ Needs practice only</option>
         </select>
       </div>
-      <div class="speed-row" style="margin-bottom:12px;">
-        <label for="stroke-hide-learned">Hide learned words (✓)</label>
-        <input type="checkbox" id="stroke-hide-learned" style="margin-left:auto;">
+      <div class="status-filter" id="status-filter-stroke">
+        <label><input type="checkbox" class="status-filter-cb" data-status="star">⭐ Needs practice</label>
+        <label><input type="checkbox" class="status-filter-cb" data-status="learned">✓ Learned</label>
+        <label><input type="checkbox" class="status-filter-cb" data-status="new">🆕 New</label>
+        <label><input type="checkbox" class="status-filter-cb" data-status="all">All words</label>
       </div>
       <div class="speed-row" style="margin-bottom:12px;">
         <label for="stroke-order">Card order</label>
@@ -670,9 +713,14 @@
         <select class="mode" id="bee-scope">
           <option value="all">All words</option>
           <option value="phrases">Phrases only</option>
-          <option value="star">⭐ Needs practice only</option>
           <option value="missed">🔁 Previously missed words</option>
         </select>
+      </div>
+      <div class="status-filter" id="status-filter-bee">
+        <label><input type="checkbox" class="status-filter-cb" data-status="star">⭐ Needs practice</label>
+        <label><input type="checkbox" class="status-filter-cb" data-status="learned">✓ Learned</label>
+        <label><input type="checkbox" class="status-filter-cb" data-status="new">🆕 New</label>
+        <label><input type="checkbox" class="status-filter-cb" data-status="all">All words</label>
       </div>
       <div class="top-controls">
         <span class="on-bg" id="bee-round-count" style="font-size:12px;">Word 1 / 10</span>
@@ -682,10 +730,6 @@
           <option value="50">Round of 50</option>
           <option value="all">All words</option>
         </select>
-      </div>
-      <div class="speed-row" style="margin-bottom:12px;">
-        <label for="bee-hide-learned">Hide learned words (✓)</label>
-        <input type="checkbox" id="bee-hide-learned" style="margin-left:auto;">
       </div>
       <div class="row">
         <button class="action btn-reveal" id="bee-hint-toggle" style="flex:1;">💡 Show hint (meaning)</button>
@@ -736,7 +780,17 @@
 
     <!-- Q&A PRACTICE -->
     <div class="panel" id="panel-qa">
-      <div class="meta"><span id="qa-count">Question 1 / 0</span></div>
+      <div class="meta" style="display:flex;align-items:center;gap:8px;">
+        <button class="action small" id="qa-star-toggle" title="Needs practice — add/remove from ⭐ list">⭐</button>
+        <button class="action small" id="qa-learned-toggle" title="Mark/unmark this Q&amp;A pair as learned">✓</button>
+        <span id="qa-count">Question 1 / 0</span>
+      </div>
+      <div class="status-filter" id="status-filter-qa">
+        <label><input type="checkbox" class="status-filter-cb" data-status="star">⭐ Needs practice</label>
+        <label><input type="checkbox" class="status-filter-cb" data-status="learned">✓ Learned</label>
+        <label><input type="checkbox" class="status-filter-cb" data-status="new">🆕 New</label>
+        <label><input type="checkbox" class="status-filter-cb" data-status="all">All words</label>
+      </div>
       <div class="nav-row-top">
         <button class="card-nav prev" id="qa-prev" title="Previous question" aria-label="Previous question">‹</button>
         <div class="nav-icons">
@@ -979,26 +1033,48 @@
   <!-- Permanent right reference: radicals table (same RADICAL_INFO source as the
        per-character Flashcard labels). -->
   <aside class="side side-right">
-      <div class="card" style="text-align:left;padding:18px;">
-        <details open>
-          <summary style="cursor:pointer;font-size:15px;color:var(--ink);font-weight:600;">部 Radicals — memorizing characters faster</summary>
-          <div style="margin-top:12px;font-size:13.5px;line-height:1.65;color:#3A3A34;">
-            <p>A <b>radical</b> (部首) is a recurring building-block inside a character. Most characters are a semantic-phonetic compound: one part hints at <b>meaning</b> (the radical), the other hints at <b>sound</b>. Learning to spot radicals turns an intimidating character into a small, memorable combination instead of a random shape.</p>
-
-            <table style="width:100%;border-collapse:collapse;font-size:13px;margin:12px 0;">
-              <tr style="border-bottom:1px solid var(--border);">
-                <th style="text-align:left;padding:6px 4px;">Radical</th>
-                <th style="text-align:left;padding:6px 4px;">Meaning</th>
-                <th style="text-align:left;padding:6px 4px;">Examples</th>
-              </tr>
-              <tbody id="radical-reference-tbody"></tbody>
-            </table>
-
-            <p><b>How to use this:</b> when you meet a new character, ask "what's the left/top part, and what's the right/bottom part?" Often one piece is a radical you already know (a meaning clue), and the other piece sounds similar to another character you know (a sound clue). Spotting the pattern sticks far better than memorizing the character as an unrelated picture.</p>
-
-            <p class="hint">Tip: while practicing on the Flashcards tab, glance at repeated components across different words — the same radicals keep showing up.</p>
+      <div class="card" style="text-align:left;padding:18px;display:flex;flex-direction:column;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:6px;">
+          <span style="font-size:15px;color:var(--ink);font-weight:600;">📝 My Notes</span>
+          <div style="display:flex;gap:6px;">
+            <button type="button" class="action btn-reveal small" id="notepad-export-btn" title="Download your notes as a file">⬇ Export</button>
+            <button type="button" class="action btn-reveal small" id="notepad-import-btn" title="Load notes from a file">⬆ Import</button>
+            <input type="file" id="notepad-import-file" accept=".html,.htm,text/html" style="display:none;">
+            <button type="button" class="action btn-danger small" id="notepad-clear-btn" title="Clear all notes">🗑 Clear</button>
           </div>
-        </details>
+        </div>
+        <div id="notepad-io-feedback" style="font-size:12px;color:var(--muted);margin:-4px 0 8px;"></div>
+        <div class="notepad-toolbar">
+          <button type="button" class="notepad-btn" data-cmd="bold" title="Bold"><b>B</b></button>
+          <button type="button" class="notepad-btn" data-cmd="italic" title="Italic"><i>I</i></button>
+          <button type="button" class="notepad-btn" data-cmd="underline" title="Underline"><u>U</u></button>
+          <button type="button" class="notepad-btn" data-cmd="strikeThrough" title="Strikethrough"><s>S</s></button>
+          <span class="notepad-sep"></span>
+          <label class="notepad-color-label" title="Text color">A
+            <input type="color" id="notepad-text-color" value="#1C231F">
+          </label>
+          <label class="notepad-color-label notepad-highlight-icon" title="Highlight color">🖍
+            <input type="color" id="notepad-highlight-color" value="#FFF59D">
+          </label>
+          <span class="notepad-sep"></span>
+          <button type="button" class="notepad-btn" data-cmd="insertUnorderedList" title="Bullet list">•≡</button>
+          <button type="button" class="notepad-btn" data-cmd="justifyLeft" title="Align left">◧</button>
+          <button type="button" class="notepad-btn" data-cmd="justifyCenter" title="Align center">▣</button>
+          <button type="button" class="notepad-btn" data-cmd="removeFormat" title="Clear formatting">✕</button>
+        </div>
+        <div class="notepad-columns">
+          <div class="notepad-col">
+            <div class="notepad-col-label">汉字 Chinese</div>
+            <div id="notepad-content-left" class="notepad-lined" contenteditable="true" spellcheck="false"
+                 data-placeholder="Chinese words…"></div>
+          </div>
+          <div class="notepad-col">
+            <div class="notepad-col-label">Meaning</div>
+            <div id="notepad-content-right" class="notepad-lined" contenteditable="true" spellcheck="false"
+                 data-placeholder="Meanings…"></div>
+          </div>
+        </div>
+        <p class="hint" style="margin-top:8px;">Saved automatically on this device as you type. Press Enter for a blank line on either side to keep matching rows level with each other.</p>
       </div>
   </aside>
 
@@ -1705,6 +1781,59 @@ const HIDE_LEARNED_KEY = 'chinesevocab_hide_learned';
 function getHideLearned(){ return localStorage.getItem(HIDE_LEARNED_KEY) !== 'false'; } // default true
 function setHideLearned(val){ localStorage.setItem(HIDE_LEARNED_KEY, val ? 'true' : 'false'); }
 
+// ---- Status filter: tick any combination of ⭐ Needs practice / ✓ Learned /
+// 🆕 New (no status yet), or "All", to focus practice on just those items.
+// One shared setting — the same tick-boxes appear on Flashcards, Translate
+// (same panel), Dictation, and Q&A, all reading and writing this same state,
+// so the focus you set carries with you as you move between them.
+const STATUS_FILTER_KEY = 'chinesevocab_status_filter';
+function getStatusFilter(){
+  try{
+    const saved = JSON.parse(localStorage.getItem(STATUS_FILTER_KEY));
+    if(Array.isArray(saved) && saved.length) return saved;
+  }catch(e){}
+  return ['all']; // default: nothing focused down, show everything
+}
+function setStatusFilter(active){
+  localStorage.setItem(STATUS_FILTER_KEY, JSON.stringify(active));
+  document.querySelectorAll('.status-filter-cb').forEach(cb => {
+    cb.checked = active.includes(cb.dataset.status);
+  });
+}
+// Applies the current filter to any list of items with a `.status` field
+// ('star' | 'learned' | undefined). "All" (or nothing selected, as a safe
+// fallback) returns the list untouched.
+function applyStatusFilter(list){
+  const active = getStatusFilter();
+  if(active.includes('all')) return list;
+  return list.filter(item => {
+    if(active.includes('star') && item.status === 'star') return true;
+    if(active.includes('learned') && item.status === 'learned') return true;
+    if(active.includes('new') && !item.status) return true;
+    return false;
+  });
+}
+// Ticking "All" clears the other three (they're redundant once everything is
+// shown); ticking any specific one clears "All" (it's no longer accurate).
+// Every status-filter checkbox on every panel shares this one handler.
+document.querySelectorAll('.status-filter-cb').forEach(cb => {
+  cb.checked = getStatusFilter().includes(cb.dataset.status);
+  cb.addEventListener('change', () => {
+    let active = getStatusFilter().slice();
+    const status = cb.dataset.status;
+    if(status === 'all'){
+      active = cb.checked ? ['all'] : [];
+    } else {
+      active = active.filter(s => s !== 'all');
+      if(cb.checked) active.push(status);
+      else active = active.filter(s => s !== status);
+    }
+    if(active.length === 0) active = ['all']; // never leave every box unchecked
+    setStatusFilter(active);
+    refreshAllDecks();
+  });
+});
+
 // ---- Common radicals: used to flag recognizable components on Flashcards.
 // Curated to characters we're confident actually contain each radical as a
 // real component (not just superficially similar strokes). Not exhaustive —
@@ -1771,6 +1900,326 @@ if(radicalTbody){
       `<td style="padding:6px 4px;">${entry.meaning}</td>` +
       `<td class="hanzi" style="padding:6px 4px;">${examples}</td></tr>`;
   }).join('');
+}
+
+// ---- My Notes — a two-column ruled notepad: Chinese words on the left,
+// meanings on the right, with matching ruled lines so a row on one side sits
+// level with the same row on the other (like an exercise book). Rich text
+// (bold/italic/underline/strike, text colour, highlight, bullet list,
+// alignment) via contenteditable + execCommand — no editor library needed.
+const NOTEPAD_KEY_LEFT = 'chinesevocab_notepad_left_html';
+const NOTEPAD_KEY_RIGHT = 'chinesevocab_notepad_right_html';
+const NOTEPAD_KEY_LEGACY = 'chinesevocab_notepad_html'; // single-column notepad this replaced
+const notepadLeft = document.getElementById('notepad-content-left');
+const notepadRight = document.getElementById('notepad-content-right');
+if(notepadLeft && notepadRight){
+  const savedLeft = localStorage.getItem(NOTEPAD_KEY_LEFT);
+  const savedRight = localStorage.getItem(NOTEPAD_KEY_RIGHT);
+  if(savedLeft) notepadLeft.innerHTML = savedLeft;
+  if(savedRight) notepadRight.innerHTML = savedRight;
+  // One-time migration: anyone with notes from the old single-column notepad
+  // gets them moved into the Chinese-words column rather than losing them —
+  // only if the new two-column keys are both still empty, so this never
+  // overwrites anything already written in the new layout.
+  if(!savedLeft && !savedRight){
+    const legacy = localStorage.getItem(NOTEPAD_KEY_LEGACY);
+    if(legacy){
+      notepadLeft.innerHTML = legacy;
+      localStorage.setItem(NOTEPAD_KEY_LEFT, legacy);
+    }
+  }
+
+  // Every Enter press creates a new top-level <div> (one per ruled line)
+  // instead of a <br> — this keeps each line as its own addressable element,
+  // which is what makes "click any ruled line to jump straight there" and
+  // "Tab to the matching row" both possible below. Wrapped defensively: if
+  // this deprecated API isn't available for some reason, the rest of the
+  // notepad (saving, formatting, click/Tab navigation) still has to work —
+  // typing would just fall back to the browser's own default line breaks.
+  try{ document.execCommand('defaultParagraphSeparator', false, 'div'); }catch(e){}
+
+  // Normalizes a column's content into one <div> per line, wrapping any bare
+  // text/legacy content that isn't already line-divs (e.g. right after the
+  // migration above, or a loaded save from before this feature existed).
+  function normalizeLines(col){
+    if(col.children.length === 0 && col.childNodes.length > 0){
+      const wrapper = document.createElement('div');
+      while(col.firstChild) wrapper.appendChild(col.firstChild);
+      col.appendChild(wrapper);
+    }
+    Array.from(col.childNodes).forEach(node => {
+      if(node.nodeType === 3 && node.textContent.trim()){ // stray text node directly in col
+        const wrapper = document.createElement('div');
+        col.insertBefore(wrapper, node);
+        wrapper.appendChild(node);
+      }
+    });
+  }
+  normalizeLines(notepadLeft);
+  normalizeLines(notepadRight);
+
+  // Fills a column with blank ruled lines up to the visible box height (or
+  // at least a screenful) so every ruled line you can SEE is something you
+  // can click straight into, not just the lines you've already typed on.
+  function fillVisibleLines(col, minLines){
+    const target = Math.max(minLines, Math.ceil(280 / 32));
+    while(col.children.length < target){
+      const div = document.createElement('div');
+      div.innerHTML = '<br>';
+      col.appendChild(div);
+    }
+  }
+  fillVisibleLines(notepadLeft, 1);
+  fillVisibleLines(notepadRight, 1);
+
+  function getLineDivs(col){
+    return Array.from(col.children);
+  }
+  // Adds blank lines until the column has at least `count` of them, so a
+  // click, Tab, or line-jump past the current end always lands somewhere
+  // real rather than falling back to the last line.
+  function ensureLineCount(col, count){
+    let divs = getLineDivs(col);
+    while(divs.length < count){
+      const div = document.createElement('div');
+      div.innerHTML = '<br>';
+      col.appendChild(div);
+      divs.push(div);
+    }
+    return divs;
+  }
+  // Which line-div the caret is currently in, by walking up from the
+  // selection to whichever direct child of the column it's inside.
+  function getCurrentLineIndex(col){
+    const sel = window.getSelection();
+    if(!sel.rangeCount) return 0;
+    let node = sel.getRangeAt(0).startContainer;
+    while(node && node.parentNode !== col) node = node.parentNode;
+    if(!node) return 0;
+    const idx = getLineDivs(col).indexOf(node);
+    return idx >= 0 ? idx : 0;
+  }
+  // Focuses a column and moves the caret to the end of whatever's on the
+  // given line (padding with blank lines first if it doesn't exist yet).
+  function placeCaretAtLine(col, index){
+    const divs = ensureLineCount(col, index + 1);
+    const target = divs[index];
+    col.focus();
+    const range = document.createRange();
+    range.selectNodeContents(target);
+    range.collapse(false);
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+  }
+
+  // Click anywhere in the ruled area — including the blank lines below
+  // whatever's already been typed — jumps straight to that exact line,
+  // rather than the browser's default of landing on the last real line.
+  [notepadLeft, notepadRight].forEach(col => {
+    col.addEventListener('mousedown', (e) => {
+      const rect = col.getBoundingClientRect();
+      const relativeY = e.clientY - rect.top + col.scrollTop - 8; // 8 = top padding
+      const lineIndex = Math.max(0, Math.floor(relativeY / 32));
+      if(lineIndex >= getLineDivs(col).length){
+        e.preventDefault();
+        placeCaretAtLine(col, lineIndex);
+      }
+      // Otherwise the click landed on an existing line — let the browser
+      // place the caret there natively, exactly where clicked.
+    });
+  });
+
+  // Tab moves to the matching row on the other side instead of leaving the
+  // notepad entirely (the browser's normal Tab behaviour). From the Chinese
+  // side it jumps to the SAME row on the Meaning side; from the Meaning side
+  // it jumps to the NEXT row back on the Chinese side, so Tab, type, Tab
+  // naturally walks straight down the page filling in one row after another.
+  notepadLeft.addEventListener('keydown', (e) => {
+    if(e.key !== 'Tab' || e.shiftKey) return;
+    e.preventDefault();
+    placeCaretAtLine(notepadRight, getCurrentLineIndex(notepadLeft));
+  });
+  notepadRight.addEventListener('keydown', (e) => {
+    if(e.key !== 'Tab' || e.shiftKey) return;
+    e.preventDefault();
+    placeCaretAtLine(notepadLeft, getCurrentLineIndex(notepadRight) + 1);
+  });
+
+  // Tracks whichever column was typed in or clicked into last, so the shared
+  // toolbar above (Bold, colour, etc.) always applies to the right one.
+  let activeNotepad = notepadLeft;
+  notepadLeft.addEventListener('focus', () => { activeNotepad = notepadLeft; });
+  notepadRight.addEventListener('focus', () => { activeNotepad = notepadRight; });
+
+  // localStorage has a shared quota for this whole app (words, Q&A, and
+  // notes all live in it together) — usually a few MB per browser. There's
+  // no length limit in the notepad itself, but if that ceiling is ever hit,
+  // fail loudly here rather than silently losing whatever was just typed.
+  function trySaveNotepad(){
+    try{
+      localStorage.setItem(NOTEPAD_KEY_LEFT, notepadLeft.innerHTML);
+      localStorage.setItem(NOTEPAD_KEY_RIGHT, notepadRight.innerHTML);
+      return true;
+    }catch(e){
+      const fb = document.getElementById('notepad-io-feedback');
+      if(fb){
+        fb.textContent = 'Could not save — your notes may have filled the space this browser allows. Try ⬇ Export now to back up what you have, then trim some content.';
+        fb.style.color = '#A6332B';
+      }
+      return false;
+    }
+  }
+  let notepadSaveTimer = null;
+  function saveNotepad(){
+    clearTimeout(notepadSaveTimer);
+    notepadSaveTimer = setTimeout(trySaveNotepad, 400);
+  }
+  notepadLeft.addEventListener('input', saveNotepad);
+  notepadRight.addEventListener('input', saveNotepad);
+
+  // Keeps the ruled lines level between columns as either one is scrolled —
+  // otherwise scrolling just one side would slide its rows out of sync with
+  // the other, even though the lines are drawn identically on both.
+  let syncingScroll = false;
+  function syncScroll(from, to){
+    from.addEventListener('scroll', () => {
+      if(syncingScroll) return;
+      syncingScroll = true;
+      to.scrollTop = from.scrollTop;
+      syncingScroll = false;
+    });
+  }
+  syncScroll(notepadLeft, notepadRight);
+  syncScroll(notepadRight, notepadLeft);
+
+  // Paste is plain-text-only, on purpose. contenteditable would otherwise
+  // happily accept a pasted image by inlining it as base64 text, and a
+  // single photo like that can be several hundred KB to a few MB — easily
+  // enough to blow through the shared localStorage quota above and put
+  // saving everything else (words, Q&A) at risk too. Formatting typed or
+  // applied with the toolbar buttons is unaffected; only paste is restricted.
+  [notepadLeft, notepadRight].forEach(col => {
+    col.addEventListener('paste', (e) => {
+      e.preventDefault();
+      const text = (e.clipboardData || window.clipboardData).getData('text/plain');
+      document.execCommand('insertText', false, text);
+    });
+  });
+
+  document.querySelectorAll('.notepad-btn[data-cmd]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      activeNotepad.focus();
+      document.execCommand(btn.dataset.cmd, false, null);
+      saveNotepad();
+    });
+  });
+  document.getElementById('notepad-text-color').addEventListener('input', (e) => {
+    activeNotepad.focus();
+    document.execCommand('foreColor', false, e.target.value);
+    saveNotepad();
+  });
+  document.getElementById('notepad-highlight-color').addEventListener('input', (e) => {
+    activeNotepad.focus();
+    document.execCommand('hiliteColor', false, e.target.value);
+    saveNotepad();
+  });
+  document.getElementById('notepad-clear-btn').addEventListener('click', () => {
+    if(confirm('Clear both columns of notes? This cannot be undone.')){
+      notepadLeft.innerHTML = '';
+      notepadRight.innerHTML = '';
+      fillVisibleLines(notepadLeft, 1);
+      fillVisibleLines(notepadRight, 1);
+      saveNotepad();
+    }
+  });
+
+  // Export/Import as a standalone .html file — separate from the main word
+  // backup, so notes can be carried over to another computer or phone on
+  // their own. Both columns are wrapped in the same side-by-side layout so
+  // the file still looks and lines up correctly if opened directly in a
+  // browser, not just when re-imported here.
+  document.getElementById('notepad-export-btn').addEventListener('click', () => {
+    const fb = document.getElementById('notepad-io-feedback');
+    if(!notepadLeft.textContent.trim() && !notepadRight.textContent.trim()){
+      fb.textContent = 'Nothing to export yet — your notes are empty.';
+      fb.style.color = '#C9A227';
+      return;
+    }
+    const doc = `<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><title>Han Yu Learning — My Notes</title>
+<style>
+body{font-family:-apple-system,Segoe UI,Arial,sans-serif;font-size:15px;color:#1C231F;margin:24px auto;max-width:900px;padding:0 16px;}
+.cols{display:flex;gap:16px;}
+.col{flex:1;min-width:0;}
+.col h2{font-size:13px;text-transform:uppercase;letter-spacing:1px;color:#8A9A92;margin:0 0 6px;}
+.lined{line-height:32px;padding:8px 10px 0;border:1px solid #ddd5c4;border-radius:10px;
+  background-image:repeating-linear-gradient(to bottom, transparent, transparent 31px, #ddd5c4 31px, #ddd5c4 32px);}
+</style>
+</head><body>
+<div class="cols">
+  <div class="col" id="notepad-export-left"><h2>汉字 Chinese</h2><div class="lined">${notepadLeft.innerHTML}</div></div>
+  <div class="col" id="notepad-export-right"><h2>Meaning</h2><div class="lined">${notepadRight.innerHTML}</div></div>
+</div>
+</body></html>
+`;
+    downloadText(doc, 'hanyu-my-notes-' + dateStamp() + '.html');
+    fb.textContent = 'Downloaded — keep this file to bring your notes to another device.';
+    fb.style.color = '#3E7C59';
+  });
+  document.getElementById('notepad-import-btn').addEventListener('click', () => {
+    document.getElementById('notepad-import-file').click();
+  });
+  document.getElementById('notepad-import-file').addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    e.target.value = ''; // so choosing the same file again still fires 'change'
+    if(!file) return;
+    const fb = document.getElementById('notepad-io-feedback');
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      const raw = evt.target.result;
+      let newLeft = null, newRight = null;
+      try{
+        const parsed = new DOMParser().parseFromString(raw, 'text/html');
+        const leftEl = parsed.querySelector('#notepad-export-left .lined');
+        const rightEl = parsed.querySelector('#notepad-export-right .lined');
+        if(leftEl || rightEl){
+          newLeft = leftEl ? leftEl.innerHTML : '';
+          newRight = rightEl ? rightEl.innerHTML : '';
+        } else if(parsed.body && parsed.body.innerHTML.trim()){
+          // A file from the old single-column notepad, or anything else —
+          // whatever it contains lands in the Chinese-words column so
+          // nothing is silently dropped.
+          newLeft = parsed.body.innerHTML;
+          newRight = '';
+        }
+      }catch(err){ /* not parseable HTML — fall through to plain-text below */ }
+      if(newLeft === null && newRight === null){
+        newLeft = raw;
+        newRight = '';
+      }
+
+      if((notepadLeft.textContent.trim() || notepadRight.textContent.trim()) &&
+         !confirm('Replace your current notes with the imported file? This cannot be undone.')){
+        return;
+      }
+      notepadLeft.innerHTML = newLeft;
+      notepadRight.innerHTML = newRight;
+      normalizeLines(notepadLeft);
+      normalizeLines(notepadRight);
+      fillVisibleLines(notepadLeft, 1);
+      fillVisibleLines(notepadRight, 1);
+      if(trySaveNotepad()){
+        fb.textContent = 'Notes imported from "' + file.name + '".';
+        fb.style.color = '#3E7C59';
+      } // trySaveNotepad already shows its own error message on failure
+    };
+    reader.onerror = () => {
+      fb.textContent = 'Could not read that file — try exporting a fresh copy and importing that instead.';
+      fb.style.color = '#A6332B';
+    };
+    reader.readAsText(file);
+  });
 }
 
 // ---- HSK word library ----
@@ -7957,9 +8406,7 @@ function scopedVocab(scope){
   const isMyPhrase = w => w.myCategory === 'phrase' || (!w.myCategory && isPhrase(w) && !isHskWord(w.h));
   if(scope === 'all') list = list.filter(w => !isMyPhrase(w));
   else if(scope === 'phrases' || scope === 'myphrases') list = list.filter(isMyPhrase);
-  else if(scope === 'star') list = list.filter(w => w.status === 'star');
-  if(scope !== 'star' && getHideLearned()) list = list.filter(w => w.status !== 'learned');
-  return list;
+  return applyStatusFilter(list);
 }
 
 function shuffle(arr){
@@ -8706,7 +9153,6 @@ let beeScope = localStorage.getItem(BEE_SCOPE_KEY) || 'all';
 let beeRoundSize = localStorage.getItem(BEE_ROUND_KEY) || '10';
 document.getElementById('bee-scope').value = beeScope;
 document.getElementById('bee-round-size').value = beeRoundSize;
-document.getElementById('bee-hide-learned').checked = getHideLearned();
 
 // Words marked "✗ Needs practice" in a past round — persisted so they're
 // remembered across sessions, and cleared once you get them right again.
@@ -8727,7 +9173,7 @@ function buildBeeRound(){
   let pool;
   if(beeScope === 'missed'){
     pool = allWords.filter(w => beeMissedIds.has(w.id));
-    if(getHideLearned()) pool = pool.filter(w => w.status !== 'learned');
+    pool = applyStatusFilter(pool);
     pool = shuffle(pool);
   } else {
     const base = scopedVocab(beeScope);
@@ -8948,7 +9394,6 @@ document.getElementById('bee-round-size').addEventListener('change', (e) => {
   startNewBeeRound();
   announceBeeRound(0);
 });
-document.getElementById('bee-hide-learned').addEventListener('change', (e) => refreshAllPracticeForHideLearned(e.target.checked));
 document.getElementById('bee-hint-toggle').addEventListener('click', () => {
   beeShowHint = !beeShowHint;
   resetBeeCard();
@@ -9343,8 +9788,6 @@ document.getElementById('stroke-scope').addEventListener('change', (e) => {
   strokeRevealed = false; strokeGuessShowPinyin = false; resetPhraseRoundDisplay();
   renderStroke();
 });
-document.getElementById('stroke-hide-learned').checked = getHideLearned();
-document.getElementById('stroke-hide-learned').addEventListener('change', (e) => refreshAllPracticeForHideLearned(e.target.checked));
 document.getElementById('stroke-order').addEventListener('change', (e) => {
   strokeOrder = e.target.value;
   strokeDeck = orderStrokeDeck(scopedVocab(strokeScope));
@@ -9973,28 +10416,16 @@ document.getElementById('qa-goto-add').addEventListener('click', () => {
 renderStroke();
 
 // ---- Shared: refresh every practice mode's deck when the "hide learned" setting changes ----
+// (Only wired to the unreachable legacy "Meaning" panel's own checkbox now —
+// Flashcards/Translate, Dictation, and Q&A all use the newer status-filter
+// checkboxes instead, via refreshAllDecks().)
 function refreshAllPracticeForHideLearned(newVal){
   setHideLearned(newVal);
   document.getElementById('meaning-hide-learned').checked = newVal;
-  document.getElementById('bee-hide-learned').checked = newVal;
 
   meaningDeck = shuffle(scopedVocab(meaningScope));
   meaningIdx = 0; showHanzi = false; showMPinyin = false;
   renderMeaning();
-
-  beeDeck = buildBeeRound();
-  beeIdx = 0;
-  beeShowHint = false;
-  beeCardState = beeDeck.map(() => ({ drawing: null, checked: false, assessed: false }));
-  score = { right: 0, total: 0 };
-  renderBeeScore();
-  renderBeeEmptyState();
-
-  strokeDeck = orderStrokeDeck(scopedVocab(strokeScope));
-  strokeIdx = 0;
-  strokeRevealed = false; strokeGuessShowPinyin = false; resetPhraseRoundDisplay();
-  document.getElementById('stroke-hide-learned').checked = newVal;
-  renderStroke();
 }
 function refreshAllDecks(){
   meaningDeck = shuffle(scopedVocab(meaningScope));
@@ -10009,6 +10440,9 @@ function refreshAllDecks(){
   strokeIdx = 0;
   strokeRevealed = false; strokeGuessShowPinyin = false; resetPhraseRoundDisplay();
   renderStroke();
+  qaIdx = 0;
+  resetQaToggles();
+  renderQaCard();
 }
 
 let editingIndex = null;
@@ -10259,7 +10693,7 @@ function resetQaToggles(){
 
 function renderQaCard(){
   resetPronForNewCard();
-  qaDeck = qaPairs; // keep in sync with latest edits without reshuffling mid-session unless asked
+  qaDeck = applyStatusFilter(qaPairs); // keep in sync with latest edits/filter without reshuffling mid-session unless asked
   if(qaIdx >= qaDeck.length) qaIdx = 0;
   const countEl = document.getElementById('qa-count');
   const qEl = document.getElementById('qa-question');
@@ -10269,12 +10703,17 @@ function renderQaCard(){
   const playAnswerBtn = document.getElementById('qa-play-a');
 
   if(qaDeck.length === 0){
-    countEl.textContent = 'No Q&A pairs yet';
+    const msg = qaPairs.length === 0
+      ? 'Add a question and answer in 生词 → 问答 Q&A Pairs to start practicing.'
+      : 'No Q&A pairs match the ticked filter above — tick another box, or "All words".';
+    countEl.textContent = qaPairs.length === 0 ? 'No Q&A pairs yet' : 'No matches';
     qEl.textContent = '—';
     qpEl.textContent = '';
     qmEl.textContent = '';
-    revealArea.innerHTML = '<div class="hint">Add a question and answer in 生词 → 问答 Q&A Pairs to start practicing.</div>';
+    revealArea.innerHTML = `<div class="hint">${msg}</div>`;
     playAnswerBtn.style.display = 'none';
+    document.getElementById('qa-star-toggle').classList.remove('on');
+    document.getElementById('qa-learned-toggle').classList.remove('on');
     return;
   }
   const card = qaDeck[qaIdx];
@@ -10282,6 +10721,8 @@ function renderQaCard(){
   qEl.textContent = card.q;
   qpEl.textContent = qaShowQPinyin ? (card.qp || '') : '';
   qmEl.textContent = qaShowQMeaning ? (card.qm || '') : '';
+  document.getElementById('qa-star-toggle').classList.toggle('on', card.status === 'star');
+  document.getElementById('qa-learned-toggle').classList.toggle('on', card.status === 'learned');
 
   let html = '';
   if(qaShowAnswer){
@@ -10303,6 +10744,20 @@ document.getElementById('qa-play-a').addEventListener('click', () => { if(qaDeck
 document.getElementById('qa-toggle-answer').addEventListener('click', () => { qaShowAnswer = !qaShowAnswer; renderQaCard(); });
 document.getElementById('qa-toggle-qpinyin').addEventListener('click', () => { qaShowQPinyin = !qaShowQPinyin; renderQaCard(); });
 document.getElementById('qa-toggle-qmeaning').addEventListener('click', () => { qaShowQMeaning = !qaShowQMeaning; renderQaCard(); });
+document.getElementById('qa-star-toggle').addEventListener('click', () => {
+  if(!qaDeck.length) return;
+  const card = qaDeck[qaIdx];
+  card.status = card.status === 'star' ? undefined : 'star';
+  saveQa(qaPairs);
+  renderQaCard();
+});
+document.getElementById('qa-learned-toggle').addEventListener('click', () => {
+  if(!qaDeck.length) return;
+  const card = qaDeck[qaIdx];
+  card.status = card.status === 'learned' ? undefined : 'learned';
+  saveQa(qaPairs);
+  renderQaCard();
+});
 
 // ---- Self-check: type your own attempt, get its pinyin generated live.
 // Translation only happens when you hit "Translate my sentence" — that's a
