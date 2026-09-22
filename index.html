@@ -1015,6 +1015,10 @@
           <option value="6">HSK 6</option>
         </select>
       </div>
+      <div class="top-controls" id="hsk-add-all-row" style="display:none;">
+        <span class="on-bg" id="hsk-add-all-info" style="font-size:12px;"></span>
+        <button class="action btn-play small" id="hsk-add-all-btn">☑️ Add all visible</button>
+      </div>
       <div class="speed-row" style="margin-bottom:10px;" id="hsk-sort-row">
         <label for="hsk-sort">Sort</label>
         <select class="mode" id="hsk-sort" style="margin-left:auto;">
@@ -8086,6 +8090,9 @@ function renderCustomQaWords(){
 function renderHskList(){
   const customViews = ['custom', 'myphrases', 'myqa'];
   document.getElementById('hsk-sort-row').style.display = customViews.includes(hskLevel) ? 'none' : 'flex';
+  // "Add all visible" only makes sense while browsing an actual HSK level —
+  // hide it for My Words/Phrases/Q&A, which are already your own list.
+  if(customViews.includes(hskLevel)) document.getElementById('hsk-add-all-row').style.display = 'none';
   if(hskLevel === 'custom'){
     renderCustomHskWords();
     return;
@@ -8129,13 +8136,27 @@ function renderHskList(){
     ? `${addedCount} / ${words.length} added · ${learnedCount} learned`
     : '0 words';
 
+  const addAllRow = document.getElementById('hsk-add-all-row');
   if(words.length === 0){
+    addAllRow.style.display = 'none';
     list.innerHTML = `<div class="empty-note">HSK ${hskLevel} isn't loaded yet — only HSK 1–4 are included so far, to keep accuracy high. Ask to have this level added from a verified source.</div>`;
     return;
   }
   if(filtered.length === 0){
+    addAllRow.style.display = 'none';
     list.innerHTML = `<div class="empty-note">No matches for "${document.getElementById('hsk-search').value}".</div>`;
     return;
+  }
+  // "Add all visible" adds every word currently shown (after any search) that
+  // isn't already in the deck — one click instead of +Add on each row, which
+  // matters once a level runs into the hundreds or thousands of words.
+  const notAddedVisible = filtered.filter(w => !allWords.some(x => x.h === w.h));
+  if(notAddedVisible.length > 0){
+    addAllRow.style.display = '';
+    document.getElementById('hsk-add-all-info').textContent = `${notAddedVisible.length} not yet added`;
+    document.getElementById('hsk-add-all-btn').textContent = `☑️ Add all ${notAddedVisible.length} visible`;
+  } else {
+    addAllRow.style.display = 'none';
   }
   list.innerHTML = filtered.map(w => {
     const mine = allWords.find(x => x.h === w.h);
@@ -8182,6 +8203,17 @@ function renderHskList(){
       renderHskList();
     });
   });
+  document.getElementById('hsk-add-all-btn').onclick = () => {
+    if(notAddedVisible.length === 0) return;
+    if(!confirm(`Add all ${notAddedVisible.length} word(s) shown here to your Flashcards deck?`)) return;
+    notAddedVisible.forEach(w => {
+      if(allWords.some(x => x.h === w.h)) return; // safety net against double-add
+      allWords.push({ h: w.h, p: w.p, m: w.m, id: newId(), addedAt: Date.now() });
+    });
+    saveWords(allWords);
+    refreshAllDecks();
+    renderHskList();
+  };
   // Jump straight to this word in Flashcards. Already added? Go there directly.
   // Not added yet? Ask first (via the same modal used for "move to category" —
   // no confirm() dialog, which is unreliable inside installed/standalone PWAs),
@@ -8250,7 +8282,10 @@ function goToFlashcard(hanzi){
     resetPhraseSession();
   }
 
-  strokeDeck = orderStrokeDeck(scopedVocab(strokeScope));
+  // Word-type only, ignoring the ⭐/✓/🆕 focus filter — jumping here from
+  // search is an explicit request for THIS exact word, and it should always
+  // land correctly regardless of whatever focus filter happens to be active.
+  strokeDeck = orderStrokeDeck(scopedVocabByType(strokeScope));
   const idx = strokeDeck.findIndex(w => w.h === hanzi);
   strokeIdx = idx >= 0 ? idx : 0;
   strokeRevealed = false; strokeGuessShowPinyin = false; resetPhraseRoundDisplay();
@@ -8263,10 +8298,14 @@ function goToQaPair(id){
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   document.querySelector('.tab-btn[data-tab="qa"]').classList.add('active');
   document.getElementById('panel-qa').classList.add('active');
-  qaDeck = qaPairs;
-  const idx = qaDeck.findIndex(p => p.id === id);
-  qaIdx = idx >= 0 ? idx : 0;
+  // Pinned so renderQaCard() includes this exact pair even if the current
+  // ⭐/✓/🆕 focus filter would otherwise exclude it — jumping here from search
+  // is an explicit request for THIS pair, which should always land correctly.
+  qaPinnedId = id;
   resetQaToggles();
+  renderQaCard();
+  qaIdx = qaDeck.findIndex(p => p.id === id);
+  if(qaIdx < 0) qaIdx = 0;
   renderQaCard();
 }
 
@@ -8393,7 +8432,11 @@ document.getElementById('global-search-results').addEventListener('click', (e) =
   goToHskLibraryEntry(r.hanzi, r.lvl);
 });
 
-function scopedVocab(scope){
+// Word-type filtering only (word vs phrase) — no status filter applied. Used
+// directly wherever a SPECIFIC word must be reachable regardless of the
+// current ⭐/✓/🆕 focus filter (search results jumping to an exact word),
+// since that filter is for general browsing, not for "find this exact item".
+function scopedVocabByType(scope){
   let list = fullVocab();
   // "All words" = your own words + HSK words, but NOT your multi-character phrases:
   // those have their own tab, and mixing sentences into character drilling made the
@@ -8406,7 +8449,10 @@ function scopedVocab(scope){
   const isMyPhrase = w => w.myCategory === 'phrase' || (!w.myCategory && isPhrase(w) && !isHskWord(w.h));
   if(scope === 'all') list = list.filter(w => !isMyPhrase(w));
   else if(scope === 'phrases' || scope === 'myphrases') list = list.filter(isMyPhrase);
-  return applyStatusFilter(list);
+  return list;
+}
+function scopedVocab(scope){
+  return applyStatusFilter(scopedVocabByType(scope));
 }
 
 function shuffle(arr){
@@ -10441,6 +10487,7 @@ function refreshAllDecks(){
   strokeRevealed = false; strokeGuessShowPinyin = false; resetPhraseRoundDisplay();
   renderStroke();
   qaIdx = 0;
+  qaPinnedId = null;
   resetQaToggles();
   renderQaCard();
 }
@@ -10677,6 +10724,11 @@ if(ensureIds(qaPairs)) saveQa(qaPairs);
 
 // ---- Practice mode ----
 let qaDeck = shuffle(qaPairs);
+// When set, renderQaCard() makes sure this exact pair is included even if
+// the current ⭐/✓/🆕 focus filter would otherwise exclude it — set by
+// goToQaPair() for search-driven navigation, cleared once you move on with
+// Prev/Next/Shuffle so normal filtered browsing resumes.
+let qaPinnedId = null;
 let qaIdx = 0;
 let qaShowAnswer = false; // also gates answer pinyin & translation — merged into one "Reveal answer" toggle
 let qaShowQPinyin = false;
@@ -10694,6 +10746,10 @@ function resetQaToggles(){
 function renderQaCard(){
   resetPronForNewCard();
   qaDeck = applyStatusFilter(qaPairs); // keep in sync with latest edits/filter without reshuffling mid-session unless asked
+  if(qaPinnedId){
+    const pinned = qaPairs.find(p => p.id === qaPinnedId);
+    if(pinned && !qaDeck.some(p => p.id === qaPinnedId)) qaDeck = [pinned, ...qaDeck];
+  }
   if(qaIdx >= qaDeck.length) qaIdx = 0;
   const countEl = document.getElementById('qa-count');
   const qEl = document.getElementById('qa-question');
@@ -10880,18 +10936,21 @@ document.getElementById('qa-user-answer-translate-btn').addEventListener('click'
 });
 
 document.getElementById('qa-shuffle').addEventListener('click', () => {
+  qaPinnedId = null;
   qaDeck = shuffle(qaPairs);
   qaIdx = 0; resetQaToggles();
   renderQaCard();
 });
 document.getElementById('qa-prev').addEventListener('click', () => {
   if(qaDeck.length === 0) return;
+  qaPinnedId = null;
   qaIdx = (qaIdx - 1 + qaDeck.length) % qaDeck.length;
   resetQaToggles();
   renderQaCard();
 });
 document.getElementById('qa-next').addEventListener('click', () => {
   if(qaDeck.length === 0) return;
+  qaPinnedId = null;
   qaIdx++; resetQaToggles();
   if(qaIdx >= qaDeck.length){ qaDeck = shuffle(qaPairs); qaIdx = 0; }
   renderQaCard();
