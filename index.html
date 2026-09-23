@@ -48,16 +48,41 @@
      The rails are sticky so they stay readable while the middle column
      scrolls. Widened from the original 1260px/300px-rail layout so both
      rails sit further out at the edges on wide screens, instead of crowding
-     the center card. */
-  .shell{ display:grid; gap:32px; align-items:start; width:100%; max-width:1640px;
-    grid-template-columns:minmax(260px,380px) minmax(0,640px) minmax(260px,380px);
+     the center card.
+     Column widths are CSS variables so JS can resize them by dragging the
+     handles between columns, or collapse a side down to a thin strip —
+     the grid itself never needs its column count edited, just these values. */
+  :root{ --left-w:320px; --right-w:320px; }
+  .shell{ display:grid; gap:0; align-items:start; width:100%; max-width:1760px;
+    grid-template-columns: var(--left-w) 14px minmax(0,640px) 14px var(--right-w);
     justify-content:center; }
-  .shell > .wrap{ max-width:none; }
+  .shell.left-collapsed{ --left-w:40px; }
+  .shell.right-collapsed{ --right-w:40px; }
+  .shell > .wrap{ max-width:none; padding:0 18px; }
   .side{ position:sticky; top:24px; max-height:calc(100vh - 48px); overflow-y:auto;
-    scrollbar-width:thin; }
+    scrollbar-width:thin; min-width:0; }
   .side::-webkit-scrollbar{ width:8px; }
   .side::-webkit-scrollbar-thumb{ background:var(--border); border-radius:8px; }
   .side .card{ margin:0; }
+  /* Collapsed: hide the panel's own content, leave just the expand tab visible. */
+  .side.collapsed > *:not(.side-collapse-tab){ display:none; }
+  .side-collapse-tab{ display:none; writing-mode:vertical-rl; text-orientation:mixed;
+    background:var(--panel); border:1px solid var(--border); border-radius:10px;
+    color:var(--muted); font-size:12px; letter-spacing:1px; padding:14px 6px;
+    cursor:pointer; margin:0 auto; }
+  .side.collapsed .side-collapse-tab{ display:block; }
+  .side-collapse-btn{ position:sticky; top:0; float:right; width:26px; height:26px;
+    border:none; border-radius:8px; background:rgba(16,21,26,.55); color:#F1EDE1;
+    cursor:pointer; font-size:13px; line-height:1; margin:0 0 6px 6px; z-index:2; }
+  .side-collapse-btn:hover{ background:rgba(111,168,138,.7); }
+  /* Drag handle between a side rail and the middle column — grabbing it and
+     dragging left/right resizes that rail; double-click resets it to default. */
+  .resize-handle{ align-self:stretch; cursor:col-resize; position:relative; }
+  .resize-handle::after{ content:''; position:absolute; top:0; bottom:0; left:50%;
+    width:3px; margin-left:-1.5px; background:var(--border); border-radius:2px;
+    transition:background .15s ease; }
+  .resize-handle:hover::after, .resize-handle.dragging::after{ background:var(--gold); }
+  @media (max-width:1400px){ .resize-handle{ display:none; } }
 
   /* Notepad — a lightweight rich-text area for the user's own notes, styled
      like the rest of the app's dark toolbar buttons. Uses the browser's
@@ -398,11 +423,13 @@
 </style>
 </head>
 <body>
-<div class="shell">
+<div class="shell" id="app-shell">
 
-  <!-- Permanent left reference: tone sandhi. Lifted out of the old 参考 tab so it
-       stays on screen no matter which tab is active. -->
-  <aside class="side side-left">
+  <!-- Permanent left panel: HSK Library. Resizable (drag the handle to its
+       right) and collapsible (▸ button) — state persists across visits. -->
+  <aside class="side side-left" id="side-left">
+      <button class="side-collapse-btn" id="side-left-collapse-btn" title="Collapse this panel">◂</button>
+      <div class="side-collapse-tab" id="side-left-tab">HSK Library</div>
       <div id="panel-hsk" class="card" style="text-align:left;padding:18px;">
       <!-- Search: one shared entry point for everything (My Words, My Phrases,
            Q&A, and the whole HSK library), now living at the top of this
@@ -509,6 +536,8 @@
       <p class="hint on-bg" style="margin-top:10px;">Adding a word here puts it straight into your Flashcards deck with its pinyin and default meaning already filled in. Head to Flashcards → 📚 Word Library any time afterwards to edit the meaning or record your own voice for it.</p>
       </div>
   </aside>
+
+  <div class="resize-handle" id="resize-handle-left" title="Drag to resize — double-click to reset"></div>
 
   <div class="wrap">
     <div class="header">
@@ -1012,9 +1041,13 @@
 
   </div>
 
-  <!-- Permanent right reference: radicals table (same RADICAL_INFO source as the
-       per-character Flashcard labels). -->
-  <aside class="side side-right">
+  <div class="resize-handle" id="resize-handle-right" title="Drag to resize — double-click to reset"></div>
+
+  <!-- Permanent right panel: the user's own Notepad. Resizable (drag the
+       handle to its left) and collapsible (▸ button) — state persists. -->
+  <aside class="side side-right" id="side-right">
+      <button class="side-collapse-btn" id="side-right-collapse-btn" title="Collapse this panel">▸</button>
+      <div class="side-collapse-tab" id="side-right-tab">My Notes</div>
       <div class="card" style="text-align:left;padding:18px;display:flex;flex-direction:column;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:6px;">
           <span style="font-size:15px;color:var(--ink);font-weight:600;">📝 My Notes</span>
@@ -9015,6 +9048,85 @@ function speakLangAsync(text, langCode){
     speechSynthesis.speak(u);
   });
 }
+
+// ---- Resizable / collapsible side panels (HSK Library on the left, My Notes
+// on the right). Only meaningful in the wide 3-column layout — the CSS
+// itself hides the drag handles and lets the panels stack normally below
+// 1400px, so none of this needs to check screen width itself.
+(function setupResizableSidePanels(){
+  const shell = document.getElementById('app-shell');
+  const sides = {
+    left: { el: document.getElementById('side-left'), tab: document.getElementById('side-left-tab'), btn: document.getElementById('side-left-collapse-btn'), handle: document.getElementById('resize-handle-left'), cssVar: '--left-w', collapsedClass: 'left-collapsed', widthKey: 'chinesevocab_left_panel_width', collapsedKey: 'chinesevocab_left_panel_collapsed', min: 260, max: 560, dragSign: 1 },
+    right: { el: document.getElementById('side-right'), tab: document.getElementById('side-right-tab'), btn: document.getElementById('side-right-collapse-btn'), handle: document.getElementById('resize-handle-right'), cssVar: '--right-w', collapsedClass: 'right-collapsed', widthKey: 'chinesevocab_right_panel_width', collapsedKey: 'chinesevocab_right_panel_collapsed', min: 260, max: 560, dragSign: -1 },
+  };
+  if(!shell || !sides.left.el || !sides.right.el) return;
+
+  function applyCollapsed(side, collapsed){
+    side.el.classList.toggle('collapsed', collapsed);
+    shell.classList.toggle(side.collapsedClass, collapsed);
+    side.btn.title = collapsed ? 'Expand this panel' : 'Collapse this panel';
+    localStorage.setItem(side.collapsedKey, collapsed ? 'true' : 'false');
+  }
+  function setWidth(side, px){
+    const clamped = Math.max(side.min, Math.min(side.max, px));
+    shell.style.setProperty(side.cssVar, clamped + 'px');
+    localStorage.setItem(side.widthKey, String(clamped));
+  }
+
+  Object.values(sides).forEach(side => {
+    // Restore saved width and collapsed state on load.
+    const savedWidth = parseInt(localStorage.getItem(side.widthKey), 10);
+    if(!isNaN(savedWidth)) setWidth(side, savedWidth);
+    applyCollapsed(side, localStorage.getItem(side.collapsedKey) === 'true');
+
+    side.btn.addEventListener('click', () => applyCollapsed(side, true));
+    side.tab.addEventListener('click', () => applyCollapsed(side, false));
+
+    // Drag-to-resize. dragSign flips the math for the right panel, since
+    // dragging its handle left (negative mouse movement) should GROW it,
+    // the opposite of the left panel's handle.
+    let dragStartX = 0, dragStartWidth = 0, dragging = false;
+    side.handle.addEventListener('mousedown', (e) => {
+      dragging = true;
+      dragStartX = e.clientX;
+      dragStartWidth = side.el.getBoundingClientRect().width;
+      side.handle.classList.add('dragging');
+      document.body.style.userSelect = 'none';
+      e.preventDefault();
+    });
+    window.addEventListener('mousemove', (e) => {
+      if(!dragging) return;
+      const delta = (e.clientX - dragStartX) * side.dragSign;
+      setWidth(side, dragStartWidth + delta);
+    });
+    window.addEventListener('mouseup', () => {
+      if(!dragging) return;
+      dragging = false;
+      side.handle.classList.remove('dragging');
+      document.body.style.userSelect = '';
+    });
+    // Double-click the handle to reset that panel back to its default width.
+    side.handle.addEventListener('dblclick', () => setWidth(side, 320));
+
+    // Touch support — same drag behaviour, for tablets.
+    side.handle.addEventListener('touchstart', (e) => {
+      dragging = true;
+      dragStartX = e.touches[0].clientX;
+      dragStartWidth = side.el.getBoundingClientRect().width;
+      side.handle.classList.add('dragging');
+    }, { passive: true });
+    window.addEventListener('touchmove', (e) => {
+      if(!dragging) return;
+      const delta = (e.touches[0].clientX - dragStartX) * side.dragSign;
+      setWidth(side, dragStartWidth + delta);
+    }, { passive: true });
+    window.addEventListener('touchend', () => {
+      if(!dragging) return;
+      dragging = false;
+      side.handle.classList.remove('dragging');
+    });
+  });
+})();
 
 const speedSlider = document.getElementById('speed-slider');
 const speedVal = document.getElementById('speed-val');
