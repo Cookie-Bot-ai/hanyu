@@ -43,11 +43,12 @@
   h1{ font-family:'STZhongsong','SimSun','Songti SC',serif; font-size:25px; margin:3px 0 0; letter-spacing:1px; }
   .eyebrow{ font-size:10px; letter-spacing:2.5px; text-transform:uppercase; color:var(--muted); }
   .wrap{ width:100%; max-width:640px; }
-  /* Three-column shell: radical reference on the left, app in the middle,
-     the user's own Notepad on the right. The rails are sticky so they stay
-     readable while the middle column scrolls. Widened from the original
-     1260px/300px-rail layout so both rails sit further out at the edges on
-     wide screens, instead of crowding the center card. */
+  /* Three-column shell: HSK Library (a permanent panel, not a tab) on the
+     left, the app's tabs in the middle, the user's own Notepad on the right.
+     The rails are sticky so they stay readable while the middle column
+     scrolls. Widened from the original 1260px/300px-rail layout so both
+     rails sit further out at the edges on wide screens, instead of crowding
+     the center card. */
   .shell{ display:grid; gap:32px; align-items:start; width:100%; max-width:1640px;
     grid-template-columns:minmax(260px,380px) minmax(0,640px) minmax(260px,380px);
     justify-content:center; }
@@ -402,26 +403,110 @@
   <!-- Permanent left reference: tone sandhi. Lifted out of the old 参考 tab so it
        stays on screen no matter which tab is active. -->
   <aside class="side side-left">
-      <div class="card" style="text-align:left;padding:18px;">
-        <details open>
-          <summary style="cursor:pointer;font-size:15px;color:var(--ink);font-weight:600;">部 Radicals — memorizing characters faster</summary>
-          <div style="margin-top:12px;font-size:13.5px;line-height:1.65;color:#3A3A34;">
-            <p>A <b>radical</b> (部首) is a recurring building-block inside a character. Most characters are a semantic-phonetic compound: one part hints at <b>meaning</b> (the radical), the other hints at <b>sound</b>. Learning to spot radicals turns an intimidating character into a small, memorable combination instead of a random shape.</p>
-
-            <table style="width:100%;border-collapse:collapse;font-size:13px;margin:12px 0;">
-              <tr style="border-bottom:1px solid var(--border);">
-                <th style="text-align:left;padding:6px 4px;">Radical</th>
-                <th style="text-align:left;padding:6px 4px;">Meaning</th>
-                <th style="text-align:left;padding:6px 4px;">Examples</th>
-              </tr>
-              <tbody id="radical-reference-tbody"></tbody>
-            </table>
-
-            <p><b>How to use this:</b> when you meet a new character, ask "what's the left/top part, and what's the right/bottom part?" Often one piece is a radical you already know (a meaning clue), and the other piece sounds similar to another character you know (a sound clue). Spotting the pattern sticks far better than memorizing the character as an unrelated picture.</p>
-
-            <p class="hint">Tip: while practicing on the Flashcards tab, glance at repeated components across different words — the same radicals keep showing up.</p>
+      <div id="panel-hsk" class="card" style="text-align:left;padding:18px;">
+      <!-- Search: one shared entry point for everything (My Words, My Phrases,
+           Q&A, and the whole HSK library), now living at the top of this
+           permanent panel instead of a separate button above the tabs and a
+           second "search this level" box further down — this is that merge. -->
+      <div class="global-search-row" style="margin-bottom:14px;">
+        <button class="action" id="global-search-open-btn" title="Search all words, phrases &amp; Q&amp;A" aria-label="Search everything">🔍 Search everything</button>
+      </div>
+      <div id="global-search-modal" style="display:none;">
+        <div class="global-search-panel">
+          <div class="global-search-input-row">
+            <input id="global-search-input" placeholder="Search hanzi, pinyin, or meaning…" autocomplete="off">
+            <button class="action" id="global-search-close-btn" aria-label="Close search">✕</button>
           </div>
-        </details>
+          <div id="global-search-results"></div>
+        </div>
+      </div>
+
+      <!-- Backup: relocated here from the old per-tab word library -->
+      <div class="top-controls" style="margin-bottom:8px;">
+        <span class="section-title on-bg" style="margin:0;">Backup</span>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <button class="action btn-reveal small" id="export-text">⬇ Export words</button>
+          <select id="import-mode" class="mode" style="max-width:210px;font-size:12.5px;padding:8px 10px;">
+            <option value="merge">Import: Merge (keep mine)</option>
+            <option value="replace">Import: Replace (mirror PC)</option>
+          </select>
+          <button class="action btn-reveal small" id="import-all-trigger">⬆ Import</button>
+          <input type="file" id="import-all-file" accept="application/json" style="display:none;">
+        </div>
+      </div>
+      <details class="hint-collapsible">
+        <summary class="on-bg">Backup, Merge &amp; Replace explained… <span class="expand-mark">▸</span></summary>
+        <p class="on-bg" style="margin:8px 0 14px;">"Export words" is one file with everything: My Words, My Phrases, and My Q&amp;A together, plus any HSK word you've added and its ⭐/✓ status. HSK vocabulary itself never needs exporting; it's already built into this file wherever you open it.<br><br><b>Merge</b> adds anything new and leaves what's already here alone — safe, but words you deleted or edited on your PC won't change. <b>Replace</b> wipes this device's words, Q&amp;A and recordings and loads the file exactly as-is, so this copy becomes an exact mirror of the PC. Use Replace on a phone you only practise on.</p>
+      </details>
+      <div id="import-all-feedback" class="on-bg" style="font-size:12px;margin-bottom:14px;"></div>
+
+      <!-- Offline bulk-add: separate from the JSON backup above. Download a plain-text
+           template, fill it in with Notepad (or any text editor) while offline, then
+           import it as a patch — new words/phrases only, always merged in, never a
+           full replace. -->
+      <div class="top-controls" style="margin-bottom:8px;">
+        <span class="section-title on-bg" style="margin:0;">Bulk add from a text file</span>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <button class="action btn-reveal small" id="download-patch-template">📋 Download template</button>
+          <button class="action btn-reveal small" id="export-patch-trigger">📤 Export everything</button>
+          <button class="action btn-reveal small" id="import-patch-trigger">📥 Import patch</button>
+          <input type="file" id="import-patch-file" accept=".txt,text/plain" style="display:none;">
+        </div>
+      </div>
+      <details class="hint-collapsible">
+        <summary class="on-bg">Bulk add, Export everything &amp; how duplicates are handled… <span class="expand-mark">▸</span></summary>
+        <p class="on-bg" style="margin:8px 0 14px;">For typing up new words, phrases, and Q&amp;A pairs offline in Notepad (or any plain text editor), then bringing them all in at once — mix all three in the same file. Download the template, fill in one line per entry using the <code>hanzi | meaning | type | viet translate</code> format (Q&amp;A pairs use two extra fields for the answer) described inside it, save the file, then Import patch. Meaning auto-translates if left blank; pinyin is always automatic on every field. Nothing is ever duplicated: a word, phrase, or Q&amp;A pair already in your deck has its meaning/Viet Translate updated if the file's version is different (a blank field in the file leaves that field alone, it never gets wiped out), and one that's already part of the built-in HSK library gets added straight to your Flashcards deck automatically (same as tapping +Add in the HSK Library section) rather than creating a second copy. This always merges — it never replaces or removes anything, only adds or updates.<br><br><b>Export everything</b> writes every word, phrase, Q&amp;A pair, and added HSK word you currently have into that same patch format — edit meanings or add a Viet Translate in Notepad, then Import patch to write any changes back in. Added HSK words are clearly labelled by their level (<code>hsk1</code>, <code>hsk2</code>, etc.) in the type column instead of a generic "word", so you can tell them apart from ones you typed in yourself.</p>
+      </details>
+      <div id="import-patch-feedback" class="on-bg" style="font-size:12px;margin-bottom:14px;"></div>
+
+      <div id="import-choice-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:999;align-items:center;justify-content:center;">
+        <div style="background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:22px;max-width:340px;text-align:center;box-shadow:0 20px 50px rgba(0,0,0,.5);">
+          <div style="margin-bottom:14px;color:var(--paper);">This file has both words/Q&amp;A and recordings. What would you like to import?</div>
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <button class="action btn-reveal" id="import-choice-text-only" style="width:100%;">Import text only</button>
+                <button class="action" id="import-choice-cancel" style="width:100%;background:transparent;color:var(--muted);border:1px solid var(--border);">Cancel</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="move-word-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:999;align-items:center;justify-content:center;">
+        <div style="background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:22px;max-width:300px;text-align:center;box-shadow:0 20px 50px rgba(0,0,0,.5);">
+          <div style="margin-bottom:14px;color:var(--paper);" id="move-word-modal-title">Move to:</div>
+          <div style="display:flex;flex-direction:column;gap:8px;" id="move-word-modal-options"></div>
+          <button class="action" id="move-word-modal-cancel" style="width:100%;margin-top:8px;background:transparent;color:var(--muted);border:1px solid var(--border);">Cancel</button>
+        </div>
+      </div>
+
+      <div class="top-controls">
+        <span class="on-bg" id="hsk-count">0 words</span>
+        <select class="mode" id="hsk-level">
+          <option value="custom">✍️ My Words</option>
+          <option value="myphrases">📝 My Phrases</option>
+          <option value="myqa">💬 My Q&amp;A</option>
+          <option value="all">🎯 All HSK levels</option>
+          <option value="1">HSK 1</option>
+          <option value="2">HSK 2</option>
+          <option value="3">HSK 3</option>
+          <option value="4">HSK 4</option>
+          <option value="5">HSK 5</option>
+          <option value="6">HSK 6</option>
+        </select>
+      </div>
+      <div class="top-controls" id="hsk-add-all-row" style="display:none;">
+        <span class="on-bg" id="hsk-add-all-info" style="font-size:12px;"></span>
+        <button class="action btn-play small" id="hsk-add-all-btn">☑️ Add all visible</button>
+      </div>
+      <div class="speed-row" style="margin-bottom:10px;" id="hsk-sort-row">
+        <label for="hsk-sort">Sort</label>
+        <select class="mode" id="hsk-sort" style="margin-left:auto;">
+          <option value="default">Default order</option>
+          <option value="added-first">Added first</option>
+          <option value="not-added-first">Not added first</option>
+        </select>
+      </div>
+      <input class="field" id="hsk-search" placeholder="Search this level…" style="margin-bottom:10px;">
+      <div class="word-list" id="hsk-list" style="max-height:420px;"></div>
+      <p class="hint on-bg" style="margin-top:10px;">Adding a word here puts it straight into your Flashcards deck with its pinyin and default meaning already filled in. Head to Flashcards → 📚 Word Library any time afterwards to edit the meaning or record your own voice for it.</p>
       </div>
   </aside>
 
@@ -446,29 +531,12 @@
       </div>
     </details>
 
-    <!-- Global search: works from any tab, across My Words, My Phrases, the
-         built-in HSK library, and Q&A pairs at once — since the per-tab
-         search boxes only ever search within whatever's currently open. -->
-    <div class="global-search-row">
-      <button class="action" id="global-search-open-btn" title="Search all words, phrases &amp; Q&amp;A" aria-label="Search everything">🔍 Search everything</button>
-    </div>
-    <div id="global-search-modal" style="display:none;">
-      <div class="global-search-panel">
-        <div class="global-search-input-row">
-          <input id="global-search-input" placeholder="Search hanzi, pinyin, or meaning…" autocomplete="off">
-          <button class="action" id="global-search-close-btn" aria-label="Close search">✕</button>
-        </div>
-        <div id="global-search-results"></div>
-      </div>
-    </div>
-
     <div class="tabs">
       <button class="tab-btn active" data-tab="stroke">闪卡 <span class="sub">Flashcards</span></button>
       <button class="tab-btn" data-tab="bee">听写 <span class="sub">Dictation</span></button>
       <button class="tab-btn" data-tab="qa">问答 <span class="sub">Q&amp;A</span></button>
       <button class="tab-btn" data-tab="phrases">翻译 <span class="sub">Translate</span></button>
       <button class="tab-btn" data-tab="test">测验 <span class="sub">Test</span></button>
-      <button class="tab-btn" data-tab="hsk">HSK <span class="sub">Library</span></button>
     </div>
 
     <!-- FLASHCARDS -->
@@ -940,96 +1008,6 @@
           <button class="action btn-play wide" id="test-retake-btn">🔁 Take Another Test</button>
         </div>
       </div>
-    </div>
-
-    <!-- HSK WORD LIBRARY: browse by level, add straight into your vocab -->
-    <div class="panel" id="panel-hsk">
-      <!-- Backup: relocated here from the old per-tab word library -->
-      <div class="top-controls" style="margin-bottom:8px;">
-        <span class="section-title on-bg" style="margin:0;">Backup</span>
-        <div style="display:flex;gap:6px;flex-wrap:wrap;">
-          <button class="action btn-reveal small" id="export-text">⬇ Export words</button>
-          <select id="import-mode" class="mode" style="max-width:210px;font-size:12.5px;padding:8px 10px;">
-            <option value="merge">Import: Merge (keep mine)</option>
-            <option value="replace">Import: Replace (mirror PC)</option>
-          </select>
-          <button class="action btn-reveal small" id="import-all-trigger">⬆ Import</button>
-          <input type="file" id="import-all-file" accept="application/json" style="display:none;">
-        </div>
-      </div>
-      <details class="hint-collapsible">
-        <summary class="on-bg">Backup, Merge &amp; Replace explained… <span class="expand-mark">▸</span></summary>
-        <p class="on-bg" style="margin:8px 0 14px;">"Export words" is one file with everything: My Words, My Phrases, and My Q&amp;A together, plus any HSK word you've added and its ⭐/✓ status. HSK vocabulary itself never needs exporting; it's already built into this file wherever you open it.<br><br><b>Merge</b> adds anything new and leaves what's already here alone — safe, but words you deleted or edited on your PC won't change. <b>Replace</b> wipes this device's words, Q&amp;A and recordings and loads the file exactly as-is, so this copy becomes an exact mirror of the PC. Use Replace on a phone you only practise on.</p>
-      </details>
-      <div id="import-all-feedback" class="on-bg" style="font-size:12px;margin-bottom:14px;"></div>
-
-      <!-- Offline bulk-add: separate from the JSON backup above. Download a plain-text
-           template, fill it in with Notepad (or any text editor) while offline, then
-           import it as a patch — new words/phrases only, always merged in, never a
-           full replace. -->
-      <div class="top-controls" style="margin-bottom:8px;">
-        <span class="section-title on-bg" style="margin:0;">Bulk add from a text file</span>
-        <div style="display:flex;gap:6px;flex-wrap:wrap;">
-          <button class="action btn-reveal small" id="download-patch-template">📋 Download template</button>
-          <button class="action btn-reveal small" id="export-patch-trigger">📤 Export everything</button>
-          <button class="action btn-reveal small" id="import-patch-trigger">📥 Import patch</button>
-          <input type="file" id="import-patch-file" accept=".txt,text/plain" style="display:none;">
-        </div>
-      </div>
-      <details class="hint-collapsible">
-        <summary class="on-bg">Bulk add, Export everything &amp; how duplicates are handled… <span class="expand-mark">▸</span></summary>
-        <p class="on-bg" style="margin:8px 0 14px;">For typing up new words, phrases, and Q&amp;A pairs offline in Notepad (or any plain text editor), then bringing them all in at once — mix all three in the same file. Download the template, fill in one line per entry using the <code>hanzi | meaning | type | viet translate</code> format (Q&amp;A pairs use two extra fields for the answer) described inside it, save the file, then Import patch. Meaning auto-translates if left blank; pinyin is always automatic on every field. Nothing is ever duplicated: a word, phrase, or Q&amp;A pair already in your deck has its meaning/Viet Translate updated if the file's version is different (a blank field in the file leaves that field alone, it never gets wiped out), and one that's already part of the built-in HSK library gets added straight to your Flashcards deck automatically (same as tapping +Add in the HSK Library tab) rather than creating a second copy. This always merges — it never replaces or removes anything, only adds or updates.<br><br><b>Export everything</b> writes every word, phrase, Q&amp;A pair, and added HSK word you currently have into that same patch format — edit meanings or add a Viet Translate in Notepad, then Import patch to write any changes back in. Added HSK words are clearly labelled by their level (<code>hsk1</code>, <code>hsk2</code>, etc.) in the type column instead of a generic "word", so you can tell them apart from ones you typed in yourself.</p>
-      </details>
-      <div id="import-patch-feedback" class="on-bg" style="font-size:12px;margin-bottom:14px;"></div>
-
-      <div id="import-choice-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:999;align-items:center;justify-content:center;">
-        <div style="background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:22px;max-width:340px;text-align:center;box-shadow:0 20px 50px rgba(0,0,0,.5);">
-          <div style="margin-bottom:14px;color:var(--paper);">This file has both words/Q&amp;A and recordings. What would you like to import?</div>
-          <div style="display:flex;flex-direction:column;gap:8px;">
-            <button class="action btn-reveal" id="import-choice-text-only" style="width:100%;">Import text only</button>
-                <button class="action" id="import-choice-cancel" style="width:100%;background:transparent;color:var(--muted);border:1px solid var(--border);">Cancel</button>
-          </div>
-        </div>
-      </div>
-
-      <div id="move-word-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:999;align-items:center;justify-content:center;">
-        <div style="background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:22px;max-width:300px;text-align:center;box-shadow:0 20px 50px rgba(0,0,0,.5);">
-          <div style="margin-bottom:14px;color:var(--paper);" id="move-word-modal-title">Move to:</div>
-          <div style="display:flex;flex-direction:column;gap:8px;" id="move-word-modal-options"></div>
-          <button class="action" id="move-word-modal-cancel" style="width:100%;margin-top:8px;background:transparent;color:var(--muted);border:1px solid var(--border);">Cancel</button>
-        </div>
-      </div>
-
-      <div class="top-controls">
-        <span class="on-bg" id="hsk-count">0 words</span>
-        <select class="mode" id="hsk-level">
-          <option value="custom">✍️ My Words</option>
-          <option value="myphrases">📝 My Phrases</option>
-          <option value="myqa">💬 My Q&amp;A</option>
-          <option value="all">🎯 All HSK levels</option>
-          <option value="1">HSK 1</option>
-          <option value="2">HSK 2</option>
-          <option value="3">HSK 3</option>
-          <option value="4">HSK 4</option>
-          <option value="5">HSK 5</option>
-          <option value="6">HSK 6</option>
-        </select>
-      </div>
-      <div class="top-controls" id="hsk-add-all-row" style="display:none;">
-        <span class="on-bg" id="hsk-add-all-info" style="font-size:12px;"></span>
-        <button class="action btn-play small" id="hsk-add-all-btn">☑️ Add all visible</button>
-      </div>
-      <div class="speed-row" style="margin-bottom:10px;" id="hsk-sort-row">
-        <label for="hsk-sort">Sort</label>
-        <select class="mode" id="hsk-sort" style="margin-left:auto;">
-          <option value="default">Default order</option>
-          <option value="added-first">Added first</option>
-          <option value="not-added-first">Not added first</option>
-        </select>
-      </div>
-      <input class="field" id="hsk-search" placeholder="Search this level…" style="margin-bottom:10px;">
-      <div class="word-list" id="hsk-list" style="max-height:420px;"></div>
-      <p class="hint on-bg" style="margin-top:10px;">Adding a word here puts it straight into your Flashcards deck with its pinyin and default meaning already filled in. Head to Flashcards → 📚 Word Library any time afterwards to edit the meaning or record your own voice for it.</p>
     </div>
 
   </div>
@@ -8310,18 +8288,16 @@ function goToQaPair(id){
 }
 
 // For an HSK word that isn't in the user's own deck yet — takes them to the
-// HSK Library tab, on the right level, filtered down to just that word (via
-// the per-level search box) so they can see it in context and +Add it
-// themselves if they want it, rather than adding it on their behalf.
+// HSK Library panel (now permanently on the left, not a tab), on the right
+// level, filtered down to just that word (via the per-level search box) so
+// they can see it in context and +Add it themselves if they want it, rather
+// than adding it on their behalf.
 function goToHskLibraryEntry(hanzi, lvl){
-  document.querySelectorAll('.tab-btn:not(.subtab-btn)').forEach(b => b.classList.remove('active'));
-  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-  document.querySelector('.tab-btn[data-tab="hsk"]').classList.add('active');
-  document.getElementById('panel-hsk').classList.add('active');
   hskLevel = lvl;
   document.getElementById('hsk-level').value = lvl;
   document.getElementById('hsk-search').value = hanzi;
   renderHskList();
+  document.getElementById('panel-hsk').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 // ---- Global search: searches My Words, My Phrases, the built-in HSK
@@ -9070,7 +9046,6 @@ document.querySelectorAll('.tab-btn:not(.subtab-btn)').forEach(btn => {
     document.getElementById(panelId).classList.add('active');
     if(tab === 'qa') renderQaCard();
     if(tab === 'bee') resizeBeeCanvas();
-    if(tab === 'hsk') renderHskList();
     if(tab === 'test' && document.getElementById('test-setup').style.display !== 'none') updateTestPoolInfo();
     if(tab === 'phrases'){
       strokeReadOnly = true;
@@ -10449,17 +10424,17 @@ document.getElementById('stroke-guess-reveal').addEventListener('click', () => {
   renderStroke();
 });
 document.getElementById('qa-goto-add').addEventListener('click', () => {
-  const hskTabBtn = document.querySelector('.tab-btn[data-tab="hsk"]');
-  if(hskTabBtn) hskTabBtn.click();
   hskLevel = 'myqa';
   document.getElementById('hsk-level').value = 'myqa';
   renderHskList();
+  document.getElementById('panel-hsk').scrollIntoView({ behavior: 'smooth', block: 'start' });
   setTimeout(() => {
     const el = document.getElementById('hsk-qa-q');
     if(el) el.focus();
-  }, 50);
+  }, 300);
 });
 renderStroke();
+renderHskList();
 
 // ---- Shared: refresh every practice mode's deck when the "hide learned" setting changes ----
 // (Only wired to the unreachable legacy "Meaning" panel's own checkbox now —
