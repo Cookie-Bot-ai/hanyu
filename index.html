@@ -43,21 +43,20 @@
   h1{ font-family:'STZhongsong','SimSun','Songti SC',serif; font-size:25px; margin:3px 0 0; letter-spacing:1px; }
   .eyebrow{ font-size:10px; letter-spacing:2.5px; text-transform:uppercase; color:var(--muted); }
   .wrap{ width:100%; max-width:640px; }
-  /* Three-column shell: HSK Library (a permanent panel, not a tab) on the
-     left, the app's tabs in the middle, the user's own Notepad on the right.
-     The rails are sticky so they stay readable while the middle column
-     scrolls. Widened from the original 1260px/300px-rail layout so both
-     rails sit further out at the edges on wide screens, instead of crowding
-     the center card.
-     Column widths are CSS variables so JS can resize them by dragging the
-     handles between columns, or collapse a side down to a thin strip —
-     the grid itself never needs its column count edited, just these values. */
-  :root{ --left-w:320px; --right-w:320px; }
-  .shell{ display:grid; gap:0; align-items:start; width:100%; max-width:1760px;
-    grid-template-columns: var(--left-w) 14px minmax(0,640px) 14px var(--right-w);
+  /* Two-column shell: HSK Library (a permanent panel, not a tab) on the
+     left, the app's tabs filling the rest. The rail is sticky so it stays
+     readable while the middle column scrolls.
+     Column widths are a CSS variable so JS can resize it by dragging the
+     handle, or collapse the left panel down to a thin strip when it's not
+     needed — the grid itself never needs its column count edited, just the
+     variable's value. Two columns now (not three) — the notepad that used
+     to live on the right was removed, and the middle column's cap widened
+     to make the most of the space that freed up. */
+  :root{ --left-w:320px; }
+  .shell{ display:grid; gap:0; align-items:start; width:100%; max-width:1440px;
+    grid-template-columns: var(--left-w) 14px minmax(0,900px);
     justify-content:center; }
   .shell.left-collapsed{ --left-w:40px; }
-  .shell.right-collapsed{ --right-w:40px; }
   .shell > .wrap{ max-width:none; padding:0 18px; }
   .side{ position:sticky; top:24px; max-height:calc(100vh - 48px); overflow-y:auto;
     scrollbar-width:thin; min-width:0; }
@@ -75,8 +74,8 @@
     border:none; border-radius:8px; background:rgba(16,21,26,.55); color:#F1EDE1;
     cursor:pointer; font-size:13px; line-height:1; margin:0 0 6px 6px; z-index:2; }
   .side-collapse-btn:hover{ background:rgba(111,168,138,.7); }
-  /* Drag handle between a side rail and the middle column — grabbing it and
-     dragging left/right resizes that rail; double-click resets it to default. */
+  /* Drag handle between the side rail and the middle column — grabbing it and
+     dragging left/right resizes the rail; double-click resets it to default. */
   .resize-handle{ align-self:stretch; cursor:col-resize; position:relative; }
   .resize-handle::after{ content:''; position:absolute; top:0; bottom:0; left:50%;
     width:3px; margin-left:-1.5px; background:var(--border); border-radius:2px;
@@ -84,52 +83,13 @@
   .resize-handle:hover::after, .resize-handle.dragging::after{ background:var(--gold); }
   @media (max-width:1400px){ .resize-handle{ display:none; } }
 
-  /* Notepad — a lightweight rich-text area for the user's own notes, styled
-     like the rest of the app's dark toolbar buttons. Uses the browser's
-     built-in contenteditable + execCommand, which is all a Bold/Italic/
-     color-highlight notepad like this actually needs — no editor library. */
-  .notepad-toolbar{ display:flex; flex-wrap:wrap; align-items:center; gap:5px; margin-bottom:8px; }
-  .notepad-btn{ width:32px; height:32px; padding:0; border:none; border-radius:8px; cursor:pointer;
-    background:rgba(16,21,26,.55); color:#F1EDE1; font-size:14px; line-height:1;
-    display:inline-flex; align-items:center; justify-content:center;
-    box-shadow:0 1px 4px rgba(0,0,0,.2); transition:background .15s ease; }
-  .notepad-btn:hover{ background:rgba(111,168,138,.7); }
-  .notepad-btn:active{ transform:scale(.94); }
-  .notepad-sep{ width:1px; height:22px; background:var(--border); margin:0 2px; }
-  .notepad-color-label{ position:relative; width:32px; height:32px; border-radius:8px; cursor:pointer;
-    background:rgba(16,21,26,.55); color:#F1EDE1; font-size:13px; font-weight:700;
-    display:inline-flex; align-items:center; justify-content:center; overflow:hidden;
-    box-shadow:0 1px 4px rgba(0,0,0,.2); }
-  .notepad-color-label.notepad-highlight-icon{ font-size:14px; font-weight:400; }
-  .notepad-color-label input[type="color"]{ position:absolute; inset:0; width:100%; height:100%;
-    opacity:0; cursor:pointer; border:none; padding:0; }
-
-  /* Two-column ruled layout — same fixed line-height and ruled-line spacing on
-     both sides so a row on the left always sits level with the same row on
-     the right, like an exercise book. background-attachment:local is the key
-     part: it makes the ruled lines scroll WITH the text instead of staying
-     fixed to the box, so a line always stays under whatever's written on it.
-     Scroll is also synced between the two columns in JS for the same reason —
-     independent scrolling would break the row-to-row correspondence the
-     lines exist for, even though the underlying text positions never move. */
-  .notepad-columns{ display:flex; gap:10px; }
-  .notepad-col{ flex:1; min-width:0; display:flex; flex-direction:column; }
-  .notepad-col-label{ font-size:11px; text-transform:uppercase; letter-spacing:1px; color:var(--muted); margin-bottom:4px; }
-  .notepad-lined{ min-height:280px; max-height:55vh; overflow-y:auto; background-color:var(--paper);
-    color:var(--ink); border:1px solid var(--border); border-radius:10px; padding:8px 10px 0;
-    font-size:14px; line-height:32px; outline:none; cursor:text;
-    background-image:repeating-linear-gradient(to bottom, transparent, transparent 31px, var(--border) 31px, var(--border) 32px);
-    background-attachment:local; }
-  .notepad-lined ul{ margin:0 0 0 20px; padding:0; }
-  .notepad-lined > div{ min-height:32px; line-height:32px; }
   .side summary{ font-size:14px; }
   .side table{ font-size:12px; }
-  /* Not enough width for rails — stack them below the app instead of squashing it */
+  /* Not enough width for the rail — stack it below the app instead of squashing it */
   @media (max-width:1400px){
     .shell{ grid-template-columns:minmax(0,640px); max-width:640px; }
     .shell > .wrap{ order:1; }
     .side-left{ order:2; }
-    .side-right{ order:3; }
     .side{ position:static; max-height:none; overflow:visible; }
   }
   .header{ text-align:center; margin-bottom:12px; }
@@ -1041,58 +1001,6 @@
 
   </div>
 
-  <div class="resize-handle" id="resize-handle-right" title="Drag to resize — double-click to reset"></div>
-
-  <!-- Permanent right panel: the user's own Notepad. Resizable (drag the
-       handle to its left) and collapsible (▸ button) — state persists. -->
-  <aside class="side side-right" id="side-right">
-      <button class="side-collapse-btn" id="side-right-collapse-btn" title="Collapse this panel">▸</button>
-      <div class="side-collapse-tab" id="side-right-tab">My Notes</div>
-      <div class="card" style="text-align:left;padding:18px;display:flex;flex-direction:column;">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:6px;">
-          <span style="font-size:15px;color:var(--ink);font-weight:600;">📝 My Notes</span>
-          <div style="display:flex;gap:6px;">
-            <button type="button" class="action btn-reveal small" id="notepad-export-btn" title="Download your notes as a file">⬇ Export</button>
-            <button type="button" class="action btn-reveal small" id="notepad-import-btn" title="Load notes from a file">⬆ Import</button>
-            <input type="file" id="notepad-import-file" accept=".html,.htm,text/html" style="display:none;">
-            <button type="button" class="action btn-danger small" id="notepad-clear-btn" title="Clear all notes">🗑 Clear</button>
-          </div>
-        </div>
-        <div id="notepad-io-feedback" style="font-size:12px;color:var(--muted);margin:-4px 0 8px;"></div>
-        <div class="notepad-toolbar">
-          <button type="button" class="notepad-btn" data-cmd="bold" title="Bold"><b>B</b></button>
-          <button type="button" class="notepad-btn" data-cmd="italic" title="Italic"><i>I</i></button>
-          <button type="button" class="notepad-btn" data-cmd="underline" title="Underline"><u>U</u></button>
-          <button type="button" class="notepad-btn" data-cmd="strikeThrough" title="Strikethrough"><s>S</s></button>
-          <span class="notepad-sep"></span>
-          <label class="notepad-color-label" title="Text color">A
-            <input type="color" id="notepad-text-color" value="#1C231F">
-          </label>
-          <label class="notepad-color-label notepad-highlight-icon" title="Highlight color">🖍
-            <input type="color" id="notepad-highlight-color" value="#FFF59D">
-          </label>
-          <span class="notepad-sep"></span>
-          <button type="button" class="notepad-btn" data-cmd="insertUnorderedList" title="Bullet list">•≡</button>
-          <button type="button" class="notepad-btn" data-cmd="justifyLeft" title="Align left">◧</button>
-          <button type="button" class="notepad-btn" data-cmd="justifyCenter" title="Align center">▣</button>
-          <button type="button" class="notepad-btn" data-cmd="removeFormat" title="Clear formatting">✕</button>
-        </div>
-        <div class="notepad-columns">
-          <div class="notepad-col">
-            <div class="notepad-col-label">汉字 Chinese</div>
-            <div id="notepad-content-left" class="notepad-lined" contenteditable="true" spellcheck="false"
-                 data-placeholder="Chinese words…"></div>
-          </div>
-          <div class="notepad-col">
-            <div class="notepad-col-label">Meaning</div>
-            <div id="notepad-content-right" class="notepad-lined" contenteditable="true" spellcheck="false"
-                 data-placeholder="Meanings…"></div>
-          </div>
-        </div>
-        <p class="hint" style="margin-top:8px;">Saved automatically on this device as you type. Press Enter for a blank line on either side to keep matching rows level with each other.</p>
-      </div>
-  </aside>
-
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/pinyin-pro@3.28.2/dist/index.js"></script>
@@ -1915,326 +1823,6 @@ if(radicalTbody){
       `<td style="padding:6px 4px;">${entry.meaning}</td>` +
       `<td class="hanzi" style="padding:6px 4px;">${examples}</td></tr>`;
   }).join('');
-}
-
-// ---- My Notes — a two-column ruled notepad: Chinese words on the left,
-// meanings on the right, with matching ruled lines so a row on one side sits
-// level with the same row on the other (like an exercise book). Rich text
-// (bold/italic/underline/strike, text colour, highlight, bullet list,
-// alignment) via contenteditable + execCommand — no editor library needed.
-const NOTEPAD_KEY_LEFT = 'chinesevocab_notepad_left_html';
-const NOTEPAD_KEY_RIGHT = 'chinesevocab_notepad_right_html';
-const NOTEPAD_KEY_LEGACY = 'chinesevocab_notepad_html'; // single-column notepad this replaced
-const notepadLeft = document.getElementById('notepad-content-left');
-const notepadRight = document.getElementById('notepad-content-right');
-if(notepadLeft && notepadRight){
-  const savedLeft = localStorage.getItem(NOTEPAD_KEY_LEFT);
-  const savedRight = localStorage.getItem(NOTEPAD_KEY_RIGHT);
-  if(savedLeft) notepadLeft.innerHTML = savedLeft;
-  if(savedRight) notepadRight.innerHTML = savedRight;
-  // One-time migration: anyone with notes from the old single-column notepad
-  // gets them moved into the Chinese-words column rather than losing them —
-  // only if the new two-column keys are both still empty, so this never
-  // overwrites anything already written in the new layout.
-  if(!savedLeft && !savedRight){
-    const legacy = localStorage.getItem(NOTEPAD_KEY_LEGACY);
-    if(legacy){
-      notepadLeft.innerHTML = legacy;
-      localStorage.setItem(NOTEPAD_KEY_LEFT, legacy);
-    }
-  }
-
-  // Every Enter press creates a new top-level <div> (one per ruled line)
-  // instead of a <br> — this keeps each line as its own addressable element,
-  // which is what makes "click any ruled line to jump straight there" and
-  // "Tab to the matching row" both possible below. Wrapped defensively: if
-  // this deprecated API isn't available for some reason, the rest of the
-  // notepad (saving, formatting, click/Tab navigation) still has to work —
-  // typing would just fall back to the browser's own default line breaks.
-  try{ document.execCommand('defaultParagraphSeparator', false, 'div'); }catch(e){}
-
-  // Normalizes a column's content into one <div> per line, wrapping any bare
-  // text/legacy content that isn't already line-divs (e.g. right after the
-  // migration above, or a loaded save from before this feature existed).
-  function normalizeLines(col){
-    if(col.children.length === 0 && col.childNodes.length > 0){
-      const wrapper = document.createElement('div');
-      while(col.firstChild) wrapper.appendChild(col.firstChild);
-      col.appendChild(wrapper);
-    }
-    Array.from(col.childNodes).forEach(node => {
-      if(node.nodeType === 3 && node.textContent.trim()){ // stray text node directly in col
-        const wrapper = document.createElement('div');
-        col.insertBefore(wrapper, node);
-        wrapper.appendChild(node);
-      }
-    });
-  }
-  normalizeLines(notepadLeft);
-  normalizeLines(notepadRight);
-
-  // Fills a column with blank ruled lines up to the visible box height (or
-  // at least a screenful) so every ruled line you can SEE is something you
-  // can click straight into, not just the lines you've already typed on.
-  function fillVisibleLines(col, minLines){
-    const target = Math.max(minLines, Math.ceil(280 / 32));
-    while(col.children.length < target){
-      const div = document.createElement('div');
-      div.innerHTML = '<br>';
-      col.appendChild(div);
-    }
-  }
-  fillVisibleLines(notepadLeft, 1);
-  fillVisibleLines(notepadRight, 1);
-
-  function getLineDivs(col){
-    return Array.from(col.children);
-  }
-  // Adds blank lines until the column has at least `count` of them, so a
-  // click, Tab, or line-jump past the current end always lands somewhere
-  // real rather than falling back to the last line.
-  function ensureLineCount(col, count){
-    let divs = getLineDivs(col);
-    while(divs.length < count){
-      const div = document.createElement('div');
-      div.innerHTML = '<br>';
-      col.appendChild(div);
-      divs.push(div);
-    }
-    return divs;
-  }
-  // Which line-div the caret is currently in, by walking up from the
-  // selection to whichever direct child of the column it's inside.
-  function getCurrentLineIndex(col){
-    const sel = window.getSelection();
-    if(!sel.rangeCount) return 0;
-    let node = sel.getRangeAt(0).startContainer;
-    while(node && node.parentNode !== col) node = node.parentNode;
-    if(!node) return 0;
-    const idx = getLineDivs(col).indexOf(node);
-    return idx >= 0 ? idx : 0;
-  }
-  // Focuses a column and moves the caret to the end of whatever's on the
-  // given line (padding with blank lines first if it doesn't exist yet).
-  function placeCaretAtLine(col, index){
-    const divs = ensureLineCount(col, index + 1);
-    const target = divs[index];
-    col.focus();
-    const range = document.createRange();
-    range.selectNodeContents(target);
-    range.collapse(false);
-    const sel = window.getSelection();
-    sel.removeAllRanges();
-    sel.addRange(range);
-  }
-
-  // Click anywhere in the ruled area — including the blank lines below
-  // whatever's already been typed — jumps straight to that exact line,
-  // rather than the browser's default of landing on the last real line.
-  [notepadLeft, notepadRight].forEach(col => {
-    col.addEventListener('mousedown', (e) => {
-      const rect = col.getBoundingClientRect();
-      const relativeY = e.clientY - rect.top + col.scrollTop - 8; // 8 = top padding
-      const lineIndex = Math.max(0, Math.floor(relativeY / 32));
-      if(lineIndex >= getLineDivs(col).length){
-        e.preventDefault();
-        placeCaretAtLine(col, lineIndex);
-      }
-      // Otherwise the click landed on an existing line — let the browser
-      // place the caret there natively, exactly where clicked.
-    });
-  });
-
-  // Tab moves to the matching row on the other side instead of leaving the
-  // notepad entirely (the browser's normal Tab behaviour). From the Chinese
-  // side it jumps to the SAME row on the Meaning side; from the Meaning side
-  // it jumps to the NEXT row back on the Chinese side, so Tab, type, Tab
-  // naturally walks straight down the page filling in one row after another.
-  notepadLeft.addEventListener('keydown', (e) => {
-    if(e.key !== 'Tab' || e.shiftKey) return;
-    e.preventDefault();
-    placeCaretAtLine(notepadRight, getCurrentLineIndex(notepadLeft));
-  });
-  notepadRight.addEventListener('keydown', (e) => {
-    if(e.key !== 'Tab' || e.shiftKey) return;
-    e.preventDefault();
-    placeCaretAtLine(notepadLeft, getCurrentLineIndex(notepadRight) + 1);
-  });
-
-  // Tracks whichever column was typed in or clicked into last, so the shared
-  // toolbar above (Bold, colour, etc.) always applies to the right one.
-  let activeNotepad = notepadLeft;
-  notepadLeft.addEventListener('focus', () => { activeNotepad = notepadLeft; });
-  notepadRight.addEventListener('focus', () => { activeNotepad = notepadRight; });
-
-  // localStorage has a shared quota for this whole app (words, Q&A, and
-  // notes all live in it together) — usually a few MB per browser. There's
-  // no length limit in the notepad itself, but if that ceiling is ever hit,
-  // fail loudly here rather than silently losing whatever was just typed.
-  function trySaveNotepad(){
-    try{
-      localStorage.setItem(NOTEPAD_KEY_LEFT, notepadLeft.innerHTML);
-      localStorage.setItem(NOTEPAD_KEY_RIGHT, notepadRight.innerHTML);
-      return true;
-    }catch(e){
-      const fb = document.getElementById('notepad-io-feedback');
-      if(fb){
-        fb.textContent = 'Could not save — your notes may have filled the space this browser allows. Try ⬇ Export now to back up what you have, then trim some content.';
-        fb.style.color = '#A6332B';
-      }
-      return false;
-    }
-  }
-  let notepadSaveTimer = null;
-  function saveNotepad(){
-    clearTimeout(notepadSaveTimer);
-    notepadSaveTimer = setTimeout(trySaveNotepad, 400);
-  }
-  notepadLeft.addEventListener('input', saveNotepad);
-  notepadRight.addEventListener('input', saveNotepad);
-
-  // Keeps the ruled lines level between columns as either one is scrolled —
-  // otherwise scrolling just one side would slide its rows out of sync with
-  // the other, even though the lines are drawn identically on both.
-  let syncingScroll = false;
-  function syncScroll(from, to){
-    from.addEventListener('scroll', () => {
-      if(syncingScroll) return;
-      syncingScroll = true;
-      to.scrollTop = from.scrollTop;
-      syncingScroll = false;
-    });
-  }
-  syncScroll(notepadLeft, notepadRight);
-  syncScroll(notepadRight, notepadLeft);
-
-  // Paste is plain-text-only, on purpose. contenteditable would otherwise
-  // happily accept a pasted image by inlining it as base64 text, and a
-  // single photo like that can be several hundred KB to a few MB — easily
-  // enough to blow through the shared localStorage quota above and put
-  // saving everything else (words, Q&A) at risk too. Formatting typed or
-  // applied with the toolbar buttons is unaffected; only paste is restricted.
-  [notepadLeft, notepadRight].forEach(col => {
-    col.addEventListener('paste', (e) => {
-      e.preventDefault();
-      const text = (e.clipboardData || window.clipboardData).getData('text/plain');
-      document.execCommand('insertText', false, text);
-    });
-  });
-
-  document.querySelectorAll('.notepad-btn[data-cmd]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      activeNotepad.focus();
-      document.execCommand(btn.dataset.cmd, false, null);
-      saveNotepad();
-    });
-  });
-  document.getElementById('notepad-text-color').addEventListener('input', (e) => {
-    activeNotepad.focus();
-    document.execCommand('foreColor', false, e.target.value);
-    saveNotepad();
-  });
-  document.getElementById('notepad-highlight-color').addEventListener('input', (e) => {
-    activeNotepad.focus();
-    document.execCommand('hiliteColor', false, e.target.value);
-    saveNotepad();
-  });
-  document.getElementById('notepad-clear-btn').addEventListener('click', () => {
-    if(confirm('Clear both columns of notes? This cannot be undone.')){
-      notepadLeft.innerHTML = '';
-      notepadRight.innerHTML = '';
-      fillVisibleLines(notepadLeft, 1);
-      fillVisibleLines(notepadRight, 1);
-      saveNotepad();
-    }
-  });
-
-  // Export/Import as a standalone .html file — separate from the main word
-  // backup, so notes can be carried over to another computer or phone on
-  // their own. Both columns are wrapped in the same side-by-side layout so
-  // the file still looks and lines up correctly if opened directly in a
-  // browser, not just when re-imported here.
-  document.getElementById('notepad-export-btn').addEventListener('click', () => {
-    const fb = document.getElementById('notepad-io-feedback');
-    if(!notepadLeft.textContent.trim() && !notepadRight.textContent.trim()){
-      fb.textContent = 'Nothing to export yet — your notes are empty.';
-      fb.style.color = '#C9A227';
-      return;
-    }
-    const doc = `<!DOCTYPE html>
-<html><head><meta charset="UTF-8"><title>Han Yu Learning — My Notes</title>
-<style>
-body{font-family:-apple-system,Segoe UI,Arial,sans-serif;font-size:15px;color:#1C231F;margin:24px auto;max-width:900px;padding:0 16px;}
-.cols{display:flex;gap:16px;}
-.col{flex:1;min-width:0;}
-.col h2{font-size:13px;text-transform:uppercase;letter-spacing:1px;color:#8A9A92;margin:0 0 6px;}
-.lined{line-height:32px;padding:8px 10px 0;border:1px solid #ddd5c4;border-radius:10px;
-  background-image:repeating-linear-gradient(to bottom, transparent, transparent 31px, #ddd5c4 31px, #ddd5c4 32px);}
-</style>
-</head><body>
-<div class="cols">
-  <div class="col" id="notepad-export-left"><h2>汉字 Chinese</h2><div class="lined">${notepadLeft.innerHTML}</div></div>
-  <div class="col" id="notepad-export-right"><h2>Meaning</h2><div class="lined">${notepadRight.innerHTML}</div></div>
-</div>
-</body></html>
-`;
-    downloadText(doc, 'hanyu-my-notes-' + dateStamp() + '.html');
-    fb.textContent = 'Downloaded — keep this file to bring your notes to another device.';
-    fb.style.color = '#3E7C59';
-  });
-  document.getElementById('notepad-import-btn').addEventListener('click', () => {
-    document.getElementById('notepad-import-file').click();
-  });
-  document.getElementById('notepad-import-file').addEventListener('change', (e) => {
-    const file = e.target.files[0];
-    e.target.value = ''; // so choosing the same file again still fires 'change'
-    if(!file) return;
-    const fb = document.getElementById('notepad-io-feedback');
-    const reader = new FileReader();
-    reader.onload = (evt) => {
-      const raw = evt.target.result;
-      let newLeft = null, newRight = null;
-      try{
-        const parsed = new DOMParser().parseFromString(raw, 'text/html');
-        const leftEl = parsed.querySelector('#notepad-export-left .lined');
-        const rightEl = parsed.querySelector('#notepad-export-right .lined');
-        if(leftEl || rightEl){
-          newLeft = leftEl ? leftEl.innerHTML : '';
-          newRight = rightEl ? rightEl.innerHTML : '';
-        } else if(parsed.body && parsed.body.innerHTML.trim()){
-          // A file from the old single-column notepad, or anything else —
-          // whatever it contains lands in the Chinese-words column so
-          // nothing is silently dropped.
-          newLeft = parsed.body.innerHTML;
-          newRight = '';
-        }
-      }catch(err){ /* not parseable HTML — fall through to plain-text below */ }
-      if(newLeft === null && newRight === null){
-        newLeft = raw;
-        newRight = '';
-      }
-
-      if((notepadLeft.textContent.trim() || notepadRight.textContent.trim()) &&
-         !confirm('Replace your current notes with the imported file? This cannot be undone.')){
-        return;
-      }
-      notepadLeft.innerHTML = newLeft;
-      notepadRight.innerHTML = newRight;
-      normalizeLines(notepadLeft);
-      normalizeLines(notepadRight);
-      fillVisibleLines(notepadLeft, 1);
-      fillVisibleLines(notepadRight, 1);
-      if(trySaveNotepad()){
-        fb.textContent = 'Notes imported from "' + file.name + '".';
-        fb.style.color = '#3E7C59';
-      } // trySaveNotepad already shows its own error message on failure
-    };
-    reader.onerror = () => {
-      fb.textContent = 'Could not read that file — try exporting a fresh copy and importing that instead.';
-      fb.style.color = '#A6332B';
-    };
-    reader.readAsText(file);
-  });
 }
 
 // ---- HSK word library ----
@@ -9053,78 +8641,73 @@ function speakLangAsync(text, langCode){
 // on the right). Only meaningful in the wide 3-column layout — the CSS
 // itself hides the drag handles and lets the panels stack normally below
 // 1400px, so none of this needs to check screen width itself.
-(function setupResizableSidePanels(){
+// ---- Resizable / collapsible left panel (HSK Library). Only meaningful in
+// the wide 2-column layout — the CSS itself hides the drag handle and lets
+// the panel stack normally below 1400px, so none of this needs to check
+// screen width itself.
+(function setupResizableSidePanel(){
   const shell = document.getElementById('app-shell');
-  const sides = {
-    left: { el: document.getElementById('side-left'), tab: document.getElementById('side-left-tab'), btn: document.getElementById('side-left-collapse-btn'), handle: document.getElementById('resize-handle-left'), cssVar: '--left-w', collapsedClass: 'left-collapsed', widthKey: 'chinesevocab_left_panel_width', collapsedKey: 'chinesevocab_left_panel_collapsed', min: 260, max: 560, dragSign: 1 },
-    right: { el: document.getElementById('side-right'), tab: document.getElementById('side-right-tab'), btn: document.getElementById('side-right-collapse-btn'), handle: document.getElementById('resize-handle-right'), cssVar: '--right-w', collapsedClass: 'right-collapsed', widthKey: 'chinesevocab_right_panel_width', collapsedKey: 'chinesevocab_right_panel_collapsed', min: 260, max: 560, dragSign: -1 },
-  };
-  if(!shell || !sides.left.el || !sides.right.el) return;
+  const side = { el: document.getElementById('side-left'), tab: document.getElementById('side-left-tab'), btn: document.getElementById('side-left-collapse-btn'), handle: document.getElementById('resize-handle-left'), cssVar: '--left-w', collapsedClass: 'left-collapsed', widthKey: 'chinesevocab_left_panel_width', collapsedKey: 'chinesevocab_left_panel_collapsed', min: 260, max: 560 };
+  if(!shell || !side.el) return;
 
-  function applyCollapsed(side, collapsed){
+  function applyCollapsed(collapsed){
     side.el.classList.toggle('collapsed', collapsed);
     shell.classList.toggle(side.collapsedClass, collapsed);
     side.btn.title = collapsed ? 'Expand this panel' : 'Collapse this panel';
     localStorage.setItem(side.collapsedKey, collapsed ? 'true' : 'false');
   }
-  function setWidth(side, px){
+  function setWidth(px){
     const clamped = Math.max(side.min, Math.min(side.max, px));
     shell.style.setProperty(side.cssVar, clamped + 'px');
     localStorage.setItem(side.widthKey, String(clamped));
   }
 
-  Object.values(sides).forEach(side => {
-    // Restore saved width and collapsed state on load.
-    const savedWidth = parseInt(localStorage.getItem(side.widthKey), 10);
-    if(!isNaN(savedWidth)) setWidth(side, savedWidth);
-    applyCollapsed(side, localStorage.getItem(side.collapsedKey) === 'true');
+  // Restore saved width and collapsed state on load.
+  const savedWidth = parseInt(localStorage.getItem(side.widthKey), 10);
+  if(!isNaN(savedWidth)) setWidth(savedWidth);
+  applyCollapsed(localStorage.getItem(side.collapsedKey) === 'true');
 
-    side.btn.addEventListener('click', () => applyCollapsed(side, true));
-    side.tab.addEventListener('click', () => applyCollapsed(side, false));
+  side.btn.addEventListener('click', () => applyCollapsed(true));
+  side.tab.addEventListener('click', () => applyCollapsed(false));
 
-    // Drag-to-resize. dragSign flips the math for the right panel, since
-    // dragging its handle left (negative mouse movement) should GROW it,
-    // the opposite of the left panel's handle.
-    let dragStartX = 0, dragStartWidth = 0, dragging = false;
-    side.handle.addEventListener('mousedown', (e) => {
-      dragging = true;
-      dragStartX = e.clientX;
-      dragStartWidth = side.el.getBoundingClientRect().width;
-      side.handle.classList.add('dragging');
-      document.body.style.userSelect = 'none';
-      e.preventDefault();
-    });
-    window.addEventListener('mousemove', (e) => {
-      if(!dragging) return;
-      const delta = (e.clientX - dragStartX) * side.dragSign;
-      setWidth(side, dragStartWidth + delta);
-    });
-    window.addEventListener('mouseup', () => {
-      if(!dragging) return;
-      dragging = false;
-      side.handle.classList.remove('dragging');
-      document.body.style.userSelect = '';
-    });
-    // Double-click the handle to reset that panel back to its default width.
-    side.handle.addEventListener('dblclick', () => setWidth(side, 320));
+  // Drag-to-resize.
+  let dragStartX = 0, dragStartWidth = 0, dragging = false;
+  side.handle.addEventListener('mousedown', (e) => {
+    dragging = true;
+    dragStartX = e.clientX;
+    dragStartWidth = side.el.getBoundingClientRect().width;
+    side.handle.classList.add('dragging');
+    document.body.style.userSelect = 'none';
+    e.preventDefault();
+  });
+  window.addEventListener('mousemove', (e) => {
+    if(!dragging) return;
+    setWidth(dragStartWidth + (e.clientX - dragStartX));
+  });
+  window.addEventListener('mouseup', () => {
+    if(!dragging) return;
+    dragging = false;
+    side.handle.classList.remove('dragging');
+    document.body.style.userSelect = '';
+  });
+  // Double-click the handle to reset the panel back to its default width.
+  side.handle.addEventListener('dblclick', () => setWidth(320));
 
-    // Touch support — same drag behaviour, for tablets.
-    side.handle.addEventListener('touchstart', (e) => {
-      dragging = true;
-      dragStartX = e.touches[0].clientX;
-      dragStartWidth = side.el.getBoundingClientRect().width;
-      side.handle.classList.add('dragging');
-    }, { passive: true });
-    window.addEventListener('touchmove', (e) => {
-      if(!dragging) return;
-      const delta = (e.touches[0].clientX - dragStartX) * side.dragSign;
-      setWidth(side, dragStartWidth + delta);
-    }, { passive: true });
-    window.addEventListener('touchend', () => {
-      if(!dragging) return;
-      dragging = false;
-      side.handle.classList.remove('dragging');
-    });
+  // Touch support — same drag behaviour, for tablets.
+  side.handle.addEventListener('touchstart', (e) => {
+    dragging = true;
+    dragStartX = e.touches[0].clientX;
+    dragStartWidth = side.el.getBoundingClientRect().width;
+    side.handle.classList.add('dragging');
+  }, { passive: true });
+  window.addEventListener('touchmove', (e) => {
+    if(!dragging) return;
+    setWidth(dragStartWidth + (e.touches[0].clientX - dragStartX));
+  }, { passive: true });
+  window.addEventListener('touchend', () => {
+    if(!dragging) return;
+    dragging = false;
+    side.handle.classList.remove('dragging');
   });
 })();
 
@@ -10494,21 +10077,18 @@ document.getElementById('stroke-shuffle').addEventListener('click', () => {
   document.getElementById('stroke-order').value = 'shuffle';
   strokeDeck = orderStrokeDeck(scopedVocab(strokeScope));
   strokeIdx = 0;
+  // Pinyin/meaning stays exactly as you left it — on or off — across every
+  // new card, in both Flashcards and Phrases. Only the character-guessing
+  // reveal below resets per card, since THAT's the actual recall exercise.
   strokeRevealed = false; strokeGuessShowPinyin = false;
-  if(strokeReadOnly) phraseHanziVisible = true; // Phrases: keep your pinyin/meaning toggle as-is
-  else { strokeShowPinyin = false; strokeShowMeaning = false; } // Flashcards: each new card starts hidden
+  if(strokeReadOnly) phraseHanziVisible = true;
   renderStroke();
 });
 document.getElementById('stroke-prev').addEventListener('click', () => {
   if(strokeDeck.length === 0) return;
   strokeIdx = (strokeIdx - 1 + strokeDeck.length) % strokeDeck.length;
   strokeRevealed = false; strokeGuessShowPinyin = false;
-  // Phrases: browsing with ‹ › shouldn't undo a pinyin/meaning toggle you've
-  // turned on — that reset-per-card behavior belongs to the guided Start/
-  // Continuous Play sequence only, not plain manual navigation. Flashcards
-  // keeps the original behavior: each new card starts hidden for active recall.
   if(strokeReadOnly) phraseHanziVisible = true;
-  else { strokeShowPinyin = false; strokeShowMeaning = false; }
   renderStroke();
 });
 document.getElementById('stroke-next').addEventListener('click', () => {
@@ -10516,7 +10096,6 @@ document.getElementById('stroke-next').addEventListener('click', () => {
   strokeIdx = (strokeIdx + 1) % strokeDeck.length;
   strokeRevealed = false; strokeGuessShowPinyin = false;
   if(strokeReadOnly) phraseHanziVisible = true;
-  else { strokeShowPinyin = false; strokeShowMeaning = false; }
   renderStroke();
 });
 document.getElementById('stroke-direction-toggle').addEventListener('click', () => {
