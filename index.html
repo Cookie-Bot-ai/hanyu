@@ -525,6 +525,7 @@
       <button class="tab-btn" data-tab="bee">听写 <span class="sub">Dictation</span></button>
       <button class="tab-btn" data-tab="qa">问答 <span class="sub">Q&amp;A</span></button>
       <button class="tab-btn" data-tab="phrases">翻译 <span class="sub">Translate</span></button>
+      <button class="tab-btn" data-tab="testprep">备考 <span class="sub">Test Prep</span></button>
       <button class="tab-btn" data-tab="test">测验 <span class="sub">Test</span></button>
     </div>
 
@@ -534,6 +535,7 @@
         <span style="display:flex;align-items:center;gap:8px;">
           <button class="action small" id="stroke-star-toggle" title="Needs practice — add/remove from ⭐ list">⭐</button>
           <button class="action small" id="stroke-learned-toggle" title="Mark/unmark this word as learned">✓</button>
+          <button class="action small" id="stroke-test-toggle" title="Add/remove from your Ready for Test pool">🎯</button>
           <span class="on-bg" id="stroke-count">Word 1 / 108</span>
         </span>
         <select class="mode" id="stroke-scope" style="display:inline-block;">
@@ -545,6 +547,7 @@
         <label><input type="checkbox" class="status-filter-cb" data-status="star">⭐ Needs practice</label>
         <label><input type="checkbox" class="status-filter-cb" data-status="learned">✓ Learned</label>
         <label><input type="checkbox" class="status-filter-cb" data-status="new">🆕 New</label>
+        <label><input type="checkbox" class="status-filter-cb" data-status="test">🎯 Ready for test</label>
         <label><input type="checkbox" class="status-filter-cb" data-status="all">All words</label>
       </div>
       <div class="speed-row" style="margin-bottom:12px;">
@@ -777,6 +780,7 @@
         <label><input type="checkbox" class="status-filter-cb" data-status="star">⭐ Needs practice</label>
         <label><input type="checkbox" class="status-filter-cb" data-status="learned">✓ Learned</label>
         <label><input type="checkbox" class="status-filter-cb" data-status="new">🆕 New</label>
+        <label><input type="checkbox" class="status-filter-cb" data-status="test">🎯 Ready for test</label>
         <label><input type="checkbox" class="status-filter-cb" data-status="all">All words</label>
       </div>
       <div class="top-controls">
@@ -838,14 +842,16 @@
     <!-- Q&A PRACTICE -->
     <div class="panel" id="panel-qa">
       <div class="meta" style="display:flex;align-items:center;gap:8px;">
-        <button class="action small" id="qa-star-toggle" title="Needs practice — add/remove from ⭐ list">⭐</button>
-        <button class="action small" id="qa-learned-toggle" title="Mark/unmark this Q&amp;A pair as learned">✓</button>
+        <button class="action btn-reveal small" id="qa-star-toggle" title="Needs practice — add/remove from ⭐ list">⭐</button>
+        <button class="action btn-reveal small" id="qa-learned-toggle" title="Mark/unmark this Q&amp;A pair as learned">✓</button>
+        <button class="action btn-reveal small" id="qa-test-toggle" title="Add/remove from your Ready for Test pool">🎯</button>
         <span id="qa-count">Question 1 / 0</span>
       </div>
       <div class="status-filter" id="status-filter-qa">
         <label><input type="checkbox" class="status-filter-cb" data-status="star">⭐ Needs practice</label>
         <label><input type="checkbox" class="status-filter-cb" data-status="learned">✓ Learned</label>
         <label><input type="checkbox" class="status-filter-cb" data-status="new">🆕 New</label>
+        <label><input type="checkbox" class="status-filter-cb" data-status="test">🎯 Ready for test</label>
         <label><input type="checkbox" class="status-filter-cb" data-status="all">All words</label>
       </div>
       <div class="nav-row-top">
@@ -910,6 +916,18 @@
     </div>
 
 
+    <!-- TEST PREP: a review/staging area — everything currently ⭐ Needs practice
+         or ✓ Learned, from words, phrases, AND Q&A pairs together in one list, so
+         you can browse them and hand-pick exactly which ones go into your Ready
+         for Test pool ahead of a specific test, instead of testing everything. -->
+    <div class="panel" id="panel-testprep">
+      <div class="meta" style="margin-bottom:10px;">
+        <span id="testprep-count">0 items to review</span>
+      </div>
+      <p class="hint" style="margin-bottom:12px;">Everything below is currently marked ⭐ Needs practice or ✓ Learned, across Flashcards, Phrases, and Q&amp;A. Tap 🎯 on anything you want included in your test pool — the Test tab can then be scoped to just these.</p>
+      <div class="word-list" id="testprep-list" style="max-height:70vh;"></div>
+    </div>
+
     <!-- TEST / EXAM: a fixed-length checkup pulling from ⭐ needs-practice and ✓
          learned words/phrases, plus your Q&A pairs. Every question is self-checked
          (attempt, reveal, mark yourself) — pronunciation, handwriting and open-ended
@@ -925,6 +943,7 @@
             <button class="action btn-reveal" data-test-scope="star">⭐ Needs practice</button>
             <button class="action btn-reveal" data-test-scope="learned">✓ Learned</button>
             <button class="action btn-reveal on" data-test-scope="both">Both</button>
+            <button class="action btn-reveal" data-test-scope="test">🎯 Ready for test</button>
           </div>
           <div class="field-label" style="margin-bottom:8px;">How many questions?</div>
           <div class="toolbar" style="margin-bottom:20px;">
@@ -992,6 +1011,15 @@
         <div class="card" id="test-bulk-promote-row" style="display:none;margin-top:14px;padding:16px;text-align:center;">
           <div id="test-bulk-promote-text" style="margin-bottom:10px;font-size:14px;"></div>
           <button class="action btn-play wide" id="test-bulk-promote-btn"></button>
+        </div>
+        <div class="card" id="test-clear-ready-row" style="display:none;margin-top:14px;padding:16px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px;">
+            <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;">
+              <input type="checkbox" id="test-clear-ready-selectall"> Select all
+            </label>
+            <button class="action btn-danger" id="test-clear-ready-btn" disabled>🎯 Clear selected from Ready for Test</button>
+          </div>
+          <div id="test-clear-ready-list" style="text-align:left;font-size:13px;"></div>
         </div>
         <div class="toolbar" style="margin-top:14px;">
           <button class="action btn-play wide" id="test-retake-btn">🔁 Take Another Test</button>
@@ -1733,10 +1761,14 @@ function applyStatusFilter(list){
     if(active.includes('star') && item.status === 'star') return true;
     if(active.includes('learned') && item.status === 'learned') return true;
     if(active.includes('new') && !item.status) return true;
+    // "Ready for test" is independent of ⭐/✓/🆕 — an item keeps its own
+    // status (still ⭐ or ✓) and separately carries this flag once you've
+    // chosen to include it in your test pool, rather than replacing status.
+    if(active.includes('test') && item.readyForTest) return true;
     return false;
   });
 }
-// Ticking "All" clears the other three (they're redundant once everything is
+// Ticking "All" clears the other four (they're redundant once everything is
 // shown); ticking any specific one clears "All" (it's no longer accurate).
 // Every status-filter checkbox on every panel shares this one handler.
 document.querySelectorAll('.status-filter-cb').forEach(cb => {
@@ -8741,6 +8773,7 @@ document.querySelectorAll('.tab-btn:not(.subtab-btn)').forEach(btn => {
     document.getElementById(panelId).classList.add('active');
     if(tab === 'qa') renderQaCard();
     if(tab === 'bee') resizeBeeCanvas();
+    if(tab === 'testprep') renderTestPrepList();
     if(tab === 'test' && document.getElementById('test-setup').style.display !== 'none') updateTestPoolInfo();
     if(tab === 'phrases'){
       strokeReadOnly = true;
@@ -9308,11 +9341,17 @@ function buildStrokeTargets(hanzi){
 function updateStrokeStatusButtons(){
   const starBtn = document.getElementById('stroke-star-toggle');
   const learnedBtn = document.getElementById('stroke-learned-toggle');
-  const status = strokeDeck.length ? strokeDeck[strokeIdx].status : '';
+  const testBtn = document.getElementById('stroke-test-toggle');
+  const card = strokeDeck.length ? strokeDeck[strokeIdx] : null;
+  const status = card ? card.status : '';
   starBtn.style.background = status === 'star' ? 'var(--gold)' : 'var(--border)';
   starBtn.style.color = status === 'star' ? '#1A211C' : '#E7EAE3';
   learnedBtn.style.background = status === 'learned' ? 'var(--jade)' : 'var(--border)';
   learnedBtn.style.color = '#E7EAE3';
+  // Independent of ⭐/✓ — a word keeps whatever status it has and separately
+  // carries this flag once added to the test pool, so both can light up together.
+  testBtn.style.background = card && card.readyForTest ? 'var(--seal)' : 'var(--border)';
+  testBtn.style.color = '#E7EAE3';
 }
 
 // Notes is a manual, freeform field the person types themselves — their own
@@ -10070,6 +10109,13 @@ document.getElementById('stroke-learned-toggle').addEventListener('click', () =>
   saveWords(allWords);
   updateStrokeStatusButtons();
 });
+document.getElementById('stroke-test-toggle').addEventListener('click', () => {
+  if(strokeDeck.length === 0) return;
+  const card = strokeDeck[strokeIdx];
+  card.readyForTest = !card.readyForTest;
+  saveWords(allWords);
+  updateStrokeStatusButtons();
+});
 document.getElementById('stroke-shuffle').addEventListener('click', () => {
   // Manual shuffle always wins over a sorted order — switch the dropdown back to
   // "Shuffled" so it doesn't silently re-sort on the next tab switch or filter change.
@@ -10436,6 +10482,7 @@ function renderQaCard(){
     playAnswerBtn.style.display = 'none';
     document.getElementById('qa-star-toggle').classList.remove('on');
     document.getElementById('qa-learned-toggle').classList.remove('on');
+    document.getElementById('qa-test-toggle').classList.remove('on');
     return;
   }
   const card = qaDeck[qaIdx];
@@ -10445,6 +10492,7 @@ function renderQaCard(){
   qmEl.textContent = qaShowQMeaning ? (card.qm || '') : '';
   document.getElementById('qa-star-toggle').classList.toggle('on', card.status === 'star');
   document.getElementById('qa-learned-toggle').classList.toggle('on', card.status === 'learned');
+  document.getElementById('qa-test-toggle').classList.toggle('on', !!card.readyForTest);
 
   let html = '';
   if(qaShowAnswer){
@@ -10477,6 +10525,13 @@ document.getElementById('qa-learned-toggle').addEventListener('click', () => {
   if(!qaDeck.length) return;
   const card = qaDeck[qaIdx];
   card.status = card.status === 'learned' ? undefined : 'learned';
+  saveQa(qaPairs);
+  renderQaCard();
+});
+document.getElementById('qa-test-toggle').addEventListener('click', () => {
+  if(!qaDeck.length) return;
+  const card = qaDeck[qaIdx];
+  card.readyForTest = !card.readyForTest;
   saveQa(qaPairs);
   renderQaCard();
 });
@@ -11034,33 +11089,112 @@ let testDrawing = false;
 let testLastX = 0, testLastY = 0;
 const TEST_TYPE_LABELS = { speaking: '🗣️ Speaking', pinyin: '拼 Pinyin', handwriting: '✍️ Handwriting', qa: '❓ Q&A' };
 
-let testScope = 'both'; // 'star' | 'learned' | 'both' — which pool to draw word-based questions from
+let testScope = 'both'; // 'star' | 'learned' | 'both' | 'test' — which pool to draw word-based questions from
 function testWordPool(){
   if(testScope === 'star') return allWords.filter(w => w.status === 'star');
   if(testScope === 'learned') return allWords.filter(w => w.status === 'learned');
+  if(testScope === 'test') return allWords.filter(w => w.readyForTest);
   return allWords.filter(w => w.status === 'star' || w.status === 'learned');
 }
 // Only Q&A pairs with an actual answer saved — "→ Q&A" (moving a word into Q&A
 // Pairs) creates a stub with a blank answer for you to fill in later, and testing
 // a question with no correct answer to reveal would just show an empty box.
-// Q&A pairs have no ⭐/✓ status of their own, so testScope never filters these out.
+// "Ready for test" (🎯) is specifically a handwriting-practice pool — see hint,
+// write the character, reveal to check — so it never includes Q&A at all.
 function testQaPool(){
-  return qaPairs.filter(p => p.a && p.a.trim());
+  if(testScope === 'test') return [];
+  let pool = qaPairs.filter(p => p.a && p.a.trim());
+  if(testScope === 'star') pool = pool.filter(p => p.status === 'star');
+  else if(testScope === 'learned') pool = pool.filter(p => p.status === 'learned');
+  else pool = pool.filter(p => p.status === 'star' || p.status === 'learned');
+  return pool;
 }
+// ---- Test Prep: a review/staging list, separate from the Test tab itself.
+// Shows everything currently ⭐ or ✓ across words, phrases, and Q&A pairs
+// together, with a 🎯 button per row to add/remove it from the Ready for
+// Test pool — a deliberate, hand-picked selection rather than testing on
+// whatever happens to be ⭐/✓ at the moment.
+function renderTestPrepList(){
+  const listEl = document.getElementById('testprep-list');
+  const countEl = document.getElementById('testprep-count');
+  if(!listEl) return;
+
+  const reviewWords = allWords.filter(w => w.status === 'star' || w.status === 'learned');
+  const reviewQa = qaPairs.filter(p => p.status === 'star' || p.status === 'learned');
+  const totalCount = reviewWords.length + reviewQa.length;
+  const readyCount = reviewWords.filter(w => w.readyForTest).length + reviewQa.filter(p => p.readyForTest).length;
+  countEl.textContent = `${readyCount} ready for test, out of ${totalCount} reviewed item${totalCount === 1 ? '' : 's'}`;
+
+  if(totalCount === 0){
+    listEl.innerHTML = '<div class="empty-note">Nothing marked ⭐ Needs practice or ✓ Learned yet. Mark some words, phrases, or Q&A pairs first — they\'ll show up here to review and add to your test pool.</div>';
+    return;
+  }
+
+  const wordRows = reviewWords.map(w => {
+    const typeLabel = (w.myCategory === 'phrase' || (isPhrase(w) && !isHskWord(w.h))) ? 'Phrase' : 'Word';
+    const statusBadge = w.status === 'star' ? '⭐' : '✓';
+    return `<div class="word-row" style="align-items:flex-start;">
+      <div class="info"><span class="h hanzi">${w.h}</span><span class="p">${w.p || ''}</span><span class="m">${escapeHtml(w.m || '')}</span>
+        <div style="font-size:11px;color:var(--muted);margin-top:2px;">${statusBadge} ${typeLabel}</div>
+      </div>
+      <button class="action btn-reveal small${w.readyForTest ? ' on' : ''}" data-testprep-toggle="${w.id}" data-testprep-kind="word">🎯 ${w.readyForTest ? 'In Test' : 'Add to Test'}</button>
+    </div>`;
+  });
+  const qaRows = reviewQa.map(p => {
+    const statusBadge = p.status === 'star' ? '⭐' : '✓';
+    return `<div class="word-row" style="align-items:flex-start;">
+      <div class="info"><span class="h hanzi">${p.q}</span>
+        <div class="m" style="margin-top:2px;">→ ${escapeHtml(p.a || '(no answer saved yet)')}</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:2px;">${statusBadge} Q&amp;A</div>
+      </div>
+      <button class="action btn-reveal small${p.readyForTest ? ' on' : ''}" data-testprep-toggle="${p.id}" data-testprep-kind="qa">🎯 ${p.readyForTest ? 'In Test' : 'Add to Test'}</button>
+    </div>`;
+  });
+  listEl.innerHTML = wordRows.join('') + qaRows.join('');
+
+  listEl.querySelectorAll('[data-testprep-toggle]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id = btn.dataset.testprepToggle;
+      if(btn.dataset.testprepKind === 'word'){
+        const w = allWords.find(x => x.id === id);
+        if(w){ w.readyForTest = !w.readyForTest; saveWords(allWords); }
+      } else {
+        const p = qaPairs.find(x => x.id === id);
+        if(p){ p.readyForTest = !p.readyForTest; saveQa(qaPairs); }
+      }
+      renderTestPrepList();
+    });
+  });
+}
+
 function updateTestPoolInfo(){
   const words = testWordPool();
   const qaCount = testQaPool().length;
-  const incompleteQaCount = qaPairs.length - qaCount;
+  // "Incomplete" always just means "blank answer" — computed against every
+  // answered pair, not testQaPool()'s result, since for the 'test' scope that
+  // result is ALSO filtered by readyForTest and would wrongly count "not yet
+  // marked ready" pairs as incomplete too.
+  const incompleteQaCount = qaPairs.length - qaPairs.filter(p => p.a && p.a.trim()).length;
   const info = document.getElementById('test-pool-info');
   const startBtn = document.getElementById('test-start-btn');
-  if(words.length === 0 && qaCount === 0){
-    const scopeLabel = testScope === 'star' ? '⭐ Needs practice' : testScope === 'learned' ? '✓ Learned' : '⭐ or ✓';
-    info.textContent = `No words marked ${scopeLabel} yet (and no Q&A pairs with an answer) — nothing to test yet.`;
+  const scopeLabels = { star: '⭐ Needs practice', learned: '✓ Learned', both: '⭐ or ✓', test: '🎯 Ready for test' };
+  const scopeLabelsMarked = { star: 'marked ⭐ Needs practice', learned: 'marked ✓ Learned', both: 'marked ⭐ or ✓', test: 'marked 🎯 Ready for test' };
+  if(words.length === 0 && (qaCount === 0 && testScope !== 'test')){
+    info.textContent = `No words marked ${scopeLabels[testScope]} yet (and no Q&A pairs with an answer) — nothing to test yet.`;
     info.style.color = '#C9A227';
     startBtn.disabled = true;
+  } else if(words.length === 0 && testScope === 'test'){
+    info.textContent = `No words marked 🎯 Ready for test yet — add some from Test Prep first.`;
+    info.style.color = '#C9A227';
+    startBtn.disabled = true;
+  } else if(testScope === 'test'){
+    // Ready for test is handwriting-practice only (see the meaning, write the
+    // character, reveal to check) — no Q&A here, so the summary never mentions it.
+    info.textContent = `${words.length} word${words.length === 1 ? '' : 's'}/phrase${words.length === 1 ? '' : 's'} marked 🎯 Ready for test — handwriting practice only.`;
+    info.style.color = '';
+    startBtn.disabled = false;
   } else {
-    const scopeLabel = testScope === 'star' ? 'marked ⭐ Needs practice' : testScope === 'learned' ? 'marked ✓ Learned' : 'marked ⭐ or ✓';
-    let text = `${words.length} word${words.length === 1 ? '' : 's'}/phrase${words.length === 1 ? '' : 's'} ${scopeLabel}, ${qaCount} Q&A pair${qaCount === 1 ? '' : 's'} available.`;
+    let text = `${words.length} word${words.length === 1 ? '' : 's'}/phrase${words.length === 1 ? '' : 's'} ${scopeLabelsMarked[testScope]}, ${qaCount} Q&A pair${qaCount === 1 ? '' : 's'} available.`;
     if(incompleteQaCount > 0) text += ` (${incompleteQaCount} Q&A pair${incompleteQaCount === 1 ? '' : 's'} skipped — no answer saved yet.)`;
     info.textContent = text;
     info.style.color = '';
@@ -11099,7 +11233,11 @@ function pickTestPromptDirection(item, includeHanzi){
 function buildTestQueue(length){
   const words = testWordPool();
   const qaPool = testQaPool();
-  const wordTypes = ['speaking', 'pinyin', 'handwriting'];
+  // "Ready for test" is handwriting-practice only: see the meaning (English
+  // AND Vietnamese together, always both — never speaking or pinyin
+  // questions, and never Q&A, since testQaPool() already returns none for
+  // this scope), write the character, reveal to check.
+  const wordTypes = testScope === 'test' ? ['handwriting'] : ['speaking', 'pinyin', 'handwriting'];
 
   if(length === 'all'){
     // One question per item, covering the whole pool exactly once instead of
@@ -11108,7 +11246,7 @@ function buildTestQueue(length){
     const queue = [];
     words.forEach(w => {
       const type = wordTypes[Math.floor(Math.random() * wordTypes.length)];
-      const direction = type === 'pinyin' ? undefined : pickTestPromptDirection(w, type === 'speaking');
+      const direction = testScope === 'test' ? 'both' : (type === 'pinyin' ? undefined : pickTestPromptDirection(w, type === 'speaking'));
       queue.push({ type, item: w, direction });
     });
     qaPool.forEach(p => {
@@ -11130,7 +11268,7 @@ function buildTestQueue(length){
       queue.push({ type: 'qa', item: qaPool[Math.floor(Math.random() * qaPool.length)] });
     } else {
       const item = words[Math.floor(Math.random() * words.length)];
-      const direction = type === 'pinyin' ? undefined : pickTestPromptDirection(item, type === 'speaking');
+      const direction = testScope === 'test' ? 'both' : (type === 'pinyin' ? undefined : pickTestPromptDirection(item, type === 'speaking'));
       queue.push({ type, item, direction });
     }
   }
@@ -11192,7 +11330,15 @@ function renderTestQuestion(){
     document.getElementById('test-pinyin-input').value = '';
   } else if(q.type === 'handwriting'){
     document.getElementById('test-prompt-meaning').style.display = '';
-    document.getElementById('test-prompt-meaning').textContent = q.direction === 'vi' ? q.item.n : (q.item.m || '(no meaning saved)');
+    if(q.direction === 'both'){
+      // Ready for test: always both languages together, never just one —
+      // this pool is specifically hint-rich handwriting practice.
+      const bits = [q.item.m || '(no meaning saved)'];
+      if(q.item.n && q.item.n.trim()) bits.push(q.item.n);
+      document.getElementById('test-prompt-meaning').innerHTML = bits.map(escapeHtml).join('<br>');
+    } else {
+      document.getElementById('test-prompt-meaning').textContent = q.direction === 'vi' ? q.item.n : (q.item.m || '(no meaning saved)');
+    }
     document.getElementById('test-canvas-block').style.display = '';
     setupTestCanvasIfNeeded();
     clearTestCanvas();
@@ -11385,6 +11531,70 @@ function renderTestResults(){
       `Move ${promotable.length === 1 ? 'it' : 'all'} to ✓ Learned`;
   } else {
     promoteRow.style.display = 'none';
+  }
+
+  // Manage your Ready for Test pool right from the results, right or wrong —
+  // clear individual items one at a time, or tick several (or Select all)
+  // and clear them together. Not touching anything here just leaves the
+  // pool exactly as it was.
+  const readyItemsMap = new Map(); // item.id -> {item, type, label} — dedupes an
+  // item that showed up in more than one question this test.
+  testResults.forEach(r => {
+    if(!r.item.readyForTest || readyItemsMap.has(r.item.id)) return;
+    const label = r.type === 'qa' ? `${r.item.q} → ${r.item.a}` : r.item.h + (r.item.m ? ' — ' + r.item.m : '');
+    readyItemsMap.set(r.item.id, { item: r.item, type: r.type, label });
+  });
+  const readyItems = Array.from(readyItemsMap.values());
+  const clearRow = document.getElementById('test-clear-ready-row');
+  const clearList = document.getElementById('test-clear-ready-list');
+  const selectAllCb = document.getElementById('test-clear-ready-selectall');
+  const clearBtn = document.getElementById('test-clear-ready-btn');
+  if(readyItems.length === 0){
+    clearRow.style.display = 'none';
+  } else {
+    clearRow.style.display = '';
+    selectAllCb.checked = false;
+    clearBtn.disabled = true;
+    clearList.innerHTML = readyItems.map((entry, i) => `
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid var(--border);">
+        <label style="display:flex;align-items:center;gap:8px;flex:1;min-width:0;cursor:pointer;">
+          <input type="checkbox" class="test-clear-ready-cb" data-clear-idx="${i}">
+          <span style="overflow-wrap:anywhere;">${escapeHtml(entry.label)}</span>
+        </label>
+        <button class="action btn-reveal small" data-clear-individual="${i}">✕ Clear</button>
+      </div>`).join('');
+    function updateClearBtnState(){
+      clearBtn.disabled = clearList.querySelectorAll('.test-clear-ready-cb:checked').length === 0;
+    }
+    clearList.querySelectorAll('.test-clear-ready-cb').forEach(cb => {
+      cb.addEventListener('change', updateClearBtnState);
+    });
+    clearList.querySelectorAll('[data-clear-individual]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const entry = readyItems[parseInt(btn.dataset.clearIndividual, 10)];
+        entry.item.readyForTest = false;
+        if(entry.type === 'qa') saveQa(qaPairs); else saveWords(allWords);
+        renderTestResults();
+      });
+    });
+    selectAllCb.onclick = function(){
+      clearList.querySelectorAll('.test-clear-ready-cb').forEach(cb => { cb.checked = this.checked; });
+      updateClearBtnState();
+    };
+    clearBtn.onclick = () => {
+      const checkedIdxs = Array.from(clearList.querySelectorAll('.test-clear-ready-cb:checked'))
+        .map(cb => parseInt(cb.dataset.clearIdx, 10));
+      if(checkedIdxs.length === 0) return;
+      let touchedWords = false, touchedQa = false;
+      checkedIdxs.forEach(i => {
+        const entry = readyItems[i];
+        entry.item.readyForTest = false;
+        if(entry.type === 'qa') touchedQa = true; else touchedWords = true;
+      });
+      if(touchedWords) saveWords(allWords);
+      if(touchedQa) saveQa(qaPairs);
+      renderTestResults();
+    };
   }
 }
 document.getElementById('test-bulk-promote-btn').addEventListener('click', () => {
