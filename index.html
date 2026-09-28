@@ -1812,14 +1812,15 @@ document.querySelectorAll('.status-filter-cb').forEach(cb => {
 // material, or just one specific lesson, independent of the ⭐/✓/🆕 filter
 // above. Same shared setting across every panel that shows the dropdown.
 const LESSON_FILTER_KEY = 'chinesevocab_lesson_filter';
-function getLessonFilter(){ return localStorage.getItem(LESSON_FILTER_KEY) || 'all'; } // 'all' | 'none' | a specific lesson name
+function getLessonFilter(){ return localStorage.getItem(LESSON_FILTER_KEY) || 'all'; } // 'all' | 'any' | 'none' | a specific lesson name
 function setLessonFilter(val){
   localStorage.setItem(LESSON_FILTER_KEY, val);
   document.querySelectorAll('.lesson-filter-select').forEach(sel => { sel.value = val; });
 }
 function applyLessonFilter(list){
   const active = getLessonFilter();
-  if(active === 'all') return list;
+  if(active === 'all') return list; // no lesson restriction at all — the safe default for anyone with no lesson data yet
+  if(active === 'any') return list.filter(item => !!item.lesson); // union of every tagged lesson, excluding untagged
   if(active === 'none') return list.filter(item => !item.lesson);
   return list.filter(item => item.lesson === active);
 }
@@ -1832,11 +1833,13 @@ function refreshLessonFilterOptions(){
   qaPairs.forEach(p => { if(p.lesson) lessons.add(p.lesson); });
   const sorted = Array.from(lessons).sort();
   const active = getLessonFilter();
+  const validValues = ['all', 'any', 'none', ...sorted];
   document.querySelectorAll('.lesson-filter-select').forEach(sel => {
-    sel.innerHTML = '<option value="all">All lessons</option>' +
+    sel.innerHTML = '<option value="all">Everything (no lesson filter)</option>' +
+      '<option value="any">All lessons (Bài content only)</option>' +
       sorted.map(l => `<option value="${escapeHtml(l)}">${escapeHtml(l)}</option>`).join('') +
       '<option value="none">No lesson (other words)</option>';
-    sel.value = sorted.includes(active) || active === 'all' || active === 'none' ? active : 'all';
+    sel.value = validValues.includes(active) ? active : 'all';
   });
 }
 document.querySelectorAll('.lesson-filter-select').forEach(sel => {
