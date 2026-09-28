@@ -8995,9 +8995,20 @@ let beeMissedIds = loadBeeMissedIds();
 // Which specific words are ticked on the setup screen, ready to become the
 // next round — no fixed round size, no automatic "missed words first"
 // reordering: you pick exactly which words you want, the round is exactly
-// that set, shuffled. Persists across a tab switch so half-picking a set
-// doesn't get lost, but is never auto-populated — always a deliberate choice.
-let beeSelectedIds = new Set();
+// that set, shuffled. Persisted to storage (not just kept in memory), so
+// half-picking a set — or getting partway through a round — survives a tab
+// switch, a page reload, or closing the app entirely. Never auto-populated
+// on its own, though: it only ever changes from an explicit choice you make.
+const BEE_SELECTED_KEY = 'chinesevocab_bee_selected_ids';
+function loadBeeSelectedIds(){
+  try{
+    const stored = JSON.parse(localStorage.getItem(BEE_SELECTED_KEY));
+    if(Array.isArray(stored)) return new Set(stored);
+  }catch(e){ /* fall through */ }
+  return new Set();
+}
+function saveBeeSelectedIds(){ localStorage.setItem(BEE_SELECTED_KEY, JSON.stringify(Array.from(beeSelectedIds))); }
+let beeSelectedIds = loadBeeSelectedIds();
 
 // The pool the setup checklist draws from — same scope/status/lesson filters
 // as the rest of the app, just narrowed down before you pick individual words.
@@ -9025,6 +9036,7 @@ function renderBeeCandidateList(){
       cb.addEventListener('change', () => {
         if(cb.checked) beeSelectedIds.add(cb.dataset.beeId);
         else beeSelectedIds.delete(cb.dataset.beeId);
+        saveBeeSelectedIds();
         updateBeeSelectedCount();
       });
     });
@@ -9043,6 +9055,7 @@ function updateBeeSelectedCount(){
 }
 document.getElementById('bee-select-all-btn').addEventListener('click', () => {
   beeCandidatePool().forEach(w => beeSelectedIds.add(w.id));
+  saveBeeSelectedIds();
   renderBeeCandidateList();
 });
 // Ticks just the words you've previously gotten wrong (and are still in the
@@ -9050,10 +9063,12 @@ document.getElementById('bee-select-all-btn').addEventListener('click', () => {
 // without having to switch the scope dropdown to "Previously missed" first.
 document.getElementById('bee-select-missed-btn').addEventListener('click', () => {
   beeCandidatePool().filter(w => beeMissedIds.has(w.id)).forEach(w => beeSelectedIds.add(w.id));
+  saveBeeSelectedIds();
   renderBeeCandidateList();
 });
 document.getElementById('bee-select-none-btn').addEventListener('click', () => {
   beeSelectedIds.clear();
+  saveBeeSelectedIds();
   renderBeeCandidateList();
 });
 
@@ -9076,6 +9091,7 @@ function startBeeRoundFromSelection(){
   document.getElementById('bee-feedback').innerHTML = '';
   renderBeeScore();
   renderBeeEmptyState();
+  speak(beeDeck[0].h); // same "hear it immediately, no extra tap" behavior as every word after this one
 }
 function endBeeRoundToSetup(completionNote){
   document.getElementById('bee-active').style.display = 'none';
@@ -9238,6 +9254,7 @@ function prevBee(){
   beeShowHint = false;
   document.getElementById('bee-feedback').innerHTML = '';
   renderBeeEmptyState();
+  speak(beeDeck[beeIdx].h); // hear the word straight away on arrival — no extra tap needed
 }
 function nextBee(){
   if(beeDeck.length === 0) return;
@@ -9250,6 +9267,7 @@ function nextBee(){
   beeIdx++;
   document.getElementById('bee-feedback').innerHTML = '';
   renderBeeEmptyState();
+  speak(beeDeck[beeIdx].h); // hear the word straight away on arrival — no extra tap needed
 }
 document.getElementById('bee-play').addEventListener('click', () => { if(beeDeck.length) speak(beeDeck[beeIdx].h); });
 document.getElementById('bee-prev').addEventListener('click', prevBee);
@@ -9287,6 +9305,7 @@ function beeSelfAssess(correct){
     if(!beeMissedIds.has(card.id)){ beeMissedIds.add(card.id); saveBeeMissedIds(); }
     beeSelectedIds.add(card.id); // still needs practice — stays ticked for next round
   }
+  saveBeeSelectedIds(); // persisted immediately — survives a reload even mid-round, not just a completed one
   score.total++;
   if(correct) score.right++;
   renderBeeScore();
