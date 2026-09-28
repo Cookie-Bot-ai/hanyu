@@ -798,6 +798,7 @@
           <span class="on-bg" id="bee-selected-count">0 selected</span>
           <div style="display:flex;gap:6px;flex-wrap:wrap;">
             <button class="action btn-reveal small" id="bee-select-all-btn">☑️ Select all visible</button>
+            <button class="action btn-reveal small" id="bee-select-missed-btn">🔁 Select needs-practice</button>
             <button class="action btn-reveal small" id="bee-select-none-btn">Clear selection</button>
           </div>
         </div>
@@ -811,20 +812,27 @@
         <span class="on-bg" id="bee-round-count" style="font-size:12px;">Word 1 / 10</span>
         <button class="action btn-danger small" id="bee-end-btn" title="End this round and pick new words">✕ End Round</button>
       </div>
+      <!-- Listen comes first and stands alone, big — this is a listening
+           exercise before anything else: hear the word, then try to write it
+           from memory. Meaning stays a single tap away right underneath,
+           collapsed by default so it's there if you're unsure, not a crutch
+           you see automatically. -->
       <div class="row">
-        <button class="action btn-reveal" id="bee-hint-toggle" style="flex:1;">💡 Show hint (meaning)</button>
+        <button class="action btn-play" id="bee-play" style="flex:1;font-size:16px;padding:16px;">🔊 Listen</button>
       </div>
+      <div class="row">
+        <button class="action btn-reveal" id="bee-hint-toggle" style="flex:1;">💭 Check meaning</button>
+      </div>
+      <div id="bee-hint-text" class="on-bg" style="text-align:center;font-size:13px;min-height:18px;margin:2px auto 10px;"></div>
       <div class="row" id="bee-check-row">
         <button class="action btn-reveal" id="bee-submit" style="flex:1;">✓ Check</button>
       </div>
       <!-- Same slot as the Check button: before you check it's the button, after you
            check it's the answer. They're never both wanted, so they share the space. -->
       <div id="bee-answer-details" class="on-bg" style="display:none;text-align:center;margin-bottom:12px;font-size:13px;"></div>
-      <div id="bee-hint-text" class="on-bg" style="text-align:center;font-size:13px;min-height:18px;margin:2px auto 4px;"></div>
       <div class="nav-row-top">
         <button class="card-nav prev" id="bee-prev" title="Previous word" aria-label="Previous word">‹</button>
         <div class="nav-icons">
-          <button class="nav-icon-btn" id="bee-play" title="Play the word" aria-label="Play the word">🔊</button>
           <button class="nav-icon-btn" id="bee-pron-check" title="Check my pronunciation" aria-label="Check my pronunciation">🎤</button>
           <div class="nav-icons" id="bee-selfassess-row" style="display:none;">
             <button class="nav-icon-btn assess-ok" id="bee-got-it" title="I got it right" aria-label="I got it right">✓</button>
@@ -9037,6 +9045,13 @@ document.getElementById('bee-select-all-btn').addEventListener('click', () => {
   beeCandidatePool().forEach(w => beeSelectedIds.add(w.id));
   renderBeeCandidateList();
 });
+// Ticks just the words you've previously gotten wrong (and are still in the
+// current filtered view) — a shortcut to build a "fix what I missed" round
+// without having to switch the scope dropdown to "Previously missed" first.
+document.getElementById('bee-select-missed-btn').addEventListener('click', () => {
+  beeCandidatePool().filter(w => beeMissedIds.has(w.id)).forEach(w => beeSelectedIds.add(w.id));
+  renderBeeCandidateList();
+});
 document.getElementById('bee-select-none-btn').addEventListener('click', () => {
   beeSelectedIds.clear();
   renderBeeCandidateList();
@@ -9267,8 +9282,10 @@ function beeSelfAssess(correct){
   const card = beeDeck[beeIdx];
   if(correct){
     if(beeMissedIds.has(card.id)){ beeMissedIds.delete(card.id); saveBeeMissedIds(); }
+    beeSelectedIds.delete(card.id); // got it right — drop it from next round's selection automatically
   } else {
     if(!beeMissedIds.has(card.id)){ beeMissedIds.add(card.id); saveBeeMissedIds(); }
+    beeSelectedIds.add(card.id); // still needs practice — stays ticked for next round
   }
   score.total++;
   if(correct) score.right++;
