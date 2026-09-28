@@ -442,7 +442,7 @@
       </div>
       <details class="hint-collapsible">
         <summary class="on-bg">Bulk add, Export everything &amp; how duplicates are handled… <span class="expand-mark">▸</span></summary>
-        <p class="on-bg" style="margin:8px 0 14px;">For typing up new words, phrases, and Q&amp;A pairs offline in Notepad (or any plain text editor), then bringing them all in at once — mix all three in the same file. Download the template, fill in one line per entry using the <code>hanzi | meaning | type | viet translate</code> format (Q&amp;A pairs use two extra fields for the answer) described inside it, save the file, then Import patch. Meaning auto-translates if left blank; pinyin is always automatic on every field. Nothing is ever duplicated: a word, phrase, or Q&amp;A pair already in your deck has its meaning/Viet Translate updated if the file's version is different (a blank field in the file leaves that field alone, it never gets wiped out), and one that's already part of the built-in HSK library gets added straight to your Flashcards deck automatically (same as tapping +Add in the HSK Library section) rather than creating a second copy. This always merges — it never replaces or removes anything, only adds or updates.<br><br><b>Export everything</b> writes every word, phrase, Q&amp;A pair, and added HSK word you currently have into that same patch format — edit meanings or add a Viet Translate in Notepad, then Import patch to write any changes back in. Added HSK words are clearly labelled by their level (<code>hsk1</code>, <code>hsk2</code>, etc.) in the type column instead of a generic "word", so you can tell them apart from ones you typed in yourself.</p>
+        <p class="on-bg" style="margin:8px 0 14px;">For typing up new words, phrases, and Q&amp;A pairs offline in Notepad (or any plain text editor), then bringing them all in at once — mix all three in the same file. Download the template, fill in one line per entry using the <code>hanzi | meaning | type | viet translate | lesson</code> format (Q&amp;A pairs use extra fields for the answer) described inside it, save the file, then Import patch. Meaning auto-translates if left blank; pinyin is always automatic on every field. "lesson" is whatever label you use for the lesson it came from (e.g. "Bài 4") — leave it blank for anything gathered outside your lesson material, which is exactly how the app tells the two apart when filtering practice. Nothing is ever duplicated: a word, phrase, or Q&amp;A pair already in your deck has its meaning/Viet Translate/lesson updated if the file's version is different (a blank field in the file leaves that field alone, it never gets wiped out), and one that's already part of the built-in HSK library gets added straight to your Flashcards deck automatically (same as tapping +Add in the HSK Library section) rather than creating a second copy. This always merges — it never replaces or removes anything, only adds or updates.<br><br><b>Export everything</b> writes every word, phrase, Q&amp;A pair, and added HSK word you currently have into that same patch format — edit meanings, lessons, or add a Viet Translate in Notepad, then Import patch to write any changes back in. Added HSK words are clearly labelled by their level (<code>hsk1</code>, <code>hsk2</code>, etc.) in the type column instead of a generic "word", so you can tell them apart from ones you typed in yourself.</p>
       </details>
       <div id="import-patch-feedback" class="on-bg" style="font-size:12px;margin-bottom:14px;"></div>
 
@@ -549,6 +549,10 @@
         <label><input type="checkbox" class="status-filter-cb" data-status="new">🆕 New</label>
         <label><input type="checkbox" class="status-filter-cb" data-status="test">🎯 Ready for test</label>
         <label><input type="checkbox" class="status-filter-cb" data-status="all">All words</label>
+      </div>
+      <div class="speed-row" style="margin-bottom:12px;">
+        <label for="lesson-filter-stroke">Lesson</label>
+        <select class="mode lesson-filter-select" id="lesson-filter-stroke" style="margin-left:auto;"></select>
       </div>
       <div class="speed-row" style="margin-bottom:12px;">
         <label for="stroke-order">Card order</label>
@@ -783,6 +787,10 @@
         <label><input type="checkbox" class="status-filter-cb" data-status="test">🎯 Ready for test</label>
         <label><input type="checkbox" class="status-filter-cb" data-status="all">All words</label>
       </div>
+      <div class="speed-row" style="margin-bottom:12px;">
+        <label for="lesson-filter-bee">Lesson</label>
+        <select class="mode lesson-filter-select" id="lesson-filter-bee" style="margin-left:auto;"></select>
+      </div>
       <div class="top-controls">
         <span class="on-bg" id="bee-round-count" style="font-size:12px;">Word 1 / 10</span>
         <select class="mode" id="bee-round-size">
@@ -853,6 +861,10 @@
         <label><input type="checkbox" class="status-filter-cb" data-status="new">🆕 New</label>
         <label><input type="checkbox" class="status-filter-cb" data-status="test">🎯 Ready for test</label>
         <label><input type="checkbox" class="status-filter-cb" data-status="all">All words</label>
+      </div>
+      <div class="speed-row" style="margin-bottom:12px;">
+        <label for="lesson-filter-qa">Lesson</label>
+        <select class="mode lesson-filter-select" id="lesson-filter-qa" style="margin-left:auto;"></select>
       </div>
       <div class="nav-row-top">
         <button class="card-nav prev" id="qa-prev" title="Previous question" aria-label="Previous question">‹</button>
@@ -939,18 +951,23 @@
           <div class="meaning" style="margin-bottom:18px;">A quick self-checked review — speaking, pinyin, handwriting, and Q&amp;A, mixed together.</div>
           <div style="font-size:12px;color:var(--muted);margin-bottom:16px;" id="test-pool-info">Loading…</div>
           <div class="field-label" style="margin-bottom:8px;">Test which words?</div>
-          <div class="toolbar" style="margin-bottom:20px;">
-            <button class="action btn-reveal" data-test-scope="star">⭐ Needs practice</button>
-            <button class="action btn-reveal" data-test-scope="learned">✓ Learned</button>
-            <button class="action btn-reveal on" data-test-scope="both">Both</button>
-            <button class="action btn-reveal" data-test-scope="test">🎯 Ready for test</button>
+          <div class="status-filter" style="margin-bottom:20px;justify-content:flex-start;">
+            <label><input type="radio" name="test-scope-radio" class="test-scope-radio" value="star">⭐ Needs practice</label>
+            <label><input type="radio" name="test-scope-radio" class="test-scope-radio" value="learned">✓ Learned</label>
+            <label><input type="radio" name="test-scope-radio" class="test-scope-radio" value="both" checked>Both</label>
+            <label><input type="radio" name="test-scope-radio" class="test-scope-radio" value="test">🎯 Ready for test</label>
+          </div>
+          <div class="field-label" style="margin-bottom:8px;">Which lesson?</div>
+          <div class="speed-row" style="margin-bottom:20px;">
+            <label for="lesson-filter-test">Lesson</label>
+            <select class="mode lesson-filter-select" id="lesson-filter-test" style="margin-left:auto;"></select>
           </div>
           <div class="field-label" style="margin-bottom:8px;">How many questions?</div>
-          <div class="toolbar" style="margin-bottom:20px;">
-            <button class="action btn-reveal" data-test-len="10">10</button>
-            <button class="action btn-reveal on" data-test-len="20">20</button>
-            <button class="action btn-reveal" data-test-len="30">30</button>
-            <button class="action btn-reveal" data-test-len="all">All</button>
+          <div class="status-filter" style="margin-bottom:20px;justify-content:flex-start;">
+            <label><input type="radio" name="test-len-radio" class="test-len-radio" value="10">10</label>
+            <label><input type="radio" name="test-len-radio" class="test-len-radio" value="20" checked>20</label>
+            <label><input type="radio" name="test-len-radio" class="test-len-radio" value="30">30</label>
+            <label><input type="radio" name="test-len-radio" class="test-len-radio" value="all">All</label>
           </div>
           <button class="action btn-play" id="test-start-btn" style="width:100%;">▶ Start Test</button>
         </div>
@@ -1785,6 +1802,46 @@ document.querySelectorAll('.status-filter-cb').forEach(cb => {
     }
     if(active.length === 0) active = ['all']; // never leave every box unchecked
     setStatusFilter(active);
+    refreshAllDecks();
+  });
+});
+
+// ---- Lesson filter: separates words/phrases/Q&A tagged with a lesson (e.g.
+// "Bài 4", from a bulk import) from anything gathered elsewhere with no
+// lesson tag — so practice and Test can be narrowed to just your lesson
+// material, or just one specific lesson, independent of the ⭐/✓/🆕 filter
+// above. Same shared setting across every panel that shows the dropdown.
+const LESSON_FILTER_KEY = 'chinesevocab_lesson_filter';
+function getLessonFilter(){ return localStorage.getItem(LESSON_FILTER_KEY) || 'all'; } // 'all' | 'none' | a specific lesson name
+function setLessonFilter(val){
+  localStorage.setItem(LESSON_FILTER_KEY, val);
+  document.querySelectorAll('.lesson-filter-select').forEach(sel => { sel.value = val; });
+}
+function applyLessonFilter(list){
+  const active = getLessonFilter();
+  if(active === 'all') return list;
+  if(active === 'none') return list.filter(item => !item.lesson);
+  return list.filter(item => item.lesson === active);
+}
+// Rebuilds every lesson dropdown's option list from whatever lessons actually
+// exist right now across words and Q&A pairs — called after any import/add/
+// edit that could introduce or remove a lesson tag, so the list never goes stale.
+function refreshLessonFilterOptions(){
+  const lessons = new Set();
+  allWords.forEach(w => { if(w.lesson) lessons.add(w.lesson); });
+  qaPairs.forEach(p => { if(p.lesson) lessons.add(p.lesson); });
+  const sorted = Array.from(lessons).sort();
+  const active = getLessonFilter();
+  document.querySelectorAll('.lesson-filter-select').forEach(sel => {
+    sel.innerHTML = '<option value="all">All lessons</option>' +
+      sorted.map(l => `<option value="${escapeHtml(l)}">${escapeHtml(l)}</option>`).join('') +
+      '<option value="none">No lesson (other words)</option>';
+    sel.value = sorted.includes(active) || active === 'all' || active === 'none' ? active : 'all';
+  });
+}
+document.querySelectorAll('.lesson-filter-select').forEach(sel => {
+  sel.addEventListener('change', () => {
+    setLessonFilter(sel.value);
     refreshAllDecks();
   });
 });
@@ -8081,7 +8138,7 @@ function scopedVocabByType(scope){
   return list;
 }
 function scopedVocab(scope){
-  return applyStatusFilter(scopedVocabByType(scope));
+  return applyLessonFilter(applyStatusFilter(scopedVocabByType(scope)));
 }
 
 function shuffle(arr){
@@ -8922,7 +8979,7 @@ function buildBeeRound(){
   let pool;
   if(beeScope === 'missed'){
     pool = allWords.filter(w => beeMissedIds.has(w.id));
-    pool = applyStatusFilter(pool);
+    pool = applyLessonFilter(applyStatusFilter(pool));
     pool = shuffle(pool);
   } else {
     const base = scopedVocab(beeScope);
@@ -10186,6 +10243,7 @@ function refreshAllPracticeForHideLearned(newVal){
   renderMeaning();
 }
 function refreshAllDecks(){
+  refreshLessonFilterOptions();
   meaningDeck = shuffle(scopedVocab(meaningScope));
   meaningIdx = 0; showHanzi = false; showMPinyin = false;
   renderMeaning();
@@ -10202,6 +10260,7 @@ function refreshAllDecks(){
   qaPinnedId = null;
   resetQaToggles();
   renderQaCard();
+  updateTestPoolInfo(); // Test tab's pool-info line stays in sync with every data/filter change too
 }
 
 let editingIndex = null;
@@ -10457,7 +10516,7 @@ function resetQaToggles(){
 
 function renderQaCard(){
   resetPronForNewCard();
-  qaDeck = applyStatusFilter(qaPairs); // keep in sync with latest edits/filter without reshuffling mid-session unless asked
+  qaDeck = applyLessonFilter(applyStatusFilter(qaPairs)); // keep in sync with latest edits/filter without reshuffling mid-session unless asked
   if(qaPinnedId){
     const pinned = qaPairs.find(p => p.id === qaPinnedId);
     if(pinned && !qaDeck.some(p => p.id === qaPinnedId)) qaDeck = [pinned, ...qaDeck];
@@ -10957,10 +11016,10 @@ function downloadText(text, filename){
 const PATCH_TEMPLATE = `# Han Yu Learning — Bulk Word, Phrase & Q&A Import Template
 #
 # Mix words, phrases, AND question/answer pairs in the same file — one entry
-# per line. Words and phrases use 4 fields; Q&A pairs use up to 7:
+# per line. Words and phrases use up to 5 fields; Q&A pairs use up to 8:
 #
-#   hanzi | meaning | type | viet translate | answer | answer meaning | answer viet translate   (qa only)
-#   hanzi | meaning | type | viet translate                                                     (word/phrase)
+#   hanzi | meaning | type | viet translate | answer | answer meaning | answer viet translate | lesson   (qa only)
+#   hanzi | meaning | type | viet translate | lesson                                                     (word/phrase)
 #
 #   hanzi           required  — the Chinese characters, or a whole sentence.
 #                               For type "qa" this is the QUESTION.
@@ -10979,6 +11038,11 @@ const PATCH_TEMPLATE = `# Han Yu Learning — Bulk Word, Phrase & Q&A Import Tem
 #   answer meaning  optional, "qa" only — leave blank to auto-translate.
 #   answer viet translate  optional, "qa" only — the ANSWER's own Vietnamese
 #                               translation, separate from the question's above.
+#   lesson          optional  — whichever label you use for the lesson this
+#                               came from (e.g. "Bài 4"). Leave blank for
+#                               words you gathered elsewhere, outside your
+#                               lesson material — that's exactly how the app
+#                               tells the two apart when filtering practice.
 #
 # Pinyin is always generated automatically for every field — don't include it.
 # For "qa" questions/answers, you can add your own short English answer-hint
@@ -10994,9 +11058,9 @@ const PATCH_TEMPLATE = `# Han Yu Learning — Bulk Word, Phrase & Q&A Import Tem
 #
 # Duplicates never create a second copy — they're either left alone or patched:
 #   - Already in My Words / My Phrases / Q&A Pairs?  → its meaning/Viet
-#                                                       Translate is updated
-#                                                       if the value in this
-#                                                       file is different
+#                                                       Translate/lesson is
+#                                                       updated if the value in
+#                                                       this file is different
 #                                                       from what's saved
 #                                                       (handy for re-importing
 #                                                       after fixing or adding
@@ -11015,7 +11079,8 @@ const PATCH_TEMPLATE = `# Han Yu Learning — Bulk Word, Phrase & Q&A Import Tem
 #                                                       HSK Library tab), using the
 #                                                       HSK library's own pinyin
 #                                                       and meaning (your Viet
-#                                                       Translate is still kept).
+#                                                       Translate and lesson are
+#                                                       still kept).
 #   - Not found anywhere?                            → added as a new custom word,
 #                                                       phrase, or Q&A pair using
 #                                                       whatever you typed here.
@@ -11023,9 +11088,9 @@ const PATCH_TEMPLATE = `# Han Yu Learning — Bulk Word, Phrase & Q&A Import Tem
 # Examples — one word, one phrase, one Q&A pair with an answer-hint (delete
 # these, or leave them; they'll just be recognised as already up to date the
 # next time you import):
-# 你好 | hello | word |
-# 你好吗 | how are you | phrase | cau hoi tham suc khoe ban
-# 你叫什么名字？[Xiaoming] | what is your name | qa | Vietnamese translation of the question | 我叫小明。 | my name is xiaoming | Vietnamese translation of the answer
+# 你好 | hello | word | | Bài 2
+# 你好吗 | how are you | phrase | cau hoi tham suc khoe ban | Bài 3
+# 你叫什么名字？[Xiaoming] | what is your name | qa | Vietnamese translation of the question | 我叫小明。 | my name is xiaoming | Vietnamese translation of the answer | Bài 3
 
 `;
 document.getElementById('download-patch-template').addEventListener('click', () => {
@@ -11052,9 +11117,12 @@ function exportAllAsPatchText(){
   const lines = [
     '# Han Yu Learning — Full Export (bulk-editable)',
     '# Generated ' + dateStamp() + ' — edit meanings or Viet Translate below, then Import patch to write changes back in.',
-    '# Format: hanzi | meaning | type | viet translate | answer | answer meaning | answer viet translate   (last three: Q&A pairs only)',
+    '# Format: hanzi | meaning | type | viet translate | lesson   (word/phrase)',
+    '#         hanzi | meaning | type | viet translate | answer | answer meaning | answer viet translate | lesson   (qa)',
     '# "type" shows hsk1..hsk6 for words that are part of the built-in HSK library',
     '# (which level they belong to), or "word"/"phrase" for ones you added yourself.',
+    '# "lesson" is whatever you use to mark which lesson a word came from (e.g. "Bài 4") —',
+    '# leave it blank for words you gathered elsewhere, outside your lesson material.',
     ''
   ];
   allWords.forEach(w => {
@@ -11063,10 +11131,10 @@ function exportAllAsPatchText(){
       : w.myCategory === 'phrase' ? 'phrase'
       : w.myCategory === 'word' ? 'word'
       : (isPhrase(w) ? 'phrase' : 'word'); // legacy entries saved before myCategory existed
-    lines.push([patchSafe(w.h), patchSafe(w.m), type, patchSafe(w.n)].join(' | '));
+    lines.push([patchSafe(w.h), patchSafe(w.m), type, patchSafe(w.n), patchSafe(w.lesson)].join(' | '));
   });
   qaPairs.forEach(p => {
-    lines.push([patchSafe(p.q), patchSafe(p.qm), 'qa', patchSafe(p.n), patchSafe(p.a), patchSafe(p.am), patchSafe(p.an)].join(' | '));
+    lines.push([patchSafe(p.q), patchSafe(p.qm), 'qa', patchSafe(p.n), patchSafe(p.a), patchSafe(p.am), patchSafe(p.an), patchSafe(p.lesson)].join(' | '));
   });
   downloadText(lines.join('\n') + '\n', 'hanyu-full-export-' + dateStamp() + '.txt');
 }
@@ -11091,10 +11159,12 @@ const TEST_TYPE_LABELS = { speaking: '🗣️ Speaking', pinyin: '拼 Pinyin', h
 
 let testScope = 'both'; // 'star' | 'learned' | 'both' | 'test' — which pool to draw word-based questions from
 function testWordPool(){
-  if(testScope === 'star') return allWords.filter(w => w.status === 'star');
-  if(testScope === 'learned') return allWords.filter(w => w.status === 'learned');
-  if(testScope === 'test') return allWords.filter(w => w.readyForTest);
-  return allWords.filter(w => w.status === 'star' || w.status === 'learned');
+  let pool;
+  if(testScope === 'star') pool = allWords.filter(w => w.status === 'star');
+  else if(testScope === 'learned') pool = allWords.filter(w => w.status === 'learned');
+  else if(testScope === 'test') pool = allWords.filter(w => w.readyForTest);
+  else pool = allWords.filter(w => w.status === 'star' || w.status === 'learned');
+  return applyLessonFilter(pool);
 }
 // Only Q&A pairs with an actual answer saved — "→ Q&A" (moving a word into Q&A
 // Pairs) creates a stub with a blank answer for you to fill in later, and testing
@@ -11107,7 +11177,7 @@ function testQaPool(){
   if(testScope === 'star') pool = pool.filter(p => p.status === 'star');
   else if(testScope === 'learned') pool = pool.filter(p => p.status === 'learned');
   else pool = pool.filter(p => p.status === 'star' || p.status === 'learned');
-  return pool;
+  return applyLessonFilter(pool);
 }
 // ---- Test Prep: a review/staging list, separate from the Test tab itself.
 // Shows everything currently ⭐ or ✓ across words, phrases, and Q&A pairs
@@ -11201,17 +11271,17 @@ function updateTestPoolInfo(){
     startBtn.disabled = false;
   }
 }
-document.querySelectorAll('[data-test-scope]').forEach(btn => {
-  btn.addEventListener('click', () => {
-    testScope = btn.dataset.testScope;
-    document.querySelectorAll('[data-test-scope]').forEach(b => b.classList.toggle('on', b === btn));
+document.querySelectorAll('.test-scope-radio').forEach(radio => {
+  radio.addEventListener('change', () => {
+    if(!radio.checked) return;
+    testScope = radio.value;
     updateTestPoolInfo();
   });
 });
-document.querySelectorAll('[data-test-len]').forEach(btn => {
-  btn.addEventListener('click', () => {
-    testLength = btn.dataset.testLen === 'all' ? 'all' : parseInt(btn.dataset.testLen, 10);
-    document.querySelectorAll('[data-test-len]').forEach(b => b.classList.toggle('on', b === btn));
+document.querySelectorAll('.test-len-radio').forEach(radio => {
+  radio.addEventListener('change', () => {
+    if(!radio.checked) return;
+    testLength = radio.value === 'all' ? 'all' : parseInt(radio.value, 10);
   });
 });
 
@@ -11701,10 +11771,12 @@ function parsePatchText(text){
       if(!answer){ problems.push(`Line ${i + 1}: type is "qa" but no answer (5th field) was given — skipped.`); return; }
       const answerMeaning = parts[5] || '';
       const answerNotes = parts[6] || '';
-      rows.push({ h, m, type, n, answer, answerMeaning, answerNotes });
+      const lesson = parts[7] || '';
+      rows.push({ h, m, type, n, answer, answerMeaning, answerNotes, lesson });
       return;
     }
-    rows.push({ h, m, type, n });
+    const lesson = parts[4] || '';
+    rows.push({ h, m, type, n, lesson });
   });
   return { rows, problems };
 }
@@ -11759,6 +11831,7 @@ async function importPatchRows(rows){
         if(row.m && row.m !== existingPair.qm){ existingPair.qm = row.m; changed = true; }
         if(row.answerMeaning && row.answerMeaning !== existingPair.am){ existingPair.am = row.answerMeaning; changed = true; }
         if(row.answerNotes && row.answerNotes !== existingPair.an){ existingPair.an = row.answerNotes; changed = true; }
+        if(row.lesson && row.lesson !== existingPair.lesson){ existingPair.lesson = row.lesson; changed = true; }
         if(changed) updated++; else skipped++;
         continue;
       }
@@ -11771,6 +11844,7 @@ async function importPatchRows(rows){
       const pair = { q: row.h, qp, qm, a: row.answer, ap, am, id: newId(), addedAt: Date.now() };
       if(row.n) pair.n = row.n;
       if(row.answerNotes) pair.an = row.answerNotes;
+      if(row.lesson) pair.lesson = row.lesson;
       qaPairs.push(pair);
       existingQuestions.set(row.h, pair);
       addedQa++;
@@ -11781,6 +11855,7 @@ async function importPatchRows(rows){
       let changed = false;
       if(row.n && row.n !== existingWord.n){ existingWord.n = row.n; changed = true; }
       if(row.m && row.m !== existingWord.m){ existingWord.m = row.m; changed = true; }
+      if(row.lesson && row.lesson !== existingWord.lesson){ existingWord.lesson = row.lesson; changed = true; }
       if(changed) updated++; else skipped++;
       continue;
     }
@@ -11788,6 +11863,7 @@ async function importPatchRows(rows){
     if(hskMatch){
       const activated = { h: hskMatch.h, p: hskMatch.p, m: hskMatch.m, id: newId(), addedAt: Date.now() };
       if(row.n) activated.n = row.n;
+      if(row.lesson) activated.lesson = row.lesson;
       allWords.push(activated);
       existingHanzi.set(row.h, activated);
       addedFromHsk++;
@@ -11799,6 +11875,7 @@ async function importPatchRows(rows){
     const item = { h: row.h, p, m, id: newId(), addedAt: Date.now() };
     item.myCategory = row.type === 'phrase' ? 'phrase' : 'word';
     if(row.n) item.n = row.n;
+    if(row.lesson) item.lesson = row.lesson;
     allWords.push(item);
     existingHanzi.set(row.h, item);
     added++;
@@ -12199,6 +12276,15 @@ if(!localStorage.getItem(SPEED_RESET_FLAG)){
   speedVal.textContent = speechRate.toFixed(2) + 'x';
   localStorage.setItem(SPEED_RESET_FLAG, '1');
 }
+
+// Populates every lesson-filter dropdown for the first time. Placed here at
+// the very end of the script, same reasoning as the speed-reset block above:
+// it reads allWords AND qaPairs, both declared much later in their own
+// sections than the Flashcards-era `renderStroke()` call — calling it any
+// earlier throws a temporal-dead-zone error that (since this is all one
+// script block) would silently abort every statement after it, including
+// those two declarations themselves.
+refreshLessonFilterOptions();
 </script>
 </body>
 </html>
