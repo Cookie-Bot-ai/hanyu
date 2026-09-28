@@ -799,6 +799,7 @@
           <div style="display:flex;gap:6px;flex-wrap:wrap;">
             <button class="action btn-reveal small" id="bee-select-all-btn">☑️ Select all visible</button>
             <button class="action btn-reveal small" id="bee-select-missed-btn">🔁 Select needs-practice</button>
+            <button class="action btn-reveal small" id="bee-select-except-missed-btn">✅ Select all except already correct</button>
             <button class="action btn-reveal small" id="bee-select-none-btn">Clear selection</button>
           </div>
         </div>
@@ -8977,6 +8978,7 @@ renderMeaning();
 // ---- Dictation (writing practice with audio) ----
 const BEE_SCOPE_KEY = 'chinesevocab_bee_scope';
 const BEE_MISSED_KEY = 'chinesevocab_bee_missed_ids';
+const BEE_PASSED_KEY = 'chinesevocab_bee_passed_ids';
 let beeScope = localStorage.getItem(BEE_SCOPE_KEY) || 'all';
 document.getElementById('bee-scope').value = beeScope;
 
@@ -8991,6 +8993,22 @@ function loadBeeMissedIds(){
 }
 function saveBeeMissedIds(){ localStorage.setItem(BEE_MISSED_KEY, JSON.stringify(Array.from(beeMissedIds))); }
 let beeMissedIds = loadBeeMissedIds();
+
+// The mirror image of beeMissedIds: words whose MOST RECENT dictation result
+// was correct — kept as its own set (not just "absent from beeMissedIds"),
+// because absence alone can't tell a word you've already passed apart from
+// one you've simply never tried yet. Only this set means "already passed";
+// a word in neither set is untested, and belongs with the needs-practice
+// ones when "except already correct" is asked for below.
+function loadBeePassedIds(){
+  try{
+    const stored = JSON.parse(localStorage.getItem(BEE_PASSED_KEY));
+    if(Array.isArray(stored)) return new Set(stored);
+  }catch(e){ /* fall through */ }
+  return new Set();
+}
+function saveBeePassedIds(){ localStorage.setItem(BEE_PASSED_KEY, JSON.stringify(Array.from(beePassedIds))); }
+let beePassedIds = loadBeePassedIds();
 
 // Which specific words are ticked on the setup screen, ready to become the
 // next round — no fixed round size, no automatic "missed words first"
@@ -9063,6 +9081,17 @@ document.getElementById('bee-select-all-btn').addEventListener('click', () => {
 // without having to switch the scope dropdown to "Previously missed" first.
 document.getElementById('bee-select-missed-btn').addEventListener('click', () => {
   beeCandidatePool().filter(w => beeMissedIds.has(w.id)).forEach(w => beeSelectedIds.add(w.id));
+  saveBeeSelectedIds();
+  renderBeeCandidateList();
+});
+// Everything visible EXCEPT the words you've already gotten correct — so
+// you keep practicing what you still got wrong last time, plus anything
+// brand new, without re-selecting words you've already passed. Resets the
+// selection first rather than adding on top, so this always gives you
+// exactly that set in one click, not "everything already ticked, plus these."
+document.getElementById('bee-select-except-missed-btn').addEventListener('click', () => {
+  beeSelectedIds.clear();
+  beeCandidatePool().filter(w => !beePassedIds.has(w.id)).forEach(w => beeSelectedIds.add(w.id));
   saveBeeSelectedIds();
   renderBeeCandidateList();
 });
@@ -9300,9 +9329,11 @@ function beeSelfAssess(correct){
   const card = beeDeck[beeIdx];
   if(correct){
     if(beeMissedIds.has(card.id)){ beeMissedIds.delete(card.id); saveBeeMissedIds(); }
+    if(!beePassedIds.has(card.id)){ beePassedIds.add(card.id); saveBeePassedIds(); }
     beeSelectedIds.delete(card.id); // got it right — drop it from next round's selection automatically
   } else {
     if(!beeMissedIds.has(card.id)){ beeMissedIds.add(card.id); saveBeeMissedIds(); }
+    if(beePassedIds.has(card.id)){ beePassedIds.delete(card.id); saveBeePassedIds(); }
     beeSelectedIds.add(card.id); // still needs practice — stays ticked for next round
   }
   saveBeeSelectedIds(); // persisted immediately — survives a reload even mid-round, not just a completed one
