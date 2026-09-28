@@ -772,33 +772,44 @@
 
     <!-- SPELLING BEE -->
     <div class="panel" id="panel-bee">
+      <!-- Setup: filter candidates down, tick exactly the words you want in this
+           round, then start. No fixed round-size — the round IS whatever you tick. -->
+      <div id="bee-setup">
+        <div class="top-controls">
+          <span class="on-bg" id="bee-candidate-count">0 words available</span>
+          <select class="mode" id="bee-scope">
+            <option value="all">All words</option>
+            <option value="phrases">Phrases only</option>
+            <option value="missed">🔁 Previously missed words</option>
+          </select>
+        </div>
+        <div class="status-filter" id="status-filter-bee">
+          <label><input type="checkbox" class="status-filter-cb" data-status="star">⭐ Needs practice</label>
+          <label><input type="checkbox" class="status-filter-cb" data-status="learned">✓ Learned</label>
+          <label><input type="checkbox" class="status-filter-cb" data-status="new">🆕 New</label>
+          <label><input type="checkbox" class="status-filter-cb" data-status="test">🎯 Ready for test</label>
+          <label><input type="checkbox" class="status-filter-cb" data-status="all">All words</label>
+        </div>
+        <div class="speed-row" style="margin-bottom:12px;">
+          <label for="lesson-filter-bee">Lesson</label>
+          <select class="mode lesson-filter-select" id="lesson-filter-bee" style="margin-left:auto;"></select>
+        </div>
+        <div class="top-controls" style="margin-bottom:8px;">
+          <span class="on-bg" id="bee-selected-count">0 selected</span>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            <button class="action btn-reveal small" id="bee-select-all-btn">☑️ Select all visible</button>
+            <button class="action btn-reveal small" id="bee-select-none-btn">Clear selection</button>
+          </div>
+        </div>
+        <div class="word-list" id="bee-candidate-list" style="max-height:340px;"></div>
+        <button class="action btn-play" id="bee-start-btn" style="width:100%;margin-top:14px;" disabled>▶ Start Dictation</button>
+      </div>
+
+      <div id="bee-active" style="display:none;">
       <div class="top-controls">
         <span class="on-bg" id="bee-score" style="font-size:12px;">Score: 0/0</span>
-        <select class="mode" id="bee-scope">
-          <option value="all">All words</option>
-          <option value="phrases">Phrases only</option>
-          <option value="missed">🔁 Previously missed words</option>
-        </select>
-      </div>
-      <div class="status-filter" id="status-filter-bee">
-        <label><input type="checkbox" class="status-filter-cb" data-status="star">⭐ Needs practice</label>
-        <label><input type="checkbox" class="status-filter-cb" data-status="learned">✓ Learned</label>
-        <label><input type="checkbox" class="status-filter-cb" data-status="new">🆕 New</label>
-        <label><input type="checkbox" class="status-filter-cb" data-status="test">🎯 Ready for test</label>
-        <label><input type="checkbox" class="status-filter-cb" data-status="all">All words</label>
-      </div>
-      <div class="speed-row" style="margin-bottom:12px;">
-        <label for="lesson-filter-bee">Lesson</label>
-        <select class="mode lesson-filter-select" id="lesson-filter-bee" style="margin-left:auto;"></select>
-      </div>
-      <div class="top-controls">
         <span class="on-bg" id="bee-round-count" style="font-size:12px;">Word 1 / 10</span>
-        <select class="mode" id="bee-round-size">
-          <option value="10">Round of 10</option>
-          <option value="20">Round of 20</option>
-          <option value="50">Round of 50</option>
-          <option value="all">All words</option>
-        </select>
+        <button class="action btn-danger small" id="bee-end-btn" title="End this round and pick new words">✕ End Round</button>
       </div>
       <div class="row">
         <button class="action btn-reveal" id="bee-hint-toggle" style="flex:1;">💡 Show hint (meaning)</button>
@@ -845,6 +856,7 @@
       </div>
 
       <div id="bee-feedback"></div>
+      </div><!-- /bee-active -->
     </div>
 
     <!-- Q&A PRACTICE -->
@@ -8954,14 +8966,11 @@ document.getElementById('meaning-next').addEventListener('click', () => {
 });
 renderMeaning();
 
-// ---- Spelling Bee ----
+// ---- Dictation (writing practice with audio) ----
 const BEE_SCOPE_KEY = 'chinesevocab_bee_scope';
-const BEE_ROUND_KEY = 'chinesevocab_bee_round_size';
 const BEE_MISSED_KEY = 'chinesevocab_bee_missed_ids';
 let beeScope = localStorage.getItem(BEE_SCOPE_KEY) || 'all';
-let beeRoundSize = localStorage.getItem(BEE_ROUND_KEY) || '10';
 document.getElementById('bee-scope').value = beeScope;
-document.getElementById('bee-round-size').value = beeRoundSize;
 
 // Words marked "✗ Needs practice" in a past round — persisted so they're
 // remembered across sessions, and cleared once you get them right again.
@@ -8975,41 +8984,95 @@ function loadBeeMissedIds(){
 function saveBeeMissedIds(){ localStorage.setItem(BEE_MISSED_KEY, JSON.stringify(Array.from(beeMissedIds))); }
 let beeMissedIds = loadBeeMissedIds();
 
-// Builds a fresh, freshly-shuffled round. Words you've previously gotten wrong
-// are placed first (unless you've specifically chosen to practice ONLY those),
-// so every round makes you clear your backlog before new words show up.
-function buildBeeRound(){
-  let pool;
+// Which specific words are ticked on the setup screen, ready to become the
+// next round — no fixed round size, no automatic "missed words first"
+// reordering: you pick exactly which words you want, the round is exactly
+// that set, shuffled. Persists across a tab switch so half-picking a set
+// doesn't get lost, but is never auto-populated — always a deliberate choice.
+let beeSelectedIds = new Set();
+
+// The pool the setup checklist draws from — same scope/status/lesson filters
+// as the rest of the app, just narrowed down before you pick individual words.
+function beeCandidatePool(){
   if(beeScope === 'missed'){
-    pool = allWords.filter(w => beeMissedIds.has(w.id));
-    pool = applyLessonFilter(applyStatusFilter(pool));
-    pool = shuffle(pool);
-  } else {
-    const base = scopedVocab(beeScope);
-    const missedFirst = shuffle(base.filter(w => beeMissedIds.has(w.id)));
-    const rest = shuffle(base.filter(w => !beeMissedIds.has(w.id)));
-    pool = missedFirst.concat(rest);
+    return applyLessonFilter(applyStatusFilter(allWords.filter(w => beeMissedIds.has(w.id))));
   }
-  if(beeRoundSize === 'all') return pool;
-  const n = parseInt(beeRoundSize, 10);
-  return pool.slice(0, Math.min(n, pool.length));
+  return scopedVocab(beeScope);
 }
-let beeDeck = buildBeeRound();
+function renderBeeCandidateList(){
+  const pool = beeCandidatePool();
+  document.getElementById('bee-candidate-count').textContent = `${pool.length} word${pool.length === 1 ? '' : 's'} available`;
+  const list = document.getElementById('bee-candidate-list');
+  if(pool.length === 0){
+    list.innerHTML = '<div class="empty-note">No words match the filters above.</div>';
+  } else {
+    list.innerHTML = pool.map(w => `
+      <div class="word-row">
+        <label class="info" style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+          <input type="checkbox" class="bee-candidate-cb" data-bee-id="${w.id}" ${beeSelectedIds.has(w.id) ? 'checked' : ''}>
+          <span><span class="h hanzi">${w.h}</span><span class="p">${w.p || ''}</span><span class="m">${escapeHtml(w.m || '')}</span></span>
+        </label>
+      </div>`).join('');
+    list.querySelectorAll('.bee-candidate-cb').forEach(cb => {
+      cb.addEventListener('change', () => {
+        if(cb.checked) beeSelectedIds.add(cb.dataset.beeId);
+        else beeSelectedIds.delete(cb.dataset.beeId);
+        updateBeeSelectedCount();
+      });
+    });
+  }
+  // A ticked word that's no longer in the current filtered pool (e.g. you
+  // marked it ✓ Learned mid-selection and the filter now excludes it) stays
+  // ticked in beeSelectedIds but can't show a checkbox for something not
+  // listed — harmless, it simply won't appear until the filter includes it
+  // again, and the count below still reflects the true total selected.
+  updateBeeSelectedCount();
+}
+function updateBeeSelectedCount(){
+  const n = beeSelectedIds.size;
+  document.getElementById('bee-selected-count').textContent = `${n} selected`;
+  document.getElementById('bee-start-btn').disabled = n === 0;
+}
+document.getElementById('bee-select-all-btn').addEventListener('click', () => {
+  beeCandidatePool().forEach(w => beeSelectedIds.add(w.id));
+  renderBeeCandidateList();
+});
+document.getElementById('bee-select-none-btn').addEventListener('click', () => {
+  beeSelectedIds.clear();
+  renderBeeCandidateList();
+});
+
+let beeDeck = [];
 let beeIdx = 0;
 let score = { right: 0, total: 0 };
 let beeShowHint = false;
 // One entry per word in the current round, so Previous/Next restores what you
 // actually drew and whether you'd already checked/assessed that word.
-let beeCardState = beeDeck.map(() => ({ drawing: null, checked: false, assessed: false }));
+let beeCardState = [];
 
-// Tells you when a fresh round is front-loaded with words you'd gotten wrong before.
-function announceBeeRound(prevRoundFinishedCount){
-  const parts = [];
-  if(prevRoundFinishedCount > 0) parts.push('Round complete — starting a fresh set of words.');
-  const missedInRound = beeDeck.filter(w => beeMissedIds.has(w.id)).length;
-  if(missedInRound > 0 && beeScope !== 'missed') parts.push(`${missedInRound} word(s) you got wrong before are up first.`);
-  if(parts.length) document.getElementById('bee-feedback').innerHTML = `<div class="hint">${parts.join(' ')}</div>`;
+function startBeeRoundFromSelection(){
+  beeDeck = shuffle(allWords.filter(w => beeSelectedIds.has(w.id)));
+  beeIdx = 0;
+  beeShowHint = false;
+  beeCardState = beeDeck.map(() => ({ drawing: null, checked: false, assessed: false }));
+  score = { right: 0, total: 0 };
+  document.getElementById('bee-setup').style.display = 'none';
+  document.getElementById('bee-active').style.display = '';
+  document.getElementById('bee-feedback').innerHTML = '';
+  renderBeeScore();
+  renderBeeEmptyState();
 }
+function endBeeRoundToSetup(completionNote){
+  document.getElementById('bee-active').style.display = 'none';
+  document.getElementById('bee-setup').style.display = '';
+  renderBeeCandidateList();
+  if(completionNote){
+    const el = document.getElementById('bee-candidate-count');
+    el.textContent = completionNote + ' — ' + el.textContent;
+  }
+}
+document.getElementById('bee-start-btn').addEventListener('click', startBeeRoundFromSelection);
+document.getElementById('bee-end-btn').addEventListener('click', () => endBeeRoundToSetup(null));
 
 function renderBeeScore(){
   document.getElementById('bee-score').textContent = `Score: ${score.right}/${score.total}`;
@@ -9150,15 +9213,6 @@ function renderBeeEmptyState(){
   document.getElementById('bee-feedback').innerHTML = empty ? `<div class="hint">${emptyDeckMessage(beeScope)}</div>` : '';
   resetBeeCard();
 }
-function startNewBeeRound(){
-  beeDeck = buildBeeRound();
-  beeIdx = 0;
-  beeShowHint = false;
-  beeCardState = beeDeck.map(() => ({ drawing: null, checked: false, assessed: false }));
-  score = { right: 0, total: 0 };
-  renderBeeScore();
-  renderBeeEmptyState();
-}
 function prevBee(){
   if(beeDeck.length === 0) return;
   // Do NOT wrap. Wrapping past word 1 landed you on the end of the round, on cards that
@@ -9175,9 +9229,7 @@ function nextBee(){
   saveBeeDrawingSnapshot(); // pointerup may never have fired if the stroke left the canvas
   beeShowHint = false;
   if(beeIdx + 1 >= beeDeck.length){
-    const finished = score.total;
-    startNewBeeRound();
-    announceBeeRound(finished);
+    endBeeRoundToSetup(`Round complete: ${score.right}/${score.total} correct`);
     return;
   }
   beeIdx++;
@@ -9194,22 +9246,13 @@ document.getElementById('bee-clear-canvas').addEventListener('click', () => {
 document.getElementById('bee-scope').addEventListener('change', (e) => {
   beeScope = e.target.value;
   localStorage.setItem(BEE_SCOPE_KEY, beeScope);
-  startNewBeeRound();
-  announceBeeRound(0);
-});
-document.getElementById('bee-round-size').addEventListener('change', (e) => {
-  beeRoundSize = e.target.value;
-  localStorage.setItem(BEE_ROUND_KEY, beeRoundSize);
-  startNewBeeRound();
-  announceBeeRound(0);
+  renderBeeCandidateList();
 });
 document.getElementById('bee-hint-toggle').addEventListener('click', () => {
   beeShowHint = !beeShowHint;
   resetBeeCard();
 });
-renderBeeScore();
-renderBeeEmptyState();
-announceBeeRound(0);
+renderBeeCandidateList();
 
 function checkBee(){
   if(beeDeck.length === 0) return;
@@ -10250,11 +10293,7 @@ function refreshAllDecks(){
   meaningDeck = shuffle(scopedVocab(meaningScope));
   meaningIdx = 0; showHanzi = false; showMPinyin = false;
   renderMeaning();
-  beeDeck = buildBeeRound();
-  beeIdx = 0;
-  beeShowHint = false;
-  beeCardState = beeDeck.map(() => ({ drawing: null, checked: false, assessed: false }));
-  renderBeeEmptyState();
+  renderBeeCandidateList();
   strokeDeck = orderStrokeDeck(scopedVocab(strokeScope));
   strokeIdx = 0;
   strokeRevealed = false; strokeGuessShowPinyin = false; resetPhraseRoundDisplay();
