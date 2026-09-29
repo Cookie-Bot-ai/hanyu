@@ -9292,7 +9292,8 @@ function showBeeAnswer(card){
   });
   playBeeAnswerStrokes();
   replayBtn.style.display = beeAnswerWriters.some(w => w) ? '' : 'none';
-  document.getElementById('bee-answer-details').textContent = `${card.p} — ${card.m}`;
+  const meaningLine = card.n && card.n.trim() ? `${card.m} — ${card.n}` : card.m;
+  document.getElementById('bee-answer-details').textContent = `${card.p} — ${meaningLine}`;
 }
 function playBeeAnswerStrokes(){
   // All characters start together, not staggered one-after-another — a
@@ -9326,7 +9327,13 @@ function resetBeeCard(){
   const prevBtn = document.getElementById('bee-prev');
   if(prevBtn) prevBtn.disabled = (beeIdx === 0);
   document.getElementById('bee-hint-toggle').classList.toggle('on', beeShowHint);
-  document.getElementById('bee-hint-text').textContent = (beeShowHint && beeDeck.length) ? beeDeck[beeIdx].m : '';
+  if(beeShowHint && beeDeck.length){
+    const card = beeDeck[beeIdx];
+    const hintText = card.n && card.n.trim() ? `${card.m} — ${card.n}` : card.m;
+    document.getElementById('bee-hint-text').textContent = hintText;
+  } else {
+    document.getElementById('bee-hint-text').textContent = '';
+  }
 }
 
 function renderBeeEmptyState(){
