@@ -854,6 +854,7 @@
           <div id="bee-answer-box" style="width:100%;aspect-ratio:1/1;background:var(--paper);border:1px solid var(--border);border-radius:14px;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 18px rgba(0,0,0,.3);">
             <span class="hint" style="padding:0 10px;text-align:center;">Listen, draw the word, then tap Check</span>
           </div>
+          <button class="action btn-reveal small" id="bee-replay-strokes" style="width:100%;margin-top:6px;display:none;">▶ Replay strokes</button>
         </div>
       </div>
       </div><!-- /bee-stage -->
@@ -9237,10 +9238,72 @@ document.getElementById('bee-pen-size').addEventListener('input', (e) => {
   if(beeCtx) beeCtx.lineWidth = beePenSize;
 });
 
+// Same idea as Flashcards' stroke-order tiles, simplified for a review context:
+// no quiz/trace/retry here — Dictation already has its own drawing canvas for
+// your attempt, right next to this. This is purely a reference showing exactly
+// how the correct answer is actually written, stroke by stroke, animated
+// automatically, with a Replay button since HanziWriter only plays once.
+let beeAnswerWriters = [];
 function showBeeAnswer(card){
-  document.getElementById('bee-answer-box').innerHTML = `<span class="hz hanzi" style="font-size:44px;line-height:1;">${card.h}</span>`;
+  const box = document.getElementById('bee-answer-box');
+  const replayBtn = document.getElementById('bee-replay-strokes');
+  box.innerHTML = '';
+  beeAnswerWriters = [];
+  const chars = Array.from(card.h);
+  // Smaller tiles once there are several characters (a phrase), so the whole
+  // answer still fits inside the same square box instead of overflowing it.
+  const tileSize = chars.length <= 2 ? 90 : chars.length <= 4 ? 64 : 46;
+  const wrap = document.createElement('div');
+  wrap.style.display = 'flex';
+  wrap.style.flexWrap = 'wrap';
+  wrap.style.gap = '4px';
+  wrap.style.justifyContent = 'center';
+  wrap.style.alignItems = 'center';
+  chars.forEach((ch, i) => {
+    const cell = document.createElement('div');
+    cell.id = 'bee-answer-target-' + i;
+    cell.style.width = tileSize + 'px';
+    cell.style.height = tileSize + 'px';
+    if(!isCjkChar(ch) || typeof HanziWriter === 'undefined'){
+      // Punctuation, digits, latin letters — or the stroke-data library hasn't
+      // loaded (e.g. no internet on first load) — just show the character itself.
+      cell.style.display = 'flex';
+      cell.style.alignItems = 'center';
+      cell.style.justifyContent = 'center';
+      cell.style.fontSize = Math.round(tileSize * 0.55) + 'px';
+      cell.style.color = 'var(--ink)';
+      cell.textContent = ch;
+    }
+    wrap.appendChild(cell);
+  });
+  box.appendChild(wrap);
+  beeAnswerWriters = chars.map((ch, i) => {
+    if(!isCjkChar(ch) || typeof HanziWriter === 'undefined') return null;
+    return HanziWriter.create('bee-answer-target-' + i, ch, {
+      width: tileSize, height: tileSize, padding: 4,
+      showCharacter: false, showOutline: true,
+      strokeAnimationSpeed: 1, delayBetweenStrokes: 300,
+      strokeColor: '#1C231F', outlineColor: '#C9CFC3',
+      onLoadCharDataError: () => {
+        const el = document.getElementById('bee-answer-target-' + i);
+        if(el) el.innerHTML = `<div class="hint" style="padding:2px;font-size:9px;">No stroke data</div>`;
+      }
+    });
+  });
+  playBeeAnswerStrokes();
+  replayBtn.style.display = beeAnswerWriters.some(w => w) ? '' : 'none';
   document.getElementById('bee-answer-details').textContent = `${card.p} — ${card.m}`;
 }
+function playBeeAnswerStrokes(){
+  // All characters start together, not staggered one-after-another — a
+  // waiting character just sits on its outline with nothing happening for
+  // over a second before its turn, which read as a flash/flicker rather
+  // than a deliberate pause.
+  beeAnswerWriters.forEach((writer) => {
+    if(writer && writer.animateCharacter) writer.animateCharacter();
+  });
+}
+document.getElementById('bee-replay-strokes').addEventListener('click', playBeeAnswerStrokes);
 function resetBeeCard(){
   resetPronForNewCard();
   resizeBeeCanvas();
@@ -9257,6 +9320,7 @@ function resetBeeCard(){
     document.getElementById('bee-answer-details').style.display = 'none';
     document.getElementById('bee-check-row').style.display = 'flex';
     document.getElementById('bee-selfassess-row').style.display = 'none';
+    document.getElementById('bee-replay-strokes').style.display = 'none';
   }
   if(state && state.drawing) restoreBeeDrawing(state.drawing);
   const prevBtn = document.getElementById('bee-prev');
