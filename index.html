@@ -11203,7 +11203,20 @@ function downloadJson(obj, filename){
 }
 
 document.getElementById('export-text').addEventListener('click', () => {
-  downloadJson({ vocab: allWords, qa: qaPairs }, 'chinese-app-words-backup-' + dateStamp() + '.json');
+  // Status (⭐/✓/🎯) already travels with each word/Q&A object itself, so it's
+  // already covered. Dictation's own tracking — which words you've gotten
+  // wrong, which you've already passed, and which are currently ticked for
+  // your next round — lives in separate storage, so it needs its own section
+  // here to actually survive a backup/restore (or a move to another device).
+  downloadJson({
+    vocab: allWords,
+    qa: qaPairs,
+    dictation: {
+      missedIds: Array.from(beeMissedIds),
+      passedIds: Array.from(beePassedIds),
+      selectedIds: Array.from(beeSelectedIds)
+    }
+  }, 'chinese-app-words-backup-' + dateStamp() + '.json');
 });
 
 function downloadText(text, filename){
@@ -12170,6 +12183,8 @@ function mergeTextData(vocabIn, qaIn){
         if(typeof w.n === 'string' && w.n.trim()) newItem.n = w.n;
         if(w.myCategory === 'phrase' || w.myCategory === 'word') newItem.myCategory = w.myCategory;
         if(w.status === 'star' || w.status === 'learned') newItem.status = w.status;
+        if(typeof w.lesson === 'string' && w.lesson.trim()) newItem.lesson = w.lesson;
+        if(w.readyForTest) newItem.readyForTest = true;
         allWords.push(newItem); existingHanzi.add(w.h); vAdded++;
         if(w.id) idRemap.set('word:' + w.id, 'word:' + newItem.id);
       }
@@ -12192,6 +12207,11 @@ function mergeTextData(vocabIn, qaIn){
         const qp = (typeof p.qp === 'string' && p.qp.trim()) ? p.qp : autoPinyin(p.q);
         const ap = (typeof p.ap === 'string' && p.ap.trim()) ? p.ap : autoPinyin(p.a);
         const newPair = { q: p.q, qp, qm: p.qm || '', a: p.a, ap, am: p.am || '', id: newId(), addedAt: Date.now() };
+        if(typeof p.n === 'string' && p.n.trim()) newPair.n = p.n;
+        if(typeof p.an === 'string' && p.an.trim()) newPair.an = p.an;
+        if(p.status === 'star' || p.status === 'learned') newPair.status = p.status;
+        if(typeof p.lesson === 'string' && p.lesson.trim()) newPair.lesson = p.lesson;
+        if(p.readyForTest) newPair.readyForTest = true;
         qaPairs.push(newPair); existingQ.add(p.q); qAdded++;
         if(p.id){
           idRemap.set('qa_q:' + p.id, 'qa_q:' + newPair.id);
@@ -12204,6 +12224,25 @@ function mergeTextData(vocabIn, qaIn){
   saveWords(allWords);
   saveQa(qaPairs);
   return { vAdded, vSkipped, qAdded, qSkipped, idRemap };
+}
+
+// Merging never overwrites what's already here — only ADDS to the local
+// tracking sets, same "merge = keep mine, add anything new" rule as the
+// words/Q&A above. File-side ids get translated through mergeTextData's own
+// idRemap (word:<fileId> -> word:<localId>) first, since a word that already
+// existed locally keeps ITS id, not the file's — without this it would file
+// to track the wrong, unrelated word that happens to now have that file id.
+function mergeDictationTracking(dictationIn, idRemap){
+  if(!dictationIn) return;
+  const remapIds = (arr) => (Array.isArray(arr) ? arr : [])
+    .map(id => idRemap.get('word:' + id))
+    .filter(Boolean)
+    .map(key => key.slice('word:'.length));
+  let changed = false;
+  remapIds(dictationIn.missedIds).forEach(id => { if(!beeMissedIds.has(id)){ beeMissedIds.add(id); changed = true; } });
+  remapIds(dictationIn.passedIds).forEach(id => { if(!beePassedIds.has(id)){ beePassedIds.add(id); changed = true; } });
+  remapIds(dictationIn.selectedIds).forEach(id => { if(!beeSelectedIds.has(id)){ beeSelectedIds.add(id); changed = true; } });
+  if(changed){ saveBeeMissedIds(); saveBeePassedIds(); saveBeeSelectedIds(); }
 }
 
 // Restores recordings using an idRemap built by mergeTextData (combined-file case).
@@ -12292,9 +12331,9 @@ document.getElementById('import-all-file').addEventListener('change', (e) => {
     }
 
     // Accepts: the new {vocab, qa} text-only export, the new {recordings} audio-only
-    // export, a combined {vocab, qa, recordings} file, or either of the older
-    // single-list export formats (plain vocab array, or plain Q&A array).
-    let vocabIn = [], qaIn = [], recordingsIn = {};
+    // export, a combined {vocab, qa, recordings, dictation} file, or either of the
+    // older single-list export formats (plain vocab array, or plain Q&A array).
+    let vocabIn = [], qaIn = [], recordingsIn = {}, dictationIn = null;
     if(Array.isArray(incoming)){
       if(incoming.length === 0){ /* nothing to do */ }
       else if('h' in incoming[0] && 'p' in incoming[0]) vocabIn = incoming;
@@ -12303,6 +12342,7 @@ document.getElementById('import-all-file').addEventListener('change', (e) => {
       vocabIn = Array.isArray(incoming.vocab) ? incoming.vocab : [];
       qaIn = Array.isArray(incoming.qa) ? incoming.qa : [];
       recordingsIn = (incoming.recordings && typeof incoming.recordings === 'object') ? incoming.recordings : {};
+      dictationIn = (incoming.dictation && typeof incoming.dictation === 'object') ? incoming.dictation : null;
     }
 
     const hasText = vocabIn.length > 0 || qaIn.length > 0;
@@ -12341,6 +12381,15 @@ document.getElementById('import-all-file').addEventListener('change', (e) => {
       }
       try{ await clearAllRecordings(); }catch(err){ /* keep going; text is the important part */ }
       const { vCount, qCount } = replaceTextData(vocabIn, qaIn);
+      // Replace mode keeps the file's own word ids as-is (ensureIds only fills
+      // in ones that are missing), so the file's Dictation tracking ids still
+      // point at the right words here — no remapping needed, just mirror them.
+      if(dictationIn){
+        beeMissedIds = new Set(Array.isArray(dictationIn.missedIds) ? dictationIn.missedIds : []);
+        beePassedIds = new Set(Array.isArray(dictationIn.passedIds) ? dictationIn.passedIds : []);
+        beeSelectedIds = new Set(Array.isArray(dictationIn.selectedIds) ? dictationIn.selectedIds : []);
+        saveBeeMissedIds(); saveBeePassedIds(); saveBeeSelectedIds();
+      }
       const ignoredNote = ignoredRecordings ? ` (${ignoredRecordings} old voice recording(s) in the file were skipped — recording has been replaced by the pronunciation check.)` : '';
       let recNote = '';
       if(hasAudio){
@@ -12364,6 +12413,7 @@ document.getElementById('import-all-file').addEventListener('change', (e) => {
         return;
       }
       const { vAdded, vSkipped, qAdded, qSkipped, idRemap } = mergeTextData(vocabIn, qaIn);
+      mergeDictationTracking(dictationIn, idRemap);
       let recAdded = null, recSkipped = null;
       if(choice === 'both'){
         const res = await importRecordingsViaRemap(recordingsIn, idRemap);
@@ -12374,7 +12424,8 @@ document.getElementById('import-all-file').addEventListener('change', (e) => {
         (choice === 'both' ? ` Recordings: restored ${recAdded}${recSkipped ? `, skipped ${recSkipped}` : ''}.` : ' Recordings in this file were skipped.');
       fb.style.color = '#3E7C59';
     } else if(hasText){
-      const { vAdded, vSkipped, qAdded, qSkipped } = mergeTextData(vocabIn, qaIn);
+      const { vAdded, vSkipped, qAdded, qSkipped, idRemap } = mergeTextData(vocabIn, qaIn);
+      mergeDictationTracking(dictationIn, idRemap);
       refreshAllUIAfterImport();
       fb.textContent = `Vocabulary: added ${vAdded}, skipped ${vSkipped} duplicate(s). Q&A: added ${qAdded}, skipped ${qSkipped} duplicate(s).`;
       fb.style.color = '#3E7C59';
