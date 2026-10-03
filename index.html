@@ -1878,54 +1878,66 @@ document.querySelectorAll('.lesson-filter-select').forEach(sel => {
 const RADICAL_INFO = [
   { radical: '氵', meaning: 'water', chars: '河海汉洗没法活酒油汤深清泳汁温' },
   { radical: '火', meaning: 'fire', chars: '烧灯烤灿炒' },
-  { radical: '木', meaning: 'tree / wood', chars: '林森桌椅树校板根村机杯' },
-  { radical: '亻', meaning: 'person', chars: '你他们做住什件但便借假信像停休位' },
-  { radical: '女', meaning: 'woman', chars: '她妈姐妹奶姓姑好' },
+  { radical: '木', meaning: 'tree / wood', chars: '林森桌椅树校板根村机杯休想茶菜闲床' },
+  { radical: '亻', meaning: 'person', chars: '你他们做住什件但便借假信像停休位宿' },
+  { radical: '女', meaning: 'woman', chars: '她妈姐妹奶姓姑好安' },
   { radical: '忄', meaning: 'heart / feelings', chars: '情快怕忙惊怀慢悔恨' },
   { radical: '心', meaning: 'heart / feelings', chars: '想念忘急您思悲忽' },
-  { radical: '口', meaning: 'mouth', chars: '吃喝叫唱听名只员' },
+  { radical: '口', meaning: 'mouth', chars: '吃喝叫唱听名只员语加召结站店官' },
   { radical: '扌', meaning: 'hand', chars: '打找拍排提拉推换挂' },
-  { radical: '日', meaning: 'sun', chars: '明时早晚星是春昨晴' },
+  { radical: '日', meaning: 'sun', chars: '明时早晚星是春昨晴间' },
   { radical: '讠', meaning: 'speech', chars: '说话请谢认识语课词记让' },
   { radical: '钅', meaning: 'metal', chars: '银钱铁钟针铅钢' },
   { radical: '艹', meaning: 'grass / plant', chars: '花草茶菜苦药苹英芽' },
   { radical: '冫', meaning: 'ice', chars: '冷冰凉' },
   { radical: '辶', meaning: 'walk / movement', chars: '过进还这连远近送边运道速' },
   { radical: '阝', meaning: 'hill / city (mound on left, city on right)', chars: '阳阴院除陪陈都那邻部郊' },
-  { radical: '门', meaning: 'door / gate', chars: '间闪闭闹闲' },
+  { radical: '门', meaning: 'door / gate', chars: '间闪闭闹闲们' },
   { radical: '宀', meaning: 'roof', chars: '家字安完定宝官室宿容' },
   { radical: '广', meaning: 'shelter', chars: '店床座应康' },
   { radical: '疒', meaning: 'sickness', chars: '病疼痛症疲' },
-  { radical: '目', meaning: 'eye', chars: '看睛眼睡眉' },
+  { radical: '目', meaning: 'eye', chars: '看睛眼睡眉想帽' },
   { radical: '足', meaning: 'foot', chars: '跑跳路跟踢' },
   { radical: '石', meaning: 'stone', chars: '码破硬研确' },
   { radical: '竹', meaning: 'bamboo', chars: '笑笔答第等简' },
   { radical: '米', meaning: 'rice', chars: '粉料精糖粒' },
-  { radical: '纟', meaning: 'silk / thread', chars: '红绿给经组线纸结' },
+  { radical: '纟', meaning: 'silk / thread', chars: '红绿给经组线纸结药' },
   { radical: '衤', meaning: 'clothing', chars: '衬袜被裤衫' },
-  { radical: '王', meaning: 'jade', chars: '玩现球理珠' },
-  { radical: '车', meaning: 'vehicle', chars: '轮较输轻软' },
-  { radical: '贝', meaning: 'shell / money', chars: '贵贫财货账购' },
+  { radical: '王', meaning: 'jade', chars: '玩现球理珠宝' },
+  { radical: '车', meaning: 'vehicle', chars: '轮较输轻软连' },
+  { radical: '贝', meaning: 'shell / money', chars: '贵贫财货账购员则' },
   { radical: '力', meaning: 'strength', chars: '加助努动功' },
   { radical: '刀', meaning: 'knife', chars: '分切召券剪' },
-  { radical: '刂', meaning: 'knife', chars: '别到刻前划判则' },
+  { radical: '刂', meaning: 'knife', chars: '别到刻前划判则型' },
   { radical: '攵', meaning: 'action / tap', chars: '教收改放数' },
   { radical: '页', meaning: 'head / page', chars: '顶顺预题颜须颗' },
-  { radical: '见', meaning: 'to see', chars: '视观规觉' },
+  { radical: '见', meaning: 'to see', chars: '视观规觉现' },
   { radical: '走', meaning: 'walk / run', chars: '起越超赶' },
-  { radical: '山', meaning: 'mountain', chars: '岁岛岸峰' },
-  { radical: '土', meaning: 'earth', chars: '地场块城坐型' },
+  { radical: '山', meaning: 'mountain', chars: '岁岛岸峰灿' },
+  { radical: '土', meaning: 'earth', chars: '地场块城坐型座' },
   { radical: '巾', meaning: 'cloth', chars: '布师帮帽常' },
-  { radical: '马', meaning: 'horse', chars: '骑驾驶验' },
-  { radical: '立', meaning: 'stand', chars: '站章童' },
+  { radical: '马', meaning: 'horse', chars: '骑驾驶验妈码' },
+  { radical: '立', meaning: 'stand', chars: '站章童位' },
   { radical: '穴', meaning: 'cave / hole', chars: '空穿窗究' }
 ];
-// Same lookup but for a single character — used to label each Flashcard tile individually.
-function findRadicalForChar(ch){
+// Returns EVERY radical from the list above that a character is built from —
+// not just the first match — since a character can genuinely contain more
+// than one (妈 = 女 + 马, 现 = 王 + 见, and so on). This stays a curated,
+// hand-checked list rather than a full decomposition database, so it won't
+// catch every component of every character — only ones we're confident are
+// correct, rather than guessing and risking a wrong breakdown.
+function findRadicalsForChar(ch){
+  const matches = [];
   for(const entry of RADICAL_INFO){
-    if(ch === entry.radical || entry.chars.includes(ch)) return { radical: entry.radical, meaning: entry.meaning };
+    if(ch === entry.radical || entry.chars.includes(ch)) matches.push({ radical: entry.radical, meaning: entry.meaning });
   }
-  return null;
+  return matches;
+}
+// Single-match convenience wrapper — kept for anywhere that only ever wants
+// the first (dominant) radical rather than the full breakdown.
+function findRadicalForChar(ch){
+  const matches = findRadicalsForChar(ch);
+  return matches.length ? matches[0] : null;
 }
 
 // Reference tab table — built from the same RADICAL_INFO used on Flashcards, so the two never drift apart.
@@ -9260,6 +9272,12 @@ function showBeeAnswer(card){
   wrap.style.justifyContent = 'center';
   wrap.style.alignItems = 'center';
   chars.forEach((ch, i) => {
+    // Same per-character wrapper + radical label pattern as Flashcards' own
+    // stroke-practice tiles, so the two look and behave consistently.
+    const charWrap = document.createElement('div');
+    charWrap.style.display = 'flex';
+    charWrap.style.flexDirection = 'column';
+    charWrap.style.alignItems = 'center';
     const cell = document.createElement('div');
     cell.id = 'bee-answer-target-' + i;
     cell.style.width = tileSize + 'px';
@@ -9274,7 +9292,15 @@ function showBeeAnswer(card){
       cell.style.color = 'var(--ink)';
       cell.textContent = ch;
     }
-    wrap.appendChild(cell);
+    charWrap.appendChild(cell);
+    const rads = findRadicalsForChar(ch);
+    if(rads.length){
+      const label = document.createElement('div');
+      label.style.cssText = `margin-top:4px;width:${tileSize}px;text-align:center;font-size:10px;line-height:1.3;color:var(--jade);`;
+      label.innerHTML = rads.map(r => `<span class="hanzi" style="font-size:13px;font-weight:bold;">${r.radical}</span> ${r.meaning}`).join('<br>');
+      charWrap.appendChild(label);
+    }
+    wrap.appendChild(charWrap);
   });
   box.appendChild(wrap);
   beeAnswerWriters = chars.map((ch, i) => {
@@ -9566,11 +9592,11 @@ function buildStrokeTargets(hanzi){
     });
     wrap.appendChild(retryBtn);
 
-    const rad = findRadicalForChar(ch);
-    if(rad){
+    const rads = findRadicalsForChar(ch);
+    if(rads.length){
       const label = document.createElement('div');
       label.style.cssText = 'margin-top:5px;width:130px;text-align:center;font-size:10.5px;line-height:1.3;color:var(--jade);';
-      label.innerHTML = `<span class="hanzi" style="font-size:14px;font-weight:bold;">${rad.radical}</span> ${rad.meaning}`;
+      label.innerHTML = rads.map(r => `<span class="hanzi" style="font-size:14px;font-weight:bold;">${r.radical}</span> ${r.meaning}`).join('<br>');
       wrap.appendChild(label);
     }
 
