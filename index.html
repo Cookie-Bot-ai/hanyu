@@ -380,6 +380,89 @@
   .pinyin-candidate:hover{ border-color:var(--gold); transform:translateY(-1px); }
   .pinyin-candidate .cand-pinyin{ color:var(--gold); margin-left:6px; font-size:11px; }
   .pinyin-candidate .cand-gloss{ color:var(--muted); margin-left:6px; font-size:11px; }
+
+  /* ---- Story Time ---- */
+  .story-subtabs{ display:flex; gap:8px; justify-content:center; margin-bottom:14px; flex-wrap:wrap; }
+  .story-subtabs button.action{ flex:0 1 auto; }
+  .st-card{ background:var(--paper); color:var(--ink); border-radius:16px; padding:18px 20px; margin-bottom:12px;
+    text-align:left; box-shadow:0 14px 34px rgba(0,0,0,.4), 0 2px 8px rgba(0,0,0,.25); }
+  .st-title-zh{ font-size:26px; line-height:1.3; }
+  .st-title-sub{ font-size:13px; color:var(--brass-ink); margin:2px 0 10px; }
+  .st-text{ font-size:23px; line-height:2; letter-spacing:.5px; white-space:pre-wrap; overflow-wrap:anywhere; }
+  mark.st-new{ background:rgba(211,166,75,.4); color:inherit; border-radius:4px; padding:0 2px; cursor:pointer; }
+  .st-lookup{ margin-top:10px; padding:8px 12px; border-radius:10px; background:rgba(63,107,82,.12);
+    color:var(--jade); font-size:14px; }
+  .st-badge{ display:inline-block; font-size:11px; padding:2px 9px; border-radius:20px; margin-right:4px;
+    background:rgba(211,166,75,.18); color:var(--brass); border:1px solid rgba(211,166,75,.4); }
+  .st-badge.lvl{ background:rgba(111,168,138,.16); color:var(--celadon); border-color:rgba(111,168,138,.4); }
+  .st-block{ background:rgba(12,17,15,.74); border:1px solid var(--border); border-radius:12px; padding:12px 14px;
+    margin-top:10px; font-size:14.5px; line-height:1.75; color:#E7EAE3; white-space:pre-wrap; overflow-wrap:anywhere; }
+  .st-block.py{ color:var(--brass); }
+  .st-block-label{ display:block; font-size:10.5px; letter-spacing:.8px; text-transform:uppercase; color:var(--muted); margin-bottom:4px; }
+  .st-block-label.dark{ color:var(--brass-ink); }
+  .st-words{ margin-top:12px; background:rgba(12,17,15,.74); border:1px solid var(--border); border-radius:12px; padding:12px 14px; }
+  .st-word-row{ display:flex; justify-content:space-between; align-items:center; gap:10px; padding:8px 0;
+    border-top:1px solid var(--border); flex-wrap:wrap; }
+  .st-word-row:first-of-type{ border-top:none; }
+  .st-word-main{ line-height:1.5; min-width:0; flex:1 1 200px; }
+  .st-word-h{ font-size:20px; margin-right:8px; }
+  .st-word-p{ color:var(--brass); margin-right:8px; }
+  .st-word-m{ color:#BCC9BF; font-size:13px; }
+  .st-word-actions{ display:flex; gap:6px; align-items:center; }
+  .st-have{ font-size:12px; color:var(--celadon); }
+  .st-section-title{ margin:22px 0 8px; font-size:13px; letter-spacing:.8px; text-transform:uppercase; color:#F1EDE1; }
+  .st-q{ font-size:22px; line-height:1.6; }
+  .st-q-tr{ font-size:13.5px; color:#3E463F; margin-top:6px; min-height:0; }
+  .st-q-tr:empty{ display:none; }
+  .st-model-py{ font-size:15px; color:var(--brass-ink); margin-top:2px; }
+  .st-alts{ font-size:12.5px; color:#3E463F; margin-top:6px; }
+  .st-judge{ margin-top:12px; margin-bottom:10px; font-size:13.5px; }
+  .st-card button.btn-reveal{ color:var(--ink); border:1px solid #BDB59F; }
+  .st-card button.btn-reveal:hover{ border-color:var(--brass-ink); color:var(--ink); background:rgba(0,0,0,.04); filter:none; }
+  .st-judge.match{ border-color:var(--celadon); }
+  .st-score{ font-size:44px; line-height:1.1; color:var(--jade); text-align:center; }
+  /* list of stories */
+  .st-item{ display:flex; align-items:center; justify-content:space-between; gap:12px; width:100%; text-align:left;
+    background:var(--paper); color:var(--ink); border:none; border-radius:14px; padding:14px 16px; margin-bottom:10px;
+    cursor:pointer; font-family:inherit; box-shadow:0 8px 22px rgba(0,0,0,.32); transition:transform .12s ease, filter .15s ease;
+    flex-direction:column; align-items:flex-start; }
+  .st-item:hover{ filter:brightness(1.04); transform:translateY(-1px); }
+  .st-item:active{ transform:scale(.99); }
+  .st-item.done{ box-shadow:inset 4px 0 0 var(--jade), 0 8px 22px rgba(0,0,0,.32); }
+  .st-item-main{ display:flex; flex-direction:column; gap:2px; min-width:0; width:100%; }
+  .st-item-title{ font-size:20px; }
+  .st-item-py{ font-size:12.5px; color:var(--brass-ink); }
+  .st-item-en{ font-size:13px; color:#3E463F; }
+  .st-item-meta{ display:flex; flex-direction:row; flex-wrap:wrap; align-items:center; gap:4px 2px; font-size:11.5px; width:100%; }
+  .st-item .st-badge, .st-card .st-badge{ background:rgba(138,101,32,.12); color:var(--brass-ink); border-color:rgba(138,101,32,.35); }
+  .st-item .st-badge.lvl, .st-card .st-badge.lvl{ background:rgba(63,107,82,.12); color:var(--jade); border-color:rgba(63,107,82,.35); }
+  .st-badges{ margin-bottom:6px; }
+  .st-badges:empty{ display:none; }
+  .st-state{ color:#5F6A5F; margin-left:auto; }
+  /* collapsible add/replace area */
+  .story-manage{ margin-top:22px; background:rgba(12,17,15,.74); border:1px solid var(--border); border-radius:12px; padding:10px 14px; }
+  .story-manage summary{ cursor:pointer; font-size:13.5px; color:#E7EAE3; user-select:none; }
+  .story-manage-body{ margin-top:10px; font-size:13px; line-height:1.6; }
+  .story-manage-body p.on-bg{ background:none; border:none; padding:0; }
+  /* sentence structure */
+  .st-pat-title{ font-size:14px; font-weight:600; color:var(--jade); margin-bottom:10px; }
+  .st-chips{ display:flex; flex-wrap:wrap; align-items:center; gap:2px; margin-bottom:10px; }
+  .st-chip{ display:inline-flex; flex-direction:column; align-items:center; gap:2px; background:#fff; color:var(--ink);
+    border:1px solid #D9D2C0; border-top:4px solid var(--celadon); border-radius:10px; padding:6px 12px; margin:3px; min-width:54px;
+    font-family:inherit; }
+  .st-chip .z{ font-size:22px; line-height:1.3; }
+  .st-chip .p{ font-size:11.5px; color:var(--brass-ink); }
+  .st-chip .l{ font-size:10.5px; color:#5F6A5F; text-transform:uppercase; letter-spacing:.4px; }
+  button.st-chip-btn{ cursor:pointer; box-shadow:0 2px 6px rgba(0,0,0,.18); }
+  button.st-chip-btn:hover{ filter:brightness(.97); }
+  .st-plus{ color:#8A9A92; font-size:16px; }
+  .st-pat-sentence{ font-size:22px; margin:4px 0 6px; }
+  .st-pat-py{ font-size:14px; color:var(--brass-ink); margin-bottom:2px; }
+  .st-pat-tr{ font-size:13.5px; color:#3E463F; margin-bottom:2px; }
+  .st-answer-row{ min-height:58px; display:flex; flex-wrap:wrap; align-items:center; gap:2px; padding:6px; margin-bottom:8px;
+    border:2px dashed #C9C2AE; border-radius:12px; }
+  .st-drop-hint{ font-size:12.5px; color:#8A9A92; padding:0 6px; }
+  .st-chips.pool{ min-height:44px; }
 </style>
 </head>
 <body>
@@ -525,6 +608,7 @@
       <button class="tab-btn" data-tab="bee">听写 <span class="sub">Dictation</span></button>
       <button class="tab-btn" data-tab="qa">问答 <span class="sub">Q&amp;A</span></button>
       <button class="tab-btn" data-tab="phrases">翻译 <span class="sub">Translate</span></button>
+      <button class="tab-btn" data-tab="story">阅读 <span class="sub">Story Time</span></button>
       <button class="tab-btn" data-tab="testprep">备考 <span class="sub">Test Prep</span></button>
       <button class="tab-btn" data-tab="test">测验 <span class="sub">Test</span></button>
     </div>
@@ -949,6 +1033,118 @@
       </div>
     </div>
 
+
+    <!-- STORY TIME (阅读练习): short graded readings with a comprehension quiz, plus
+         a Sentence Structure area. The stories themselves are data (see the
+         Story Time script block), so more can be imported as you progress. -->
+    <div class="panel" id="panel-story">
+      <div class="story-subtabs">
+        <button class="action btn-reveal on" id="story-mode-stories">📖 Stories</button>
+        <button class="action btn-reveal" id="story-mode-patterns">🧩 Sentence Structure</button>
+      </div>
+
+      <!-- Stories: list -->
+      <div id="story-list-view">
+        <div class="meta"><span id="story-list-count">0 stories</span></div>
+        <div id="story-list"></div>
+      </div>
+
+      <!-- Stories: reader -->
+      <div id="story-reader-view" style="display:none;">
+        <div class="top-controls">
+          <button class="action btn-reveal small" id="story-back">‹ All stories</button>
+        </div>
+        <div class="st-card">
+          <div class="st-badges" id="story-badges"></div>
+          <div class="st-title-zh hanzi" id="story-title-zh"></div>
+          <div class="st-title-sub" id="story-title-sub"></div>
+          <div class="st-text hanzi" id="story-text"></div>
+          <div class="st-lookup" id="story-lookup" style="display:none;"></div>
+        </div>
+        <div class="row" style="margin-top:0;">
+          <button class="action btn-play" id="story-listen">🔊 Listen</button>
+          <button class="action btn-reveal" id="story-hl-toggle" style="display:none;">🖍 Highlight new words</button>
+        </div>
+        <div class="row" style="margin-top:10px;">
+          <button class="action btn-reveal" id="story-show-py">Pinyin</button>
+          <button class="action btn-reveal" id="story-show-en">English</button>
+          <button class="action btn-reveal" id="story-show-vi">Tiếng Việt</button>
+        </div>
+        <div class="st-block" id="story-py" style="display:none;"></div>
+        <div class="st-block" id="story-en" style="display:none;"></div>
+        <div class="st-block" id="story-vi" style="display:none;"></div>
+        <div class="st-words" id="story-words" style="display:none;"></div>
+
+        <div class="st-section-title">Check your understanding</div>
+        <div class="empty-note on-bg" id="story-quiz-empty" style="display:none;">This story has no questions yet.</div>
+        <div id="story-quiz-card">
+          <div class="top-controls">
+            <span class="on-bg" id="story-quiz-count" style="font-size:12px;"></span>
+            <button class="action btn-reveal small" id="story-quiz-restart">↻ Restart quiz</button>
+          </div>
+          <div id="story-quiz-body">
+            <div class="st-card">
+              <div class="st-q hanzi" id="story-q-zh"></div>
+              <div class="st-q-tr" id="story-q-tr"></div>
+            </div>
+            <div class="row" style="margin-top:0;">
+              <button class="action btn-reveal" id="story-q-listen">🔊 Listen to the question</button>
+              <button class="action btn-reveal" id="story-q-hint">💭 Check meaning</button>
+            </div>
+            <input class="field" id="story-answer" placeholder="Type your answer in Chinese" autocomplete="off" style="margin-top:10px;">
+            <div class="pinyin-ime-wrap">
+              <input class="pinyin-buffer" id="story-answer-pybuf" placeholder="No Chinese keyboard? Type pinyin + tone number, e.g. zhong1guo2, and pick a match below">
+              <div class="pinyin-candidates" id="story-answer-pycand"></div>
+            </div>
+            <div class="row">
+              <button class="action btn-play" id="story-q-check">✓ Check answer</button>
+            </div>
+            <div class="on-bg st-judge" id="story-judge" style="display:none;"></div>
+            <div class="st-card st-model" id="story-model" style="display:none;"></div>
+            <div class="row" id="story-selfassess" style="display:none;">
+              <button class="action btn-play" id="story-got-it">✓ Got it</button>
+              <button class="action btn-reveal" id="story-missed-it">✗ Needs work</button>
+              <button class="action btn-reveal" id="story-try-again">↻ Try again</button>
+            </div>
+          </div>
+          <div id="story-quiz-done" style="display:none;"></div>
+        </div>
+
+        <div class="row" style="margin-top:20px;">
+          <button class="action btn-reveal" id="story-complete-btn">✓ Mark as completed</button>
+          <button class="action btn-danger small" id="story-delete-btn" style="flex:0 0 auto;">🗑 Delete story</button>
+        </div>
+      </div>
+
+      <!-- Sentence Structure -->
+      <div id="story-patterns-view" style="display:none;">
+        <p class="hint on-bg" style="margin-bottom:10px;">Each sentence is cut into its parts. Tap Practice to put shuffled pieces back in order.</p>
+        <div class="row" style="margin-top:0;margin-bottom:12px;">
+          <button class="action btn-reveal" id="pat-show-py">Pinyin</button>
+          <button class="action btn-reveal" id="pat-show-en">English</button>
+          <button class="action btn-reveal" id="pat-show-vi">Tiếng Việt</button>
+        </div>
+        <div id="story-patterns-body"></div>
+      </div>
+
+      <!-- Add / replace content: template, import, export -->
+      <details class="story-manage" id="story-manage">
+        <summary>➕ Add or replace stories</summary>
+        <div class="story-manage-body">
+          <p class="on-bg">Write new stories and quizzes in Notepad using the template, then import the file. A story with the same id <b>replaces</b> the old one (your progress is kept). A new id <b>adds</b> a story. Nothing is deleted by importing.</p>
+          <div class="row" style="margin-top:10px;">
+            <button class="action btn-reveal" id="story-template-btn">⬇ Download template</button>
+            <button class="action btn-reveal" id="story-import-btn">⬆ Import stories</button>
+          </div>
+          <div class="row" style="margin-top:10px;">
+            <button class="action btn-reveal" id="story-export-btn">📤 Export my stories</button>
+            <button class="action btn-reveal" id="story-restore-btn">↺ Restore starter stories</button>
+          </div>
+          <input type="file" id="story-import-file" accept=".txt,.md,text/plain" style="display:none;">
+          <div class="on-bg" id="story-import-feedback" style="display:none;margin-top:10px;"></div>
+        </div>
+      </details>
+    </div>
 
     <!-- TEST PREP: a review/staging area — everything currently ⭐ Needs practice
          or ✓ Learned, from words, phrases, AND Q&A pairs together in one list, so
@@ -8868,6 +9064,7 @@ document.querySelectorAll('.tab-btn:not(.subtab-btn)').forEach(btn => {
     if(tab === 'qa') renderQaCard();
     if(tab === 'bee') resizeBeeCanvas();
     if(tab === 'testprep') renderTestPrepList();
+    if(tab === 'story') renderStoryTab();
     if(tab === 'test' && document.getElementById('test-setup').style.display !== 'none') updateTestPoolInfo();
     if(tab === 'phrases'){
       strokeReadOnly = true;
@@ -11215,7 +11412,8 @@ document.getElementById('export-text').addEventListener('click', () => {
       missedIds: Array.from(beeMissedIds),
       passedIds: Array.from(beePassedIds),
       selectedIds: Array.from(beeSelectedIds)
-    }
+    },
+    stories: storyBackupData()
   }, 'chinese-app-words-backup-' + dateStamp() + '.json');
 });
 
@@ -12333,7 +12531,7 @@ document.getElementById('import-all-file').addEventListener('change', (e) => {
     // Accepts: the new {vocab, qa} text-only export, the new {recordings} audio-only
     // export, a combined {vocab, qa, recordings, dictation} file, or either of the
     // older single-list export formats (plain vocab array, or plain Q&A array).
-    let vocabIn = [], qaIn = [], recordingsIn = {}, dictationIn = null;
+    let vocabIn = [], qaIn = [], recordingsIn = {}, dictationIn = null, storiesIn = null;
     if(Array.isArray(incoming)){
       if(incoming.length === 0){ /* nothing to do */ }
       else if('h' in incoming[0] && 'p' in incoming[0]) vocabIn = incoming;
@@ -12343,6 +12541,7 @@ document.getElementById('import-all-file').addEventListener('change', (e) => {
       qaIn = Array.isArray(incoming.qa) ? incoming.qa : [];
       recordingsIn = (incoming.recordings && typeof incoming.recordings === 'object') ? incoming.recordings : {};
       dictationIn = (incoming.dictation && typeof incoming.dictation === 'object') ? incoming.dictation : null;
+      storiesIn = (incoming.stories && typeof incoming.stories === 'object') ? incoming.stories : null;
     }
 
     const hasText = vocabIn.length > 0 || qaIn.length > 0;
@@ -12397,10 +12596,11 @@ document.getElementById('import-all-file').addEventListener('change', (e) => {
         const { recAdded, recSkipped } = await importRecordingsDirect(recordingsIn);
         recNote = ` Recordings: restored ${recAdded}${recSkipped ? `, skipped ${recSkipped}` : ''}.`;
       }
+      const storyNote = applyStoriesFromBackup(storiesIn, true);
       refreshAllUIAfterImport();
       renderHskList();
       fb.textContent = `This device now mirrors the file: ${vCount} word(s), ${qCount} Q&A pair(s).${recNote}` +
-        ignoredNote;
+        ignoredNote + storyNote;
       fb.style.color = '#3E7C59';
       return;
     }
@@ -12414,6 +12614,7 @@ document.getElementById('import-all-file').addEventListener('change', (e) => {
       }
       const { vAdded, vSkipped, qAdded, qSkipped, idRemap } = mergeTextData(vocabIn, qaIn);
       mergeDictationTracking(dictationIn, idRemap);
+      const storyNote = applyStoriesFromBackup(storiesIn, false);
       let recAdded = null, recSkipped = null;
       if(choice === 'both'){
         const res = await importRecordingsViaRemap(recordingsIn, idRemap);
@@ -12421,13 +12622,14 @@ document.getElementById('import-all-file').addEventListener('change', (e) => {
       }
       refreshAllUIAfterImport();
       fb.textContent = `Vocabulary: added ${vAdded}, skipped ${vSkipped} duplicate(s). Q&A: added ${qAdded}, skipped ${qSkipped} duplicate(s).` +
-        (choice === 'both' ? ` Recordings: restored ${recAdded}${recSkipped ? `, skipped ${recSkipped}` : ''}.` : ' Recordings in this file were skipped.');
+        (choice === 'both' ? ` Recordings: restored ${recAdded}${recSkipped ? `, skipped ${recSkipped}` : ''}.` : ' Recordings in this file were skipped.') + storyNote;
       fb.style.color = '#3E7C59';
     } else if(hasText){
       const { vAdded, vSkipped, qAdded, qSkipped, idRemap } = mergeTextData(vocabIn, qaIn);
       mergeDictationTracking(dictationIn, idRemap);
+      const storyNote = applyStoriesFromBackup(storiesIn, false);
       refreshAllUIAfterImport();
-      fb.textContent = `Vocabulary: added ${vAdded}, skipped ${vSkipped} duplicate(s). Q&A: added ${qAdded}, skipped ${qSkipped} duplicate(s).`;
+      fb.textContent = `Vocabulary: added ${vAdded}, skipped ${vSkipped} duplicate(s). Q&A: added ${qAdded}, skipped ${qSkipped} duplicate(s).` + storyNote;
       fb.style.color = '#3E7C59';
     } else {
       const { recAdded, recSkipped } = await importRecordingsDirect(recordingsIn);
@@ -12542,6 +12744,847 @@ if(!localStorage.getItem(SPEED_RESET_FLAG)){
 // script block) would silently abort every statement after it, including
 // those two declarations themselves.
 refreshLessonFilterOptions();
+
+// =====================================================================
+// STORY TIME (阅读练习) — short readings, comprehension questions and
+// sentence-structure practice. Content is DATA (a library kept in
+// localStorage), never hard-coded into the screen, so stories can be added
+// or replaced by importing a plain-text file (see STORY_TEMPLATE). Nothing
+// here ever changes your word lists unless you press "+ Add to My Words".
+// Kept at the very end of the script, same reason as the lesson-filter
+// setup above: it must run after everything it reads has been declared.
+// =====================================================================
+const STORY_LIB_KEY = 'chinesevocab_story_library';
+const STORY_PROGRESS_KEY = 'chinesevocab_story_progress';
+const SEED_STORY_LIBRARY = {"stories": [{"id": "my-family", "titleZh": "我的家", "titlePy": "Wǒ de jiā", "titleEn": "My Family", "titleVi": "Gia đình tôi", "lessons": "Bài 2–5", "level": "Beginner", "zh": "我叫小明。我是中国人。我家有四口人：爸爸、妈妈、姐姐和我。爸爸是医生，妈妈是老师。姐姐是大学生，她学习英语。我学习汉语。我们都很喜欢学习。", "py": "Wǒ jiào Xiǎomíng. Wǒ shì Zhōngguó rén. Wǒ jiā yǒu sì kǒu rén: bàba, māma, jiějie hé wǒ. Bàba shì yīshēng, māma shì lǎoshī. Jiějie shì dàxuéshēng, tā xuéxí Yīngyǔ. Wǒ xuéxí Hànyǔ. Wǒmen dōu hěn xǐhuan xuéxí.", "en": "My name is Xiaoming. I'm Chinese. There are four people in my family: Dad, Mum, my older sister and me. Dad is a doctor, Mum is a teacher. My sister is a university student and studies English. I study Chinese. We all really like studying.", "vi": "Tôi tên là Tiểu Minh. Tôi là người Trung Quốc. Gia đình tôi có bốn người: bố, mẹ, chị gái và tôi. Bố là bác sĩ, mẹ là giáo viên. Chị gái là sinh viên đại học, chị ấy học tiếng Anh. Tôi học tiếng Trung. Chúng tôi đều rất thích học.", "questions": [{"q": "小明是哪国人？", "a": "小明是中国人。", "alt": [], "qEn": "What nationality is Xiaoming?", "aEn": "Xiaoming is Chinese.", "qVi": "Tiểu Minh là người nước nào?", "aVi": "Tiểu Minh là người Trung Quốc."}, {"q": "他家有几口人？", "a": "他家有四口人。", "alt": [], "qEn": "How many people are in his family?", "aEn": "Four.", "qVi": "Gia đình cậu ấy có mấy người?", "aVi": "Có bốn người."}, {"q": "他妈妈做什么工作？", "a": "他妈妈是老师。", "alt": [], "qEn": "What is his mother's job?", "aEn": "She is a teacher.", "qVi": "Mẹ cậu ấy làm nghề gì?", "aVi": "Mẹ cậu ấy là giáo viên."}], "words": []}, {"id": "my-saturday", "titleZh": "我的星期六", "titlePy": "Wǒ de xīngqīliù", "titleEn": "My Saturday", "titleVi": "Thứ Bảy của tôi", "lessons": "Bài 8–9", "level": "Beginner", "zh": "今天星期六，我不上班。我早上七点半起床。起床以后，我先洗澡，然后吃早饭。上午十点，我去超市买东西。中午十二点，我回家吃午饭。下午两点，我去图书馆看书。晚上，我在家看电视，有时候上网。", "py": "Jīntiān xīngqīliù, wǒ bù shàngbān. Wǒ zǎoshang qī diǎn bàn qǐchuáng. Qǐchuáng yǐhòu, wǒ xiān xǐzǎo, ránhòu chī zǎofàn. Shàngwǔ shí diǎn, wǒ qù chāoshì mǎi dōngxi. Zhōngwǔ shí'èr diǎn, wǒ huí jiā chī wǔfàn. Xiàwǔ liǎng diǎn, wǒ qù túshūguǎn kàn shū. Wǎnshang, wǒ zài jiā kàn diànshì, yǒu shíhou shàngwǎng.", "en": "Today is Saturday and I don't work. I get up at 7:30. After getting up, I shower first and then eat breakfast. At 10 am I go shopping at the supermarket. At noon I go home for lunch. At 2 pm I go to the library to read. In the evening I watch TV at home and sometimes go online.", "vi": "Hôm nay là thứ Bảy, tôi không đi làm. Tôi thức dậy lúc 7 giờ rưỡi. Sau khi thức dậy, tôi tắm rửa trước, sau đó ăn sáng. Lúc 10 giờ sáng tôi đi siêu thị mua đồ. Trưa 12 giờ tôi về nhà ăn trưa. Chiều 2 giờ tôi đến thư viện đọc sách. Buổi tối tôi xem tivi ở nhà, đôi khi lên mạng.", "questions": [{"q": "今天星期几？", "a": "今天星期六。", "alt": [], "qEn": "What day is it today?", "aEn": "Saturday.", "qVi": "Hôm nay là thứ mấy?", "aVi": "Thứ Bảy."}, {"q": "他几点起床？", "a": "他七点半起床。", "alt": [], "qEn": "What time does the person get up?", "aEn": "7:30.", "qVi": "Người ấy thức dậy lúc mấy giờ?", "aVi": "7 giờ rưỡi."}, {"q": "他下午两点去哪里？", "a": "他去图书馆看书。", "alt": [], "qEn": "Where does the person go at 2 pm?", "aEn": "To the library to read.", "qVi": "Lúc 2 giờ chiều người ấy đi đâu?", "aVi": "Đến thư viện đọc sách."}], "words": []}, {"id": "shopping-at-the-supermarket", "titleZh": "去超市买东西", "titlePy": "Qù chāoshì mǎi dōngxi", "titleEn": "Shopping at the Supermarket", "titleVi": "Đi siêu thị mua đồ", "lessons": "Bài 6–7", "level": "Beginner + small extension vocabulary", "zh": "今天下午，我和妈妈一起去超市。我们想买苹果、面包和牛奶。苹果五块钱一斤。妈妈说：\"我要两斤苹果。\"我说：\"我也要一个面包和一瓶牛奶。\"我们买了很多东西，然后回家。", "py": "Jīntiān xiàwǔ, wǒ hé māma yìqǐ qù chāoshì. Wǒmen xiǎng mǎi píngguǒ, miànbāo hé niúnǎi. Píngguǒ wǔ kuài qián yì jīn. Māma shuō: \"Wǒ yào liǎng jīn píngguǒ.\" Wǒ shuō: \"Wǒ yě yào yí ge miànbāo hé yì píng niúnǎi.\" Wǒmen mǎi le hěn duō dōngxi, ránhòu huí jiā.", "en": "This afternoon, Mum and I go to the supermarket together. We want to buy apples, bread and milk. Apples cost five yuan per jin (500 g). Mum wants two jin of apples. I also want some bread and a bottle of milk. We buy lots of things and then go home.", "vi": "Chiều nay, tôi và mẹ cùng đi siêu thị. Chúng tôi muốn mua táo, bánh mì và sữa. Táo giá 5 tệ một cân Trung Quốc (500 g). Mẹ muốn mua hai cân táo. Tôi cũng muốn một ổ bánh mì và một chai sữa. Chúng tôi mua nhiều đồ rồi về nhà.", "questions": [{"q": "他们去哪里？", "a": "他们去超市。", "alt": [], "qEn": "Where do they go?", "aEn": "The supermarket.", "qVi": "Họ đi đâu?", "aVi": "Đi siêu thị."}, {"q": "苹果多少钱一斤？", "a": "苹果五块钱一斤。", "alt": [], "qEn": "How much are the apples per jin?", "aEn": "Five yuan.", "qVi": "Táo bao nhiêu tiền một cân Trung Quốc?", "aVi": "Năm tệ."}, {"q": "他们一共买几斤苹果？", "a": "他们一共买两斤苹果。", "alt": [], "qEn": "How many jin of apples do they buy?", "aEn": "Two jin.", "qVi": "Họ mua tổng cộng mấy cân táo?", "aVi": "Hai cân Trung Quốc."}], "words": [{"h": "苹果", "p": "píngguǒ", "en": "apple", "vi": "táo"}, {"h": "瓶", "p": "píng", "en": "bottle; measure word", "vi": "chai"}, {"h": "了", "p": "le", "en": "completed-action particle", "vi": "trợ từ chỉ hành động đã hoàn thành"}]}, {"id": "whats-the-plan-today", "titleZh": "今天有什么安排？", "titlePy": "Jīntiān yǒu shénme ānpái?", "titleEn": "What's the Plan Today?", "titleVi": "Hôm nay có kế hoạch gì?", "lessons": "Bài 7–9", "level": "Beginner", "zh": "今天是星期三。小红有很多事。她上午十点去银行取钱。中午十二点，她和朋友一起吃午饭。下午四点，她去咖啡店喝咖啡。晚上七点，她去电影院看电影。她今天很高兴。", "py": "Jīntiān shì xīngqīsān. Xiǎohóng yǒu hěn duō shì. Tā shàngwǔ shí diǎn qù yínháng qǔ qián. Zhōngwǔ shí'èr diǎn, tā hé péngyou yìqǐ chī wǔfàn. Xiàwǔ sì diǎn, tā qù kāfēidiàn hē kāfēi. Wǎnshang qī diǎn, tā qù diànyǐngyuàn kàn diànyǐng. Tā jīntiān hěn gāoxìng.", "en": "Today is Wednesday. Xiaohong has lots to do. At 10 am she goes to the bank to withdraw money. At noon she has lunch with a friend. At 4 pm she goes to a café for coffee. At 7 pm she goes to the cinema to watch a film. She's very happy today.", "vi": "Hôm nay là thứ Tư. Tiểu Hồng có nhiều việc phải làm. Lúc 10 giờ sáng cô ấy đi ngân hàng rút tiền. Trưa 12 giờ cô ấy ăn trưa với bạn. Chiều 4 giờ cô ấy đi quán cà phê uống cà phê. Tối 7 giờ cô ấy đi rạp xem phim. Hôm nay cô ấy rất vui.", "questions": [{"q": "小红几点去银行？", "a": "她上午十点去银行。", "alt": [], "qEn": "What time does Xiaohong go to the bank?", "aEn": "10 am.", "qVi": "Tiểu Hồng đi ngân hàng lúc mấy giờ?", "aVi": "10 giờ sáng."}, {"q": "她去银行做什么？", "a": "她去银行取钱。", "alt": [], "qEn": "Why does she go to the bank?", "aEn": "To withdraw money.", "qVi": "Cô ấy đi ngân hàng làm gì?", "aVi": "Để rút tiền."}, {"q": "她下午四点去哪里？", "a": "她去咖啡店喝咖啡。", "alt": [], "qEn": "Where does she go at 4 pm?", "aEn": "A café for coffee.", "qVi": "Cô ấy đi đâu lúc 4 giờ chiều?", "aVi": "Đến quán cà phê uống cà phê."}], "words": []}, {"id": "my-day", "titleZh": "我的一天", "titlePy": "Wǒ de yì tiān", "titleEn": "My Day", "titleVi": "Một ngày của tôi", "lessons": "Bài 8–9", "level": "Beginner", "zh": "我是留学生。我每天六点半起床。起床以后，我先刷牙、洗脸，然后吃早饭。八点开始上课。十一点半下课。下午我常常去图书馆看书。晚上我常常学习汉语，有时候看电视，有时候上网。我每天都很高兴。", "py": "Wǒ shì liúxuéshēng. Wǒ měitiān liù diǎn bàn qǐchuáng. Qǐchuáng yǐhòu, wǒ xiān shuāyá, xǐliǎn, ránhòu chī zǎofàn. Bā diǎn kāishǐ shàngkè. Shíyī diǎn bàn xiàkè. Xiàwǔ wǒ chángcháng qù túshūguǎn kàn shū. Wǎnshang wǒ chángcháng xuéxí Hànyǔ, yǒu shíhou kàn diànshì, yǒu shíhou shàngwǎng. Wǒ měitiān dōu hěn gāoxìng.", "en": "I'm an international student. I get up at 6:30 every day. After getting up, I brush my teeth and wash my face, then eat breakfast. Class starts at 8 and finishes at 11:30. In the afternoon I often go to the library to read. In the evening I often study Chinese, sometimes watch TV and sometimes go online. I'm happy every day.", "vi": "Tôi là du học sinh. Mỗi ngày tôi thức dậy lúc 6 giờ rưỡi. Sau khi thức dậy, tôi đánh răng, rửa mặt rồi ăn sáng. Lớp học bắt đầu lúc 8 giờ và kết thúc lúc 11 giờ rưỡi. Buổi chiều tôi thường đến thư viện đọc sách. Buổi tối tôi thường học tiếng Trung, đôi khi xem tivi, đôi khi lên mạng. Mỗi ngày tôi đều rất vui.", "questions": [{"q": "他每天几点起床？", "a": "他每天六点半起床。", "alt": [], "qEn": "What time does the person get up every day?", "aEn": "6:30.", "qVi": "Người ấy thức dậy lúc mấy giờ mỗi ngày?", "aVi": "6 giờ rưỡi."}, {"q": "起床以后他先做什么？", "a": "他先刷牙、洗脸。", "alt": [], "qEn": "What does the person do first after getting up?", "aEn": "Brush teeth and wash face.", "qVi": "Sau khi thức dậy người ấy làm gì trước?", "aVi": "Đánh răng, rửa mặt."}, {"q": "他晚上常常做什么？", "a": "他晚上常常学习汉语。", "alt": [], "qEn": "What does the person often do in the evening?", "aEn": "Study Chinese.", "qVi": "Buổi tối người ấy thường làm gì?", "aVi": "Học tiếng Trung."}], "words": []}], "patterns": [{"id": "pattern-subject-time-place-action", "title": "Subject + Time + Place + Action", "labels": ["Subject", "Time", "Place", "Action"], "zh": ["我", "下午两点", "去图书馆", "看书"], "zhEnd": "。", "py": ["Wǒ", "xiàwǔ liǎng diǎn", "qù túshūguǎn", "kàn shū"], "pyEnd": ".", "pyAll": "", "en": "I go to the library to read at 2 pm.", "vi": "Tôi đến thư viện đọc sách lúc 2 giờ chiều."}, {"id": "pattern-subject-frequency-verb", "title": "Subject + Frequency + Verb", "labels": ["Subject", "Frequency", "Verb"], "zh": ["我", "常常", "学习汉语"], "zhEnd": "。", "py": ["Wǒ", "chángcháng", "xuéxí Hànyǔ"], "pyEnd": ".", "pyAll": "", "en": "I often study Chinese.", "vi": "Tôi thường xuyên học tiếng Trung."}, {"id": "pattern-first-action-then-action", "title": "First Action + Then Action", "labels": ["Subject", "First action", "Then action"], "zh": ["我", "先洗澡", "然后吃早饭"], "zhEnd": "。", "py": ["Wǒ", "xiān xǐzǎo", "ránhòu chī zǎofàn"], "pyEnd": ".", "pyAll": "", "en": "I shower first, then eat breakfast.", "vi": "Tôi tắm rửa trước, sau đó ăn sáng."}]};
+
+// ---- small helpers ----
+function stClone(o){ return JSON.parse(JSON.stringify(o)); }
+function stStr(v){ return typeof v === 'string' ? v.trim() : ''; }
+function stStrList(v){ return (Array.isArray(v) ? v : []).map(stStr).filter(Boolean); }
+function stSlugify(s){
+  return String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/đ/g, 'd').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+}
+function stHash(s){
+  let h = 0;
+  for(let i = 0; i < s.length; i++){ h = ((h << 5) - h + s.charCodeAt(i)) | 0; }
+  return Math.abs(h).toString(36);
+}
+
+// ---- cleaning: anything loaded, imported or restored goes through these ----
+function stSanitizeStory(s){
+  if(!s || typeof s !== 'object') return null;
+  const id = stSlugify(s.id);
+  const zh = stStr(s.zh);
+  if(!id || !zh) return null;
+  const questions = (Array.isArray(s.questions) ? s.questions : []).map(q => ({
+    q: stStr(q && q.q), a: stStr(q && q.a), alt: stStrList(q && q.alt),
+    qEn: stStr(q && q.qEn), aEn: stStr(q && q.aEn), qVi: stStr(q && q.qVi), aVi: stStr(q && q.aVi)
+  })).filter(q => q.q && q.a);
+  const words = (Array.isArray(s.words) ? s.words : []).map(w => ({
+    h: stStr(w && w.h), p: stStr(w && w.p), en: stStr(w && w.en), vi: stStr(w && w.vi)
+  })).filter(w => w.h);
+  return {
+    id, titleZh: stStr(s.titleZh) || zh.slice(0, 10), titlePy: stStr(s.titlePy),
+    titleEn: stStr(s.titleEn), titleVi: stStr(s.titleVi),
+    lessons: stStr(s.lessons), level: stStr(s.level),
+    zh, py: stStr(s.py), en: stStr(s.en), vi: stStr(s.vi), questions, words
+  };
+}
+function stSanitizePattern(p){
+  if(!p || typeof p !== 'object') return null;
+  const zh = stStrList(p.zh);
+  if(zh.length < 2) return null;
+  let py = stStrList(p.py);
+  let pyAll = stStr(p.pyAll);
+  if(py.length !== zh.length){ if(!pyAll && py.length) pyAll = py.join(' '); py = []; }
+  const labels = (Array.isArray(p.labels) ? p.labels : []).map(stStr);
+  return {
+    id: stSlugify(p.id) || ('pattern-' + stHash(zh.join('|'))),
+    title: stStr(p.title), labels, zh, zhEnd: stStr(p.zhEnd),
+    py, pyEnd: stStr(p.pyEnd), pyAll, en: stStr(p.en), vi: stStr(p.vi)
+  };
+}
+
+// ---- library + progress storage ----
+function stSeedLibrary(){
+  return {
+    stories: SEED_STORY_LIBRARY.stories.map(stSanitizeStory).filter(Boolean),
+    patterns: SEED_STORY_LIBRARY.patterns.map(stSanitizePattern).filter(Boolean)
+  };
+}
+function loadStoryLibrary(){
+  try{
+    const raw = localStorage.getItem(STORY_LIB_KEY);
+    if(raw){
+      const parsed = JSON.parse(raw);
+      if(parsed && Array.isArray(parsed.stories) && Array.isArray(parsed.patterns)){
+        return {
+          stories: parsed.stories.map(stSanitizeStory).filter(Boolean),
+          patterns: parsed.patterns.map(stSanitizePattern).filter(Boolean)
+        };
+      }
+    }
+  }catch(e){ /* fall through to the starter set */ }
+  const seeded = stSeedLibrary();
+  try{ localStorage.setItem(STORY_LIB_KEY, JSON.stringify(seeded)); }catch(e){}
+  return seeded;
+}
+function saveStoryLibrary(){ localStorage.setItem(STORY_LIB_KEY, JSON.stringify(storyLibrary)); }
+function loadStoryProgress(){
+  try{
+    const p = JSON.parse(localStorage.getItem(STORY_PROGRESS_KEY));
+    if(p && typeof p === 'object' && !Array.isArray(p)) return p;
+  }catch(e){}
+  return {};
+}
+function saveStoryProgress(){ localStorage.setItem(STORY_PROGRESS_KEY, JSON.stringify(storyProgress)); }
+
+let storyLibrary = loadStoryLibrary();
+let storyProgress = loadStoryProgress();
+let storyMode = 'stories';            // 'stories' | 'patterns'
+let storyOpenId = null;               // which story is open in the reader (null = list)
+let storyShow = { py: false, en: false, vi: false, hl: false };
+let storyQuiz = null;                 // { order, pos, results, revealed, hint }
+let patShow = { py: false, en: false, vi: false };
+let patPractice = {};                 // pattern id -> { pool, placed, verdict }
+
+function storyById(id){ return storyLibrary.stories.find(s => s.id === id); }
+function storyProg(id){ if(!storyProgress[id]) storyProgress[id] = {}; return storyProgress[id]; }
+
+// ---- answer checking: lenient, and never marks anything "wrong" ----
+const ST_PUNCT = /[\s，。！？、；：,.!?;:"'“”‘’（）()\[\]【】《》—…·\-]/g;
+const ST_SUBJECT = /^(我们|你们|他们|她们|它们|我|你|他|她|它)/;
+function stNorm(s){ return String(s || '').replace(ST_PUNCT, '').toLowerCase(); }
+function stNoSubject(s){ return s.replace(ST_SUBJECT, ''); }
+function stBigrams(s){ const o = []; for(let i = 0; i < s.length - 1; i++) o.push(s.slice(i, i + 2)); return o; }
+function stDice(a, b){
+  if(!a || !b) return 0;
+  if(a === b) return 1;
+  const A = stBigrams(a), B = stBigrams(b);
+  if(!A.length || !B.length) return 0;
+  const counts = new Map();
+  A.forEach(x => counts.set(x, (counts.get(x) || 0) + 1));
+  let hit = 0;
+  B.forEach(x => { const c = counts.get(x) || 0; if(c > 0){ hit++; counts.set(x, c - 1); } });
+  return (2 * hit) / (A.length + B.length);
+}
+// 'empty' | 'match' | 'close' | 'different'
+function stJudge(typed, q){
+  const t = stNorm(typed);
+  if(!t) return 'empty';
+  const tt = stNoSubject(t);
+  const cands = [q.a].concat(q.alt || []).map(stNorm).filter(Boolean);
+  for(const c of cands){
+    const cc = stNoSubject(c);
+    if(t === c || tt === cc) return 'match';
+    if(cc.length >= 2 && tt.length >= 2 && (cc.includes(tt) || tt.includes(cc))) return 'match';
+  }
+  let best = 0;
+  cands.forEach(c => { best = Math.max(best, stDice(t, c), stDice(tt, stNoSubject(c))); });
+  return best >= 0.6 ? 'close' : 'different';
+}
+
+// =====================================================================
+// IMPORT / EXPORT in a plain-text format anyone can edit in Notepad
+// =====================================================================
+const STORY_TEMPLATE = `# Han Yu Learning — Story Time import template
+#
+# HOW IT WORKS
+#  - One story = one "=== STORY ===" block. Put as many as you like in one file.
+#  - Lines that start with # are ignored (notes to yourself).
+#  - A story needs a title and the [chinese] text. Everything else is optional.
+#  - id: leave it blank and the app makes one from the English title.
+#    Same id as an existing story = it REPLACES that story (your progress is kept).
+#    A new id = a new story is ADDED. Nothing is ever deleted by importing.
+#  - Questions: each one starts with Q: and needs an A: (the model answer).
+#      ALT:  another answer that is also correct (add as many as you like)
+#      QEN / AEN = English,   QVI / AVI = Tiếng Việt   (all optional)
+#    When you answer, the app checks loosely and never marks you "wrong" -
+#    you always see the model answer and decide for yourself.
+#  - [words] = new words in this story, one per line:
+#      hanzi | pinyin | English | Tiếng Việt
+#    They are only highlighted so you can look them up. They are NEVER added to
+#    your word lists unless you tap "+ Add to My Words" yourself.
+#  - Sentence Structure patterns use "=== PATTERN ===" (example at the bottom).
+#    Cut the sentence into pieces with | and give every piece a label.
+#
+# Save as a .txt file (UTF-8), then:  Story Time > Add or replace stories > Import.
+# Below is a small working example - edit it, replace it, or delete it.
+
+=== STORY ===
+id: example-my-morning
+title: 我的早上
+title_pinyin: Wǒ de zǎoshang
+title_en: My Morning (Example)
+title_vi: Buổi sáng của tôi
+lessons: Bài 9
+level: Beginner
+
+[chinese]
+我每天七点起床。我先刷牙，然后吃早饭。
+
+[pinyin]
+Wǒ měitiān qī diǎn qǐchuáng. Wǒ xiān shuāyá, ránhòu chī zǎofàn.
+
+[english]
+I get up at 7:00 every day. I brush my teeth first, then eat breakfast.
+
+[vietnamese]
+Mỗi ngày tôi thức dậy lúc 7 giờ. Tôi đánh răng trước, sau đó ăn sáng.
+
+[questions]
+Q: 他每天几点起床？
+A: 他每天七点起床。
+ALT: 七点
+QEN: What time does the person get up every day?
+AEN: At 7:00.
+QVI: Người ấy thức dậy lúc mấy giờ mỗi ngày?
+AVI: Lúc 7 giờ.
+
+Q: 他先做什么？
+A: 他先刷牙。
+QEN: What does the person do first?
+AEN: Brush teeth.
+
+[words]
+刷牙 | shuāyá | brush teeth | đánh răng
+
+=== PATTERN ===
+title: Subject + Frequency + Verb
+labels: Subject | Frequency | Verb
+chinese: 我 | 每天 | 学习汉语。
+pinyin: Wǒ | měitiān | xuéxí Hànyǔ.
+english: I study Chinese every day.
+vietnamese: Mỗi ngày tôi học tiếng Trung.
+`;
+
+function stSplitPieces(str){
+  const s = String(str || '');
+  let parts = s.split(/\s*[|｜]\s*/);
+  if(parts.length < 2 && /\s\+\s/.test(s)) parts = s.split(/\s*\+\s*/);
+  return parts.map(x => x.trim()).filter(x => x !== '');
+}
+function stSplitEnd(piece){
+  const m = String(piece || '').match(/[。！？.!?]+$/);
+  return m ? { text: piece.slice(0, piece.length - m[0].length).trim(), end: m[0] } : { text: piece, end: '' };
+}
+function stParseQuestions(lines){
+  const qs = [];
+  let q = null;
+  (lines || []).forEach(raw => {
+    const t = raw.trim();
+    if(!t) return;
+    const m = t.match(/^(QEN|AEN|QVI|AVI|ALT|Q|A)\s*[:：]\s*(.*)$/i);
+    if(!m) return;
+    const key = m[1].toUpperCase(), val = m[2].trim();
+    if(key === 'Q'){ q = { q: val, a: '', alt: [], qEn: '', aEn: '', qVi: '', aVi: '' }; qs.push(q); return; }
+    if(!q) return;
+    if(key === 'A') q.a = val;
+    else if(key === 'ALT'){ if(val) q.alt.push(val); }
+    else if(key === 'QEN') q.qEn = val;
+    else if(key === 'AEN') q.aEn = val;
+    else if(key === 'QVI') q.qVi = val;
+    else if(key === 'AVI') q.aVi = val;
+  });
+  return qs.filter(x => x.q && x.a);
+}
+function stParseWords(lines){
+  const out = [];
+  (lines || []).forEach(raw => {
+    const t = raw.trim();
+    if(!t) return;
+    const parts = t.split(/\s*[|｜]\s*/);
+    if(!parts[0]) return;
+    out.push({ h: parts[0], p: parts[1] || '', en: parts[2] || '', vi: parts[3] || '' });
+  });
+  return out;
+}
+function stSectionText(lines){
+  return (lines || []).join('\n').replace(/\n{3,}/g, '\n\n').trim();
+}
+// Returns { stories, patterns, problems } — never throws on a messy file.
+function parseStoryText(text){
+  const stories = [], patterns = [], problems = [];
+  const blocks = [];
+  let cur = null;
+  String(text || '').replace(/^\uFEFF/, '').split(/\r?\n/).forEach((raw, i) => {
+    const line = raw.replace(/\s+$/, '');
+    const trimmed = line.trim();
+    const hm = trimmed.match(/^={3,}\s*(STORY|PATTERN)\s*=*$/i);
+    if(hm){ cur = { type: hm[1].toLowerCase(), line: i + 1, head: {}, section: null, sections: {} }; blocks.push(cur); return; }
+    if(!cur) return;
+    if(trimmed.startsWith('#')) return;
+    const sm = trimmed.match(/^\[([a-z_ ]+)\]$/i);
+    if(sm){
+      cur.section = sm[1].toLowerCase().replace(/\s+/g, '_');
+      if(!cur.sections[cur.section]) cur.sections[cur.section] = [];
+      return;
+    }
+    if(cur.section){ cur.sections[cur.section].push(line); return; }
+    if(!trimmed) return;
+    const km = trimmed.match(/^([a-z_]+)\s*[:：]\s*(.*)$/i);
+    if(km) cur.head[km[1].toLowerCase()] = km[2].trim();
+  });
+  blocks.forEach((b, n) => {
+    const label = `${b.type === 'story' ? 'Story' : 'Pattern'} at line ${b.line}`;
+    if(b.type === 'story'){
+      const zh = stSectionText(b.sections.chinese);
+      if(!zh){ problems.push(`${label}: no [chinese] text found — skipped.`); return; }
+      const titleZh = b.head.title || zh.slice(0, 10);
+      const idBase = b.head.id || b.head.title_en || '';
+      const story = stSanitizeStory({
+        id: stSlugify(idBase) || ('story-' + stHash(b.head.title || zh)),
+        titleZh, titlePy: b.head.title_pinyin || b.head.title_py || '',
+        titleEn: b.head.title_en || '', titleVi: b.head.title_vi || '',
+        lessons: b.head.lessons || b.head.lesson || '', level: b.head.level || '',
+        zh, py: stSectionText(b.sections.pinyin), en: stSectionText(b.sections.english),
+        vi: stSectionText(b.sections.vietnamese),
+        questions: stParseQuestions(b.sections.questions), words: stParseWords(b.sections.words)
+      });
+      if(!story){ problems.push(`${label}: could not be read — skipped.`); return; }
+      if(!b.sections.questions || !story.questions.length) problems.push(`${label} ("${story.titleEn || story.titleZh}"): imported with no questions (each question needs a Q: and an A:).`);
+      stories.push(story);
+    } else {
+      const zhPieces = stSplitPieces(b.head.chinese);
+      if(zhPieces.length < 2){ problems.push(`${label}: "chinese:" needs at least two pieces separated by | — skipped.`); return; }
+      const zhLast = stSplitEnd(zhPieces[zhPieces.length - 1]);
+      zhPieces[zhPieces.length - 1] = zhLast.text;
+      const pyPieces = stSplitPieces(b.head.pinyin);
+      let pyEnd = '';
+      if(pyPieces.length){ const pl = stSplitEnd(pyPieces[pyPieces.length - 1]); pyPieces[pyPieces.length - 1] = pl.text; pyEnd = pl.end; }
+      const patId = b.head.id ? stSlugify(b.head.id)
+        : stSlugify('pattern-' + stSlugify(b.head.title || '').slice(0, 40) + '-' + stHash(zhPieces.join('|')));
+      const pat = stSanitizePattern({
+        id: patId, title: b.head.title || '', labels: stSplitPieces(b.head.labels),
+        zh: zhPieces, zhEnd: zhLast.end, py: pyPieces, pyEnd,
+        pyAll: pyPieces.length === zhPieces.length ? '' : (b.head.pinyin || ''),
+        en: b.head.english || '', vi: b.head.vietnamese || ''
+      });
+      if(!pat){ problems.push(`${label}: could not be read — skipped.`); return; }
+      if(pyPieces.length && pyPieces.length !== zhPieces.length) problems.push(`${label}: pinyin has ${pyPieces.length} pieces but chinese has ${zhPieces.length} — showing the pinyin as one line.`);
+      patterns.push(pat);
+    }
+  });
+  if(!blocks.length) problems.push('No "=== STORY ===" or "=== PATTERN ===" blocks found. Download the template to see the format.');
+  return { stories, patterns, problems };
+}
+
+function stEsc(s){ return String(s || '').replace(/\|/g, '｜'); }
+function storiesToText(){
+  const out = [
+    '# Han Yu Learning — Story Time export',
+    '# Edit anything below, then use Import to bring it back. Same id = replaces that story.',
+    '# Lines that start with # are ignored.',
+    ''
+  ];
+  storyLibrary.stories.forEach(s => {
+    out.push('=== STORY ===', 'id: ' + s.id, 'title: ' + s.titleZh, 'title_pinyin: ' + s.titlePy,
+      'title_en: ' + s.titleEn, 'title_vi: ' + s.titleVi, 'lessons: ' + s.lessons, 'level: ' + s.level, '');
+    out.push('[chinese]', s.zh, '', '[pinyin]', s.py, '', '[english]', s.en, '', '[vietnamese]', s.vi, '', '[questions]');
+    s.questions.forEach(q => {
+      out.push('Q: ' + q.q, 'A: ' + q.a);
+      q.alt.forEach(a => out.push('ALT: ' + a));
+      if(q.qEn) out.push('QEN: ' + q.qEn);
+      if(q.aEn) out.push('AEN: ' + q.aEn);
+      if(q.qVi) out.push('QVI: ' + q.qVi);
+      if(q.aVi) out.push('AVI: ' + q.aVi);
+      out.push('');
+    });
+    if(s.words.length){
+      out.push('[words]');
+      s.words.forEach(w => out.push([stEsc(w.h), stEsc(w.p), stEsc(w.en), stEsc(w.vi)].join(' | ')));
+      out.push('');
+    }
+  });
+  storyLibrary.patterns.forEach(p => {
+    const zh = p.zh.map(stEsc); zh[zh.length - 1] += p.zhEnd;
+    out.push('=== PATTERN ===', 'id: ' + p.id, 'title: ' + p.title, 'labels: ' + p.labels.map(stEsc).join(' | '),
+      'chinese: ' + zh.join(' | '));
+    if(p.py.length){ const py = p.py.map(stEsc); py[py.length - 1] += p.pyEnd; out.push('pinyin: ' + py.join(' | ')); }
+    else if(p.pyAll) out.push('pinyin: ' + p.pyAll);
+    out.push('english: ' + p.en, 'vietnamese: ' + p.vi, '');
+  });
+  return out.join('\n');
+}
+
+// Adds new / replaces same-id. Progress is keyed by id, so it survives a replace.
+function importStoryText(text){
+  const { stories, patterns, problems } = parseStoryText(text);
+  let added = 0, replaced = 0, pAdded = 0, pReplaced = 0;
+  stories.forEach(s => {
+    const i = storyLibrary.stories.findIndex(x => x.id === s.id);
+    if(i >= 0){ storyLibrary.stories[i] = s; replaced++; } else { storyLibrary.stories.push(s); added++; }
+  });
+  patterns.forEach(p => {
+    const i = storyLibrary.patterns.findIndex(x => x.id === p.id);
+    if(i >= 0){ storyLibrary.patterns[i] = p; pReplaced++; } else { storyLibrary.patterns.push(p); pAdded++; }
+  });
+  if(stories.length || patterns.length) saveStoryLibrary();
+  return { added, replaced, pAdded, pReplaced, problems };
+}
+
+// Backup (the JSON "Export" in the HSK panel) carries stories + progress too.
+function storyBackupData(){ return { library: storyLibrary, progress: storyProgress }; }
+// Returns a short note for the import message ('' if the file had no stories section).
+function applyStoriesFromBackup(data, replaceMode){
+  if(!data || typeof data !== 'object' || !data.library) return '';
+  const inStories = (Array.isArray(data.library.stories) ? data.library.stories : []).map(stSanitizeStory).filter(Boolean);
+  const inPatterns = (Array.isArray(data.library.patterns) ? data.library.patterns : []).map(stSanitizePattern).filter(Boolean);
+  const inProgress = (data.progress && typeof data.progress === 'object' && !Array.isArray(data.progress)) ? data.progress : {};
+  let note;
+  if(replaceMode){
+    storyLibrary = { stories: inStories, patterns: inPatterns };
+    storyProgress = stClone(inProgress);
+    note = ` Story Time: ${inStories.length} stor${inStories.length === 1 ? 'y' : 'ies'} restored.`;
+  } else {
+    let sAdd = 0;
+    inStories.forEach(s => { if(!storyById(s.id)){ storyLibrary.stories.push(s); sAdd++; if(inProgress[s.id]) storyProgress[s.id] = stClone(inProgress[s.id]); } });
+    inPatterns.forEach(p => { if(!storyLibrary.patterns.some(x => x.id === p.id)) storyLibrary.patterns.push(p); });
+    note = ` Story Time: ${sAdd} new stor${sAdd === 1 ? 'y' : 'ies'} added.`;
+  }
+  saveStoryLibrary(); saveStoryProgress();
+  storyOpenId = null; storyQuiz = null; patPractice = {};
+  if(document.getElementById('panel-story').classList.contains('active')) renderStoryTab();
+  return note;
+}
+
+// =====================================================================
+// SCREEN: switching, list, reader
+// =====================================================================
+function setStoryMode(mode){
+  storyMode = mode;
+  const reading = mode === 'stories' && !!storyOpenId;
+  document.getElementById('story-mode-stories').classList.toggle('on', mode === 'stories');
+  document.getElementById('story-mode-patterns').classList.toggle('on', mode === 'patterns');
+  document.getElementById('story-list-view').style.display = (mode === 'stories' && !storyOpenId) ? '' : 'none';
+  document.getElementById('story-reader-view').style.display = reading ? '' : 'none';
+  document.getElementById('story-patterns-view').style.display = mode === 'patterns' ? '' : 'none';
+  document.getElementById('story-manage').style.display = reading ? 'none' : '';
+  if(mode === 'stories' && !storyOpenId) renderStoryList();
+  if(mode === 'patterns') renderPatterns();
+}
+function renderStoryTab(){
+  if(storyOpenId && !storyById(storyOpenId)) storyOpenId = null;
+  setStoryMode(storyMode);
+  if(storyMode === 'stories' && storyOpenId) renderStoryReader();
+}
+
+function storyStatusLabel(id){
+  const p = storyProgress[id] || {};
+  const bits = [];
+  if(p.completed) bits.push('✓ Completed');
+  if(p.quiz && p.quiz.total) bits.push(`Quiz best ${p.quiz.best}/${p.quiz.total}`);
+  return bits.length ? bits.join(' · ') : 'New';
+}
+function renderStoryList(){
+  const host = document.getElementById('story-list');
+  const n = storyLibrary.stories.length;
+  document.getElementById('story-list-count').textContent = `${n} stor${n === 1 ? 'y' : 'ies'}`;
+  if(!n){
+    host.innerHTML = '<div class="empty-note on-bg">No stories yet — import some below, or restore the starter stories.</div>';
+    return;
+  }
+  host.innerHTML = storyLibrary.stories.map(s => {
+    const done = storyProgress[s.id] && storyProgress[s.id].completed;
+    return `<button class="st-item${done ? ' done' : ''}" data-story="${escapeHtml(s.id)}">
+      <span class="st-item-main">
+        <span class="st-item-title hanzi">${escapeHtml(s.titleZh)}</span>
+        ${s.titlePy ? `<span class="st-item-py">${escapeHtml(s.titlePy)}</span>` : ''}
+        <span class="st-item-en">${escapeHtml(s.titleEn)}${s.titleEn && s.titleVi ? ' · ' : ''}${escapeHtml(s.titleVi)}</span>
+      </span>
+      <span class="st-item-meta">
+        ${s.lessons ? `<span class="st-badge">${escapeHtml(s.lessons)}</span>` : ''}
+        ${s.level ? `<span class="st-badge lvl">${escapeHtml(s.level)}</span>` : ''}
+        <span class="st-state">${escapeHtml(storyStatusLabel(s.id))}</span>
+      </span>
+    </button>`;
+  }).join('');
+  host.querySelectorAll('.st-item').forEach(b => b.addEventListener('click', () => openStory(b.dataset.story)));
+}
+
+function openStory(id){
+  if(!storyById(id)) return;
+  storyOpenId = id;
+  storyShow = { py: false, en: false, vi: false, hl: false };   // hidden by default: recognise characters first
+  storyProg(id).lastReadAt = Date.now(); saveStoryProgress();
+  startStoryQuiz();
+  setStoryMode('stories');
+  renderStoryReader();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+function closeStory(){
+  storyOpenId = null; storyQuiz = null;
+  setStoryMode('stories');
+}
+
+function storyTextHtml(s){
+  const words = (s.words || []).map(w => w.h).filter(Boolean).sort((a, b) => b.length - a.length);
+  if(!storyShow.hl || !words.length) return escapeHtml(s.zh);
+  const re = new RegExp('(' + words.map(w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|') + ')', 'g');
+  return s.zh.split(re).map((part, i) =>
+    i % 2 === 1 ? `<mark class="st-new" data-word="${escapeHtml(part)}">${escapeHtml(part)}</mark>` : escapeHtml(part)
+  ).join('');
+}
+function renderStoryReader(){
+  const s = storyById(storyOpenId);
+  if(!s){ closeStory(); return; }
+  document.getElementById('story-badges').innerHTML =
+    [s.lessons, s.level].filter(Boolean).map(b => `<span class="st-badge">${escapeHtml(b)}</span>`).join(' ');
+  document.getElementById('story-title-zh').textContent = s.titleZh;
+  document.getElementById('story-title-sub').textContent =
+    [s.titlePy, s.titleEn, s.titleVi].filter(Boolean).join(' · ');
+  document.getElementById('story-text').innerHTML = storyTextHtml(s);
+  document.getElementById('story-lookup').style.display = 'none';
+
+  const hasWords = s.words.length > 0;
+  const hlBtn = document.getElementById('story-hl-toggle');
+  hlBtn.style.display = hasWords ? '' : 'none';
+  hlBtn.classList.toggle('on', storyShow.hl);
+
+  [['py', 'Pinyin', s.py], ['en', 'English', s.en], ['vi', 'Tiếng Việt', s.vi]].forEach(([k, label, text]) => {
+    const btn = document.getElementById('story-show-' + k);
+    const box = document.getElementById('story-' + k);
+    btn.classList.toggle('on', storyShow[k]);
+    btn.disabled = !text;
+    btn.title = text ? '' : 'Not provided for this story';
+    box.style.display = (storyShow[k] && text) ? '' : 'none';
+    box.innerHTML = `<span class="st-block-label">${label}</span>${escapeHtml(text)}`;
+    box.classList.toggle('py', k === 'py');
+  });
+
+  renderStoryWords();
+  const prog = storyProgress[s.id] || {};
+  const doneBtn = document.getElementById('story-complete-btn');
+  doneBtn.textContent = prog.completed ? '↻ Read again' : '✓ Mark as completed';
+  doneBtn.classList.toggle('on', !!prog.completed);
+}
+function renderStoryWords(){
+  const s = storyById(storyOpenId);
+  const host = document.getElementById('story-words');
+  if(!s || !s.words.length){ host.style.display = 'none'; host.innerHTML = ''; return; }
+  host.style.display = '';
+  const have = new Set(allWords.map(w => w.h));
+  host.innerHTML = `<div class="st-block-label" style="margin:0 0 6px;">New words in this story</div>` +
+    s.words.map(w => `<div class="st-word-row">
+      <span class="st-word-main"><span class="hanzi st-word-h">${escapeHtml(w.h)}</span>
+        <span class="st-word-p">${escapeHtml(w.p)}</span>
+        <span class="st-word-m">${escapeHtml(w.en)}${w.en && w.vi ? ' — ' : ''}${escapeHtml(w.vi)}</span></span>
+      <span class="st-word-actions">
+        <button class="action btn-reveal small" data-say="${escapeHtml(w.h)}" title="Listen">🔊</button>
+        ${have.has(w.h)
+          ? '<span class="st-have">✓ In your words</span>'
+          : `<button class="action btn-reveal small" data-add="${escapeHtml(w.h)}">+ Add to My Words</button>`}
+      </span></div>`).join('');
+}
+async function addStoryWordToDeck(h){
+  const s = storyById(storyOpenId);
+  const w = s && s.words.find(x => x.h === h);
+  if(!w) return;
+  // The only place Story Time ever touches your words — and only on this tap.
+  await importPatchRows([{ h: w.h, m: w.en, type: 'word', n: w.vi, lesson: '' }]);
+  refreshAllUIAfterImport();
+  renderHskList();
+  renderStoryWords();
+}
+
+// ---- quiz ----
+function startStoryQuiz(order){
+  const s = storyById(storyOpenId);
+  const n = s ? s.questions.length : 0;
+  const prev = storyQuiz && order ? storyQuiz.results : {};
+  storyQuiz = { order: order || Array.from({ length: n }, (_, i) => i), pos: 0, results: prev, revealed: false, hint: false };
+  storyResetQuestionInputs();
+  renderStoryQuiz();
+}
+function storyCurrentQ(){
+  const s = storyById(storyOpenId);
+  return s && storyQuiz ? s.questions[storyQuiz.order[storyQuiz.pos]] : null;
+}
+function renderStoryQuiz(){
+  const s = storyById(storyOpenId);
+  const card = document.getElementById('story-quiz-card');
+  const empty = document.getElementById('story-quiz-empty');
+  if(!s || !s.questions.length){ card.style.display = 'none'; empty.style.display = ''; return; }
+  empty.style.display = 'none'; card.style.display = '';
+  const total = s.questions.length;
+  const doneAll = storyQuiz.pos >= storyQuiz.order.length;
+  document.getElementById('story-quiz-body').style.display = doneAll ? 'none' : '';
+  document.getElementById('story-quiz-done').style.display = doneAll ? '' : 'none';
+  if(doneAll){
+    const got = Object.values(storyQuiz.results).filter(v => v === 'got').length;
+    const missed = Object.keys(storyQuiz.results).filter(k => storyQuiz.results[k] === 'missed').map(Number);
+    document.getElementById('story-quiz-count').textContent = 'Quiz finished';
+    document.getElementById('story-quiz-done').innerHTML =
+      `<div class="st-card" style="text-align:center;"><div class="st-score">${got} / ${total}</div>
+         <div class="st-title-sub">marked "Got it"${missed.length ? ` · ${missed.length} to revisit` : ' — nice work!'}</div></div>
+       <div class="row">
+         ${missed.length ? '<button class="action btn-play" id="story-quiz-retry">Retry the ones I missed</button>' : ''}
+         <button class="action btn-reveal" id="story-quiz-again">↻ Restart quiz</button>
+       </div>`;
+    const retry = document.getElementById('story-quiz-retry');
+    if(retry) retry.addEventListener('click', () => startStoryQuiz(missed));
+    document.getElementById('story-quiz-again').addEventListener('click', () => startStoryQuiz());
+    const prog = storyProg(s.id);
+    prog.quiz = { best: Math.max(got, (prog.quiz && prog.quiz.best) || 0), total, last: got, at: Date.now() };
+    saveStoryProgress();
+    return;
+  }
+  const qi = storyQuiz.order[storyQuiz.pos];
+  const q = s.questions[qi];
+  document.getElementById('story-quiz-count').textContent = `Question ${storyQuiz.pos + 1} of ${storyQuiz.order.length}`;
+  document.getElementById('story-q-zh').textContent = q.q;
+  const tr = [q.qEn, q.qVi].filter(Boolean).join(' — ');
+  const hintBtn = document.getElementById('story-q-hint');
+  hintBtn.style.display = tr ? '' : 'none';
+  hintBtn.classList.toggle('on', storyQuiz.hint);
+  document.getElementById('story-q-tr').textContent = (storyQuiz.hint && tr) ? tr : '';
+  document.getElementById('story-model').style.display = storyQuiz.revealed ? '' : 'none';
+  document.getElementById('story-selfassess').style.display = storyQuiz.revealed ? 'flex' : 'none';
+  document.getElementById('story-judge').style.display = storyQuiz.revealed ? '' : 'none';
+  document.getElementById('story-q-check').style.display = storyQuiz.revealed ? 'none' : '';
+}
+function storyCheckAnswer(){
+  const q = storyCurrentQ();
+  if(!q || storyQuiz.revealed) return;
+  const typed = document.getElementById('story-answer').value;
+  const verdict = stJudge(typed, q);
+  const msg = {
+    empty: 'No answer typed — here is the model answer.',
+    match: '✓ Matches a model answer.',
+    close: 'Close — compare with the model answer below.',
+    different: 'Compare with the model answer below — different wording can still be right.'
+  }[verdict];
+  const judge = document.getElementById('story-judge');
+  judge.textContent = msg;
+  judge.className = 'on-bg st-judge ' + verdict;
+  const py = (typeof autoPinyin === 'function') ? autoPinyin(q.a) : '';
+  const tr = [q.aEn, q.aVi].filter(Boolean).join(' — ');
+  const alts = q.alt.length ? `<div class="st-alts">Also accepted: ${q.alt.map(escapeHtml).join(' · ')}</div>` : '';
+  document.getElementById('story-model').innerHTML =
+    `<div class="st-block-label dark">Model answer</div>
+     <div class="st-q hanzi">${escapeHtml(q.a)}</div>
+     ${py ? `<div class="st-model-py">${escapeHtml(py)}</div>` : ''}
+     ${tr ? `<div class="st-q-tr">${escapeHtml(tr)}</div>` : ''}${alts}`;
+  storyQuiz.revealed = true;
+  renderStoryQuiz();
+}
+function storyResetQuestionInputs(){
+  document.getElementById('story-answer').value = '';
+  const buf = document.getElementById('story-answer-pybuf'); if(buf) buf.value = '';
+  const cand = document.getElementById('story-answer-pycand'); if(cand) cand.innerHTML = '';
+  storyQuiz.revealed = false; storyQuiz.hint = false;
+}
+function storyMarkAndNext(result){
+  const qi = storyQuiz.order[storyQuiz.pos];
+  storyQuiz.results[qi] = result;
+  storyQuiz.pos++;
+  storyResetQuestionInputs();
+  renderStoryQuiz();
+}
+
+// =====================================================================
+// SENTENCE STRUCTURE: breakdown + put-the-pieces-in-order practice
+// =====================================================================
+const PAT_COLORS = ['#6FA88A', '#D3A64B', '#B24232', '#6A8CAF', '#9A7BB5'];
+function patSentence(p){ return p.zh.join('') + p.zhEnd; }
+function patShuffle(n){
+  const idx = Array.from({ length: n }, (_, i) => i);
+  for(let tries = 0; tries < 12; tries++){
+    for(let i = n - 1; i > 0; i--){ const j = Math.floor(Math.random() * (i + 1)); [idx[i], idx[j]] = [idx[j], idx[i]]; }
+    if(n < 2 || idx.some((v, i) => v !== i)) break;
+  }
+  return idx;
+}
+function patPyLine(p){
+  if(p.py.length){ const parts = p.py.slice(); parts[parts.length - 1] += p.pyEnd; return parts.join(' '); }
+  return p.pyAll;
+}
+function renderPatterns(){
+  const host = document.getElementById('story-patterns-body');
+  ['py', 'en', 'vi'].forEach(k => document.getElementById('pat-show-' + k).classList.toggle('on', patShow[k]));
+  if(!storyLibrary.patterns.length){
+    host.innerHTML = '<div class="empty-note on-bg">No sentence patterns yet — import some below, or restore the starter set.</div>';
+    return;
+  }
+  host.innerHTML = storyLibrary.patterns.map(p => {
+    const st = patPractice[p.id];
+    const body = !st ? patBreakdownHtml(p) : patPracticeHtml(p, st, st.verdict !== null);
+    return `<div class="st-card st-pattern" data-pat="${escapeHtml(p.id)}">
+      <div class="st-pat-title">${escapeHtml(p.title)}</div>${body}</div>`;
+  }).join('');
+}
+function patChipHtml(p, i, withLabel){
+  const color = PAT_COLORS[i % PAT_COLORS.length];
+  return `<div class="st-chip" style="border-top-color:${color};">
+    <span class="z hanzi">${escapeHtml(p.zh[i])}</span>
+    ${patShow.py && p.py[i] ? `<span class="p">${escapeHtml(p.py[i])}</span>` : ''}
+    ${withLabel && p.labels[i] ? `<span class="l">${escapeHtml(p.labels[i])}</span>` : ''}</div>`;
+}
+function patTranslationsHtml(p){
+  return (patShow.py && patPyLine(p) ? `<div class="st-pat-py">${escapeHtml(patPyLine(p))}</div>` : '') +
+    (patShow.en && p.en ? `<div class="st-pat-tr">${escapeHtml(p.en)}</div>` : '') +
+    (patShow.vi && p.vi ? `<div class="st-pat-tr">${escapeHtml(p.vi)}</div>` : '');
+}
+function patBreakdownCore(p){
+  const chips = p.zh.map((_, i) => (i ? '<span class="st-plus">+</span>' : '') + patChipHtml(p, i, true)).join('');
+  return `<div class="st-chips">${chips}</div>
+    <div class="st-pat-sentence hanzi">${escapeHtml(patSentence(p))}</div>
+    ${patTranslationsHtml(p)}`;
+}
+function patBreakdownHtml(p){
+  return patBreakdownCore(p) +
+    `<div class="row"><button class="action btn-reveal small" data-act="practice" data-id="${escapeHtml(p.id)}">🔀 Practice: put the pieces in order</button>
+      <button class="action btn-reveal small" data-act="listen" data-id="${escapeHtml(p.id)}">🔊 Listen</button></div>`;
+}
+function patPracticeHtml(p, st, checked){
+  if(checked){
+    const ok = st.verdict === true;
+    return `<div class="st-judge ${ok ? 'match' : 'different'} on-bg">${ok ? '✓ Correct order!' : 'Not quite — here is the correct order:'}</div>
+      ${patBreakdownCore(p)}
+      <div class="row"><button class="action btn-play small" data-act="again" data-id="${escapeHtml(p.id)}">🔀 Try again</button>
+        <button class="action btn-reveal small" data-act="exit" data-id="${escapeHtml(p.id)}">Done</button></div>`;
+  }
+  const placedHtml = st.placed.length
+    ? st.placed.map(i => `<button class="st-chip st-chip-btn" data-act="unpick" data-id="${escapeHtml(p.id)}" data-i="${i}"><span class="z hanzi">${escapeHtml(p.zh[i])}</span></button>`).join('')
+    : '<span class="st-drop-hint">Tap the pieces below, in order</span>';
+  const poolHtml = st.pool.filter(i => !st.placed.includes(i))
+    .map(i => `<button class="st-chip st-chip-btn" data-act="pick" data-id="${escapeHtml(p.id)}" data-i="${i}"><span class="z hanzi">${escapeHtml(p.zh[i])}</span></button>`).join('');
+  return `<div class="st-answer-row">${placedHtml}</div>
+    <div class="st-chips pool">${poolHtml || '<span class="st-drop-hint">All pieces placed</span>'}</div>
+    ${st.note ? `<div class="st-pat-tr">${escapeHtml(st.note)}</div>` : ''}
+    <div class="row"><button class="action btn-play small" data-act="check" data-id="${escapeHtml(p.id)}">✓ Check</button>
+      <button class="action btn-reveal small" data-act="reset" data-id="${escapeHtml(p.id)}">↻ Reset</button>
+      <button class="action btn-reveal small" data-act="exit" data-id="${escapeHtml(p.id)}">✕ Stop</button></div>`;
+}
+function patStartPractice(id){
+  const p = storyLibrary.patterns.find(x => x.id === id);
+  if(!p) return;
+  patPractice[id] = { pool: patShuffle(p.zh.length), placed: [], verdict: null, note: '' };
+}
+function patHandleAction(act, id, i){
+  const p = storyLibrary.patterns.find(x => x.id === id);
+  if(!p) return;
+  const st = patPractice[id];
+  if(act === 'practice' || act === 'again' || act === 'reset') patStartPractice(id);
+  else if(act === 'exit') delete patPractice[id];
+  else if(act === 'listen') { speak(patSentence(p)); return; }
+  else if(act === 'pick' && st){ if(!st.placed.includes(i)) st.placed.push(i); st.note = ''; }
+  else if(act === 'unpick' && st){ st.placed = st.placed.filter(x => x !== i); st.note = ''; }
+  else if(act === 'check' && st){
+    if(st.placed.length < p.zh.length){ st.note = 'Place all the pieces first.'; }
+    else { st.verdict = st.placed.map(k => p.zh[k]).join('|') === p.zh.join('|'); }
+  }
+  renderPatterns();
+}
+
+// =====================================================================
+// WIRING
+// =====================================================================
+function stSetFeedback(msg, ok){
+  const fb = document.getElementById('story-import-feedback');
+  fb.textContent = msg;
+  fb.style.color = ok ? '#3E7C59' : '#A6332B';
+  fb.style.display = msg ? '' : 'none';
+}
+document.getElementById('story-mode-stories').addEventListener('click', () => setStoryMode('stories'));
+document.getElementById('story-mode-patterns').addEventListener('click', () => setStoryMode('patterns'));
+document.getElementById('story-back').addEventListener('click', closeStory);
+document.getElementById('story-listen').addEventListener('click', () => { const s = storyById(storyOpenId); if(s) speak(s.zh); });
+document.getElementById('story-hl-toggle').addEventListener('click', () => { storyShow.hl = !storyShow.hl; renderStoryReader(); });
+['py', 'en', 'vi'].forEach(k => document.getElementById('story-show-' + k).addEventListener('click', () => { storyShow[k] = !storyShow[k]; renderStoryReader(); }));
+document.getElementById('story-text').addEventListener('click', (e) => {
+  const mark = e.target.closest('.st-new');
+  const s = storyById(storyOpenId);
+  if(!mark || !s) return;
+  const w = s.words.find(x => x.h === mark.dataset.word);
+  if(!w) return;
+  const box = document.getElementById('story-lookup');
+  box.style.display = '';
+  box.textContent = [w.h, w.p, [w.en, w.vi].filter(Boolean).join(' — ')].filter(Boolean).join('  ·  ');
+  speak(w.h);
+});
+document.getElementById('story-words').addEventListener('click', (e) => {
+  const say = e.target.closest('[data-say]');
+  if(say){ speak(say.dataset.say); return; }
+  const add = e.target.closest('[data-add]');
+  if(add){ add.disabled = true; addStoryWordToDeck(add.dataset.add); }
+});
+document.getElementById('story-complete-btn').addEventListener('click', () => {
+  const s = storyById(storyOpenId);
+  if(!s) return;
+  const prog = storyProg(s.id);
+  if(prog.completed){
+    prog.completed = false;                       // "Read again": back to unread, same story, fresh quiz
+    storyShow = { py: false, en: false, vi: false, hl: false };
+    startStoryQuiz();
+  } else {
+    prog.completed = true; prog.completedAt = Date.now();
+  }
+  saveStoryProgress();
+  renderStoryReader();
+});
+document.getElementById('story-delete-btn').addEventListener('click', () => {
+  const s = storyById(storyOpenId);
+  if(!s) return;
+  if(!confirm(`Delete "${s.titleEn || s.titleZh}" from Story Time?\n\nYou can bring it back by importing a file that has it` +
+    (SEED_STORY_LIBRARY.stories.some(x => x.id === s.id) ? ', or with "Restore starter stories".' : '.'))) return;
+  storyLibrary.stories = storyLibrary.stories.filter(x => x.id !== s.id);
+  delete storyProgress[s.id];
+  saveStoryLibrary(); saveStoryProgress();
+  closeStory();
+});
+// quiz
+document.getElementById('story-q-listen').addEventListener('click', () => { const q = storyCurrentQ(); if(q) speak(q.q); });
+document.getElementById('story-q-hint').addEventListener('click', () => { storyQuiz.hint = !storyQuiz.hint; renderStoryQuiz(); });
+document.getElementById('story-q-check').addEventListener('click', storyCheckAnswer);
+document.getElementById('story-answer').addEventListener('keydown', (e) => { if(e.key === 'Enter'){ e.preventDefault(); storyCheckAnswer(); } });
+document.getElementById('story-got-it').addEventListener('click', () => storyMarkAndNext('got'));
+document.getElementById('story-missed-it').addEventListener('click', () => storyMarkAndNext('missed'));
+document.getElementById('story-try-again').addEventListener('click', () => { storyResetQuestionInputs(); renderStoryQuiz(); document.getElementById('story-answer').focus(); });
+document.getElementById('story-quiz-restart').addEventListener('click', () => startStoryQuiz());
+attachPinyinIME('story-answer');
+// patterns
+['py', 'en', 'vi'].forEach(k => document.getElementById('pat-show-' + k).addEventListener('click', () => { patShow[k] = !patShow[k]; renderPatterns(); }));
+document.getElementById('story-patterns-body').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-act]');
+  if(!b) return;
+  patHandleAction(b.dataset.act, b.dataset.id, b.dataset.i === undefined ? undefined : parseInt(b.dataset.i, 10));
+});
+// template / import / export / restore
+document.getElementById('story-template-btn').addEventListener('click', () => downloadText(STORY_TEMPLATE, 'story-time-template.txt'));
+document.getElementById('story-export-btn').addEventListener('click', () => downloadText(storiesToText(), 'hanyu-stories-' + dateStamp() + '.txt'));
+document.getElementById('story-import-btn').addEventListener('click', () => document.getElementById('story-import-file').click());
+document.getElementById('story-import-file').addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    const r = importStoryText(String(reader.result || ''));
+    const parts = [];
+    if(r.added) parts.push(`${r.added} ${r.added === 1 ? 'story' : 'stories'} added`);
+    if(r.replaced) parts.push(`${r.replaced} replaced`);
+    if(r.pAdded) parts.push(`${r.pAdded} pattern${r.pAdded === 1 ? '' : 's'} added`);
+    if(r.pReplaced) parts.push(`${r.pReplaced} pattern${r.pReplaced === 1 ? '' : 's'} replaced`);
+    const ok = parts.length > 0;
+    let msg = ok ? 'Imported: ' + parts.join(', ') + '.' : 'Nothing was imported.';
+    if(r.problems.length) msg += ' Notes: ' + r.problems.join(' ');
+    stSetFeedback(msg, ok);
+    renderStoryTab();
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+});
+document.getElementById('story-restore-btn').addEventListener('click', () => {
+  const seed = stSeedLibrary();
+  let n = 0, pn = 0;
+  seed.stories.forEach(s => { if(!storyById(s.id)){ storyLibrary.stories.push(s); n++; } });
+  seed.patterns.forEach(p => { if(!storyLibrary.patterns.some(x => x.id === p.id)){ storyLibrary.patterns.push(p); pn++; } });
+  if(n || pn) saveStoryLibrary();
+  stSetFeedback(n || pn ? `Restored ${n} starter stor${n === 1 ? 'y' : 'ies'} and ${pn} pattern${pn === 1 ? '' : 's'}.` : 'All starter stories and patterns are already here.', true);
+  renderStoryTab();
+});
 </script>
 </body>
 </html>
