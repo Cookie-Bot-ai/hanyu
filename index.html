@@ -463,6 +463,23 @@
     border:2px dashed #C9C2AE; border-radius:12px; }
   .st-drop-hint{ font-size:12.5px; color:#8A9A92; padding:0 6px; }
   .st-chips.pool{ min-height:44px; }
+
+  /* ---- Lesson filter: tick-box drop-down ---- */
+  details.lesson-multi{ background:var(--panel); border:1px solid var(--border); border-radius:10px; text-align:left; }
+  details.lesson-multi:hover, details.lesson-multi[open]{ border-color:var(--gold); }
+  details.lesson-multi summary{ display:flex; align-items:center; gap:10px; padding:9px 12px; cursor:pointer;
+    list-style:none; font-size:13px; color:#E7EAE3; user-select:none; }
+  details.lesson-multi summary::-webkit-details-marker{ display:none; }
+  .lm-label{ color:#F1EDE1; white-space:nowrap; }
+  .lm-value{ flex:1 1 auto; min-width:0; text-align:right; color:var(--brass); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .lm-caret{ font-size:11px; color:var(--muted); transition:transform .15s ease; }
+  details.lesson-multi[open] .lm-caret{ transform:rotate(180deg); }
+  .lm-panel{ border-top:1px solid var(--border); padding:6px 4px; max-height:260px; overflow-y:auto; }
+  .lm-panel label{ display:flex; align-items:center; gap:10px; padding:9px 10px; font-size:13.5px; color:#E7EAE3;
+    cursor:pointer; border-radius:8px; }
+  .lm-panel label:hover{ background:rgba(255,255,255,.06); }
+  .lm-panel input[type=checkbox]{ accent-color:var(--gold); width:17px; height:17px; flex:0 0 auto; cursor:pointer; }
+  .lm-sep{ height:1px; background:var(--border); margin:4px 8px; }
 </style>
 </head>
 <body>
@@ -634,10 +651,10 @@
         <label><input type="checkbox" class="status-filter-cb" data-status="test">🎯 Ready for test</label>
         <label><input type="checkbox" class="status-filter-cb" data-status="all">All words</label>
       </div>
-      <div class="speed-row" style="margin-bottom:12px;">
-        <label for="lesson-filter-stroke">Lesson</label>
-        <select class="mode lesson-filter-select" id="lesson-filter-stroke" style="margin-left:auto;"></select>
-      </div>
+      <details class="lesson-multi lesson-filter-select" id="lesson-filter-stroke" style="margin-bottom:12px;">
+        <summary><span class="lm-label">Lesson</span><span class="lm-value">Everything</span><span class="lm-caret">▾</span></summary>
+        <div class="lm-panel"></div>
+      </details>
       <div class="speed-row" style="margin-bottom:12px;">
         <label for="stroke-order">Card order</label>
         <select class="mode" id="stroke-order" style="margin-left:auto;">
@@ -874,10 +891,10 @@
           <label><input type="checkbox" class="status-filter-cb" data-status="test">🎯 Ready for test</label>
           <label><input type="checkbox" class="status-filter-cb" data-status="all">All words</label>
         </div>
-        <div class="speed-row" style="margin-bottom:12px;">
-          <label for="lesson-filter-bee">Lesson</label>
-          <select class="mode lesson-filter-select" id="lesson-filter-bee" style="margin-left:auto;"></select>
-        </div>
+        <details class="lesson-multi lesson-filter-select" id="lesson-filter-bee" style="margin-bottom:12px;">
+        <summary><span class="lm-label">Lesson</span><span class="lm-value">Everything</span><span class="lm-caret">▾</span></summary>
+        <div class="lm-panel"></div>
+      </details>
         <div class="top-controls" style="margin-bottom:8px;">
           <span class="on-bg" id="bee-selected-count">0 selected</span>
           <div style="display:flex;gap:6px;flex-wrap:wrap;">
@@ -968,10 +985,10 @@
         <label><input type="checkbox" class="status-filter-cb" data-status="test">🎯 Ready for test</label>
         <label><input type="checkbox" class="status-filter-cb" data-status="all">All words</label>
       </div>
-      <div class="speed-row" style="margin-bottom:12px;">
-        <label for="lesson-filter-qa">Lesson</label>
-        <select class="mode lesson-filter-select" id="lesson-filter-qa" style="margin-left:auto;"></select>
-      </div>
+      <details class="lesson-multi lesson-filter-select" id="lesson-filter-qa" style="margin-bottom:12px;">
+        <summary><span class="lm-label">Lesson</span><span class="lm-value">Everything</span><span class="lm-caret">▾</span></summary>
+        <div class="lm-panel"></div>
+      </details>
       <div class="nav-row-top">
         <button class="card-nav prev" id="qa-prev" title="Previous question" aria-label="Previous question">‹</button>
         <div class="nav-icons">
@@ -1175,11 +1192,11 @@
             <label><input type="radio" name="test-scope-radio" class="test-scope-radio" value="both" checked>Both</label>
             <label><input type="radio" name="test-scope-radio" class="test-scope-radio" value="test">🎯 Ready for test</label>
           </div>
-          <div class="field-label" style="margin-bottom:8px;">Which lesson?</div>
-          <div class="speed-row" style="margin-bottom:20px;">
-            <label for="lesson-filter-test">Lesson</label>
-            <select class="mode lesson-filter-select" id="lesson-filter-test" style="margin-left:auto;"></select>
-          </div>
+          <div class="field-label" style="margin-bottom:8px;">Which lessons?</div>
+          <details class="lesson-multi lesson-filter-select" id="lesson-filter-test" style="margin-bottom:20px;">
+        <summary><span class="lm-label">Lesson</span><span class="lm-value">Everything</span><span class="lm-caret">▾</span></summary>
+        <div class="lm-panel"></div>
+      </details>
           <div class="field-label" style="margin-bottom:8px;">How many questions?</div>
           <div class="status-filter" style="margin-bottom:20px;justify-content:flex-start;">
             <label><input type="radio" name="test-len-radio" class="test-len-radio" value="10">10</label>
@@ -2027,44 +2044,121 @@ document.querySelectorAll('.status-filter-cb').forEach(cb => {
 // ---- Lesson filter: separates words/phrases/Q&A tagged with a lesson (e.g.
 // "Bài 4", from a bulk import) from anything gathered elsewhere with no
 // lesson tag — so practice and Test can be narrowed to just your lesson
-// material, or just one specific lesson, independent of the ⭐/✓/🆕 filter
-// above. Same shared setting across every panel that shows the dropdown.
+// material, independent of the ⭐/✓/🆕 filter above. You can tick as many
+// lessons as you like and they combine (Bài 2 + Bài 5 = both). One shared
+// setting across every panel that shows the dropdown.
+//
+// What's saved is a list of tokens:
+//   'all'  -> no lesson restriction (the safe default for anyone with no lesson data)
+//   'any'  -> everything tagged with SOME lesson (stays true as new lessons get added)
+//   'none' -> things with no lesson tag (words gathered elsewhere)
+//   'Bài 2' etc. -> that specific lesson
+// An item passes if it matches ANY ticked token.
 const LESSON_FILTER_KEY = 'chinesevocab_lesson_filter';
-function getLessonFilter(){ return localStorage.getItem(LESSON_FILTER_KEY) || 'all'; } // 'all' | 'any' | 'none' | a specific lesson name
-function setLessonFilter(val){
-  localStorage.setItem(LESSON_FILTER_KEY, val);
-  document.querySelectorAll('.lesson-filter-select').forEach(sel => { sel.value = val; });
+function getLessonFilter(){
+  const raw = localStorage.getItem(LESSON_FILTER_KEY);
+  if(!raw) return ['all'];
+  try{
+    const v = JSON.parse(raw);
+    if(Array.isArray(v)){
+      const t = v.filter(x => typeof x === 'string' && x);
+      return t.length ? t : ['all'];
+    }
+  }catch(e){ /* not JSON: an older single-choice value, handled below */ }
+  return [raw];   // older versions stored just one plain string — keep that choice
+}
+function setLessonFilter(tokens){
+  let t = Array.from(new Set(tokens));
+  if(!t.length || t.includes('all')) t = ['all'];    // nothing ticked means everything
+  localStorage.setItem(LESSON_FILTER_KEY, JSON.stringify(t));
+  syncLessonFilterUi();
 }
 function applyLessonFilter(list){
-  const active = getLessonFilter();
-  if(active === 'all') return list; // no lesson restriction at all — the safe default for anyone with no lesson data yet
-  if(active === 'any') return list.filter(item => !!item.lesson); // union of every tagged lesson, excluding untagged
-  if(active === 'none') return list.filter(item => !item.lesson);
-  return list.filter(item => item.lesson === active);
+  const t = getLessonFilter();
+  if(t.includes('all')) return list;
+  const lessons = new Set(t.filter(x => x !== 'any' && x !== 'none'));
+  const any = t.includes('any'), none = t.includes('none');
+  return list.filter(item => item.lesson ? (any || lessons.has(item.lesson)) : none);
 }
-// Rebuilds every lesson dropdown's option list from whatever lessons actually
-// exist right now across words and Q&A pairs — called after any import/add/
-// edit that could introduce or remove a lesson tag, so the list never goes stale.
+// A tick changes the saved list. Everything is exclusive; "All lessons" already
+// covers every individual lesson (so it clears them); ticking one lesson drops
+// "All lessons"; "No lesson" can sit alongside anything.
+function toggleLessonToken(v, checked){
+  let t = getLessonFilter();
+  if(v === 'all'){
+    t = checked ? ['all'] : [];
+  } else {
+    t = t.filter(x => x !== 'all');
+    if(checked){
+      if(v === 'any') t = t.filter(x => x === 'none');
+      else if(v !== 'none') t = t.filter(x => x !== 'any');
+      if(!t.includes(v)) t.push(v);
+    } else {
+      t = t.filter(x => x !== v);
+    }
+  }
+  setLessonFilter(t);
+}
+function lessonFilterSummary(tokens){
+  if(tokens.includes('all')) return 'Everything';
+  const names = [];
+  if(tokens.includes('any')) names.push('All lessons');
+  tokens.filter(x => x !== 'any' && x !== 'none').forEach(x => names.push(x));
+  if(tokens.includes('none')) names.push('No lesson');
+  return names.length > 3 ? `${names.length} selected` : names.join(', ');
+}
+// Updates ticks + the closed-dropdown summary on every panel (no rebuild, so an open list keeps its scroll).
+function syncLessonFilterUi(){
+  const tokens = getLessonFilter();
+  document.querySelectorAll('.lesson-filter-select').forEach(box => {
+    box.querySelectorAll('input[data-lesson]').forEach(cb => { cb.checked = tokens.includes(cb.dataset.lesson); });
+    const val = box.querySelector('.lm-value');
+    if(val) val.textContent = lessonFilterSummary(tokens);
+  });
+}
+// Rebuilds the list of lessons from whatever actually exists right now across
+// words and Q&A pairs — called after any import/add/edit that could add or
+// remove a lesson tag, so it never goes stale. Only rebuilds a list when the
+// lessons really changed.
 function refreshLessonFilterOptions(){
   const lessons = new Set();
   allWords.forEach(w => { if(w.lesson) lessons.add(w.lesson); });
   qaPairs.forEach(p => { if(p.lesson) lessons.add(p.lesson); });
-  const sorted = Array.from(lessons).sort();
-  const active = getLessonFilter();
-  const validValues = ['all', 'any', 'none', ...sorted];
-  document.querySelectorAll('.lesson-filter-select').forEach(sel => {
-    sel.innerHTML = '<option value="all">Everything (no lesson filter)</option>' +
-      '<option value="any">All lessons (Bài content only)</option>' +
-      sorted.map(l => `<option value="${escapeHtml(l)}">${escapeHtml(l)}</option>`).join('') +
-      '<option value="none">No lesson (other words)</option>';
-    sel.value = validValues.includes(active) ? active : 'all';
+  const sorted = Array.from(lessons).sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));   // Bài 2 before Bài 10
+  // A ticked lesson that no longer exists anywhere would silently empty every deck — drop it.
+  const saved = getLessonFilter();
+  const valid = saved.filter(x => x === 'all' || x === 'any' || x === 'none' || sorted.includes(x));
+  const pruned = valid.length !== saved.length;
+  if(pruned) setLessonFilter(valid);
+  const sig = sorted.join('\u0001');
+  document.querySelectorAll('.lesson-filter-select').forEach(box => {
+    if(box.dataset.sig === sig) return;
+    box.dataset.sig = sig;
+    const opt = (value, label) => `<label><input type="checkbox" data-lesson="${escapeHtml(value)}"> ${escapeHtml(label)}</label>`;
+    box.querySelector('.lm-panel').innerHTML =
+      opt('all', 'Everything (no lesson filter)') +
+      opt('any', 'All lessons (Bài content only)') +
+      (sorted.length ? '<div class="lm-sep"></div>' + sorted.map(l => opt(l, l)).join('') : '') +
+      '<div class="lm-sep"></div>' +
+      opt('none', 'No lesson (other words)');
   });
+  syncLessonFilterUi();
+  return pruned;   // true = the saved choice had to change, so any deck built with it needs rebuilding
 }
-document.querySelectorAll('.lesson-filter-select').forEach(sel => {
-  sel.addEventListener('change', () => {
-    setLessonFilter(sel.value);
+document.querySelectorAll('.lesson-filter-select').forEach(box => {
+  box.addEventListener('change', (e) => {
+    const cb = e.target.closest('input[data-lesson]');
+    if(!cb) return;
+    toggleLessonToken(cb.dataset.lesson, cb.checked);
     refreshAllDecks();
   });
+});
+// Behaves like a drop-down: tapping elsewhere (or Escape) closes an open list.
+document.addEventListener('click', (e) => {
+  document.querySelectorAll('details.lesson-multi[open]').forEach(d => { if(!d.contains(e.target)) d.open = false; });
+});
+document.addEventListener('keydown', (e) => {
+  if(e.key === 'Escape') document.querySelectorAll('details.lesson-multi[open]').forEach(d => { d.open = false; });
 });
 
 // ---- Common radicals: used to flag recognizable components on Flashcards.
@@ -12743,7 +12837,8 @@ if(!localStorage.getItem(SPEED_RESET_FLAG)){
 // earlier throws a temporal-dead-zone error that (since this is all one
 // script block) would silently abort every statement after it, including
 // those two declarations themselves.
-refreshLessonFilterOptions();
+// If a ticked lesson no longer exists, the decks were already built with it — rebuild them.
+if(refreshLessonFilterOptions()) refreshAllDecks();
 
 // =====================================================================
 // STORY TIME (阅读练习) — short readings, comprehension questions and
