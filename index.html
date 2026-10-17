@@ -388,7 +388,23 @@
     text-align:left; box-shadow:0 14px 34px rgba(0,0,0,.4), 0 2px 8px rgba(0,0,0,.25); }
   .st-title-zh{ font-size:26px; line-height:1.3; }
   .st-title-sub{ font-size:13px; color:var(--brass-ink); margin:2px 0 10px; }
-  .st-text{ font-size:23px; line-height:2; letter-spacing:.5px; white-space:pre-wrap; overflow-wrap:anywhere; }
+  .st-text{ font-size:23px; line-height:2; letter-spacing:.5px; overflow-wrap:anywhere; }
+  .st-toggles{ display:flex; gap:6px; flex-wrap:wrap; margin:2px 0 12px; }
+  .st-toggles button.action.small{ flex:0 0 auto; }
+  /* Off: sentences run together as one tight paragraph. On: each sentence becomes its own
+     block with its translations tucked directly beneath it. */
+  .st-seg{ display:inline; }
+  .st-seg.on{ display:block; margin-bottom:12px; }
+  .st-seg.on .st-seg-zh{ display:block; line-height:1.55; }
+  .st-tr{ display:block; font-family:-apple-system,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;
+    font-size:14.5px; line-height:1.5; letter-spacing:0; margin-top:2px; }
+  .st-tr.py{ color:var(--brass-ink); }
+  .st-tr.en{ color:#26302A; }
+  .st-tr.vi{ color:#5F6A5F; }
+  .st-fallback{ display:block; margin-top:10px; padding:8px 10px; border-radius:10px; background:rgba(0,0,0,.05);
+    font-family:-apple-system,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif; font-size:14.5px; line-height:1.65; letter-spacing:0; }
+  .st-fallback.py{ color:var(--brass-ink); } .st-fallback.en{ color:#26302A; } .st-fallback.vi{ color:#5F6A5F; }
+  .st-card button.btn-reveal.on, .st-card button.btn-reveal.on:hover{ background:var(--brass); border-color:var(--brass); color:var(--ink); }
   mark.st-new{ background:rgba(211,166,75,.4); color:inherit; border-radius:4px; padding:0 2px; cursor:pointer; }
   .st-lookup{ margin-top:10px; padding:8px 12px; border-radius:10px; background:rgba(63,107,82,.12);
     color:var(--jade); font-size:14px; }
@@ -1075,21 +1091,18 @@
           <div class="st-badges" id="story-badges"></div>
           <div class="st-title-zh hanzi" id="story-title-zh"></div>
           <div class="st-title-sub" id="story-title-sub"></div>
-          <div class="st-text hanzi" id="story-text"></div>
+          <div class="st-toggles">
+            <button class="action btn-reveal small" id="story-show-py">Pinyin</button>
+            <button class="action btn-reveal small" id="story-show-en">English</button>
+            <button class="action btn-reveal small" id="story-show-vi">Tiếng Việt</button>
+          </div>
+          <div class="st-text" id="story-text"></div>
           <div class="st-lookup" id="story-lookup" style="display:none;"></div>
         </div>
         <div class="row" style="margin-top:0;">
           <button class="action btn-play" id="story-listen">🔊 Listen</button>
           <button class="action btn-reveal" id="story-hl-toggle" style="display:none;">🖍 Highlight new words</button>
         </div>
-        <div class="row" style="margin-top:10px;">
-          <button class="action btn-reveal" id="story-show-py">Pinyin</button>
-          <button class="action btn-reveal" id="story-show-en">English</button>
-          <button class="action btn-reveal" id="story-show-vi">Tiếng Việt</button>
-        </div>
-        <div class="st-block" id="story-py" style="display:none;"></div>
-        <div class="st-block" id="story-en" style="display:none;"></div>
-        <div class="st-block" id="story-vi" style="display:none;"></div>
         <div class="st-words" id="story-words" style="display:none;"></div>
 
         <div class="st-section-title">Check your understanding</div>
@@ -12851,7 +12864,7 @@ if(refreshLessonFilterOptions()) refreshAllDecks();
 // =====================================================================
 const STORY_LIB_KEY = 'chinesevocab_story_library';
 const STORY_PROGRESS_KEY = 'chinesevocab_story_progress';
-const SEED_STORY_LIBRARY = {"stories": [{"id": "my-family", "titleZh": "我的家", "titlePy": "Wǒ de jiā", "titleEn": "My Family", "titleVi": "Gia đình tôi", "lessons": "Bài 2–5", "level": "Beginner", "zh": "我叫小明。我是中国人。我家有四口人：爸爸、妈妈、姐姐和我。爸爸是医生，妈妈是老师。姐姐是大学生，她学习英语。我学习汉语。我们都很喜欢学习。", "py": "Wǒ jiào Xiǎomíng. Wǒ shì Zhōngguó rén. Wǒ jiā yǒu sì kǒu rén: bàba, māma, jiějie hé wǒ. Bàba shì yīshēng, māma shì lǎoshī. Jiějie shì dàxuéshēng, tā xuéxí Yīngyǔ. Wǒ xuéxí Hànyǔ. Wǒmen dōu hěn xǐhuan xuéxí.", "en": "My name is Xiaoming. I'm Chinese. There are four people in my family: Dad, Mum, my older sister and me. Dad is a doctor, Mum is a teacher. My sister is a university student and studies English. I study Chinese. We all really like studying.", "vi": "Tôi tên là Tiểu Minh. Tôi là người Trung Quốc. Gia đình tôi có bốn người: bố, mẹ, chị gái và tôi. Bố là bác sĩ, mẹ là giáo viên. Chị gái là sinh viên đại học, chị ấy học tiếng Anh. Tôi học tiếng Trung. Chúng tôi đều rất thích học.", "questions": [{"q": "小明是哪国人？", "a": "小明是中国人。", "alt": [], "qEn": "What nationality is Xiaoming?", "aEn": "Xiaoming is Chinese.", "qVi": "Tiểu Minh là người nước nào?", "aVi": "Tiểu Minh là người Trung Quốc."}, {"q": "他家有几口人？", "a": "他家有四口人。", "alt": [], "qEn": "How many people are in his family?", "aEn": "Four.", "qVi": "Gia đình cậu ấy có mấy người?", "aVi": "Có bốn người."}, {"q": "他妈妈做什么工作？", "a": "他妈妈是老师。", "alt": [], "qEn": "What is his mother's job?", "aEn": "She is a teacher.", "qVi": "Mẹ cậu ấy làm nghề gì?", "aVi": "Mẹ cậu ấy là giáo viên."}], "words": []}, {"id": "my-saturday", "titleZh": "我的星期六", "titlePy": "Wǒ de xīngqīliù", "titleEn": "My Saturday", "titleVi": "Thứ Bảy của tôi", "lessons": "Bài 8–9", "level": "Beginner", "zh": "今天星期六，我不上班。我早上七点半起床。起床以后，我先洗澡，然后吃早饭。上午十点，我去超市买东西。中午十二点，我回家吃午饭。下午两点，我去图书馆看书。晚上，我在家看电视，有时候上网。", "py": "Jīntiān xīngqīliù, wǒ bù shàngbān. Wǒ zǎoshang qī diǎn bàn qǐchuáng. Qǐchuáng yǐhòu, wǒ xiān xǐzǎo, ránhòu chī zǎofàn. Shàngwǔ shí diǎn, wǒ qù chāoshì mǎi dōngxi. Zhōngwǔ shí'èr diǎn, wǒ huí jiā chī wǔfàn. Xiàwǔ liǎng diǎn, wǒ qù túshūguǎn kàn shū. Wǎnshang, wǒ zài jiā kàn diànshì, yǒu shíhou shàngwǎng.", "en": "Today is Saturday and I don't work. I get up at 7:30. After getting up, I shower first and then eat breakfast. At 10 am I go shopping at the supermarket. At noon I go home for lunch. At 2 pm I go to the library to read. In the evening I watch TV at home and sometimes go online.", "vi": "Hôm nay là thứ Bảy, tôi không đi làm. Tôi thức dậy lúc 7 giờ rưỡi. Sau khi thức dậy, tôi tắm rửa trước, sau đó ăn sáng. Lúc 10 giờ sáng tôi đi siêu thị mua đồ. Trưa 12 giờ tôi về nhà ăn trưa. Chiều 2 giờ tôi đến thư viện đọc sách. Buổi tối tôi xem tivi ở nhà, đôi khi lên mạng.", "questions": [{"q": "今天星期几？", "a": "今天星期六。", "alt": [], "qEn": "What day is it today?", "aEn": "Saturday.", "qVi": "Hôm nay là thứ mấy?", "aVi": "Thứ Bảy."}, {"q": "他几点起床？", "a": "他七点半起床。", "alt": [], "qEn": "What time does the person get up?", "aEn": "7:30.", "qVi": "Người ấy thức dậy lúc mấy giờ?", "aVi": "7 giờ rưỡi."}, {"q": "他下午两点去哪里？", "a": "他去图书馆看书。", "alt": [], "qEn": "Where does the person go at 2 pm?", "aEn": "To the library to read.", "qVi": "Lúc 2 giờ chiều người ấy đi đâu?", "aVi": "Đến thư viện đọc sách."}], "words": []}, {"id": "shopping-at-the-supermarket", "titleZh": "去超市买东西", "titlePy": "Qù chāoshì mǎi dōngxi", "titleEn": "Shopping at the Supermarket", "titleVi": "Đi siêu thị mua đồ", "lessons": "Bài 6–7", "level": "Beginner + small extension vocabulary", "zh": "今天下午，我和妈妈一起去超市。我们想买苹果、面包和牛奶。苹果五块钱一斤。妈妈说：\"我要两斤苹果。\"我说：\"我也要一个面包和一瓶牛奶。\"我们买了很多东西，然后回家。", "py": "Jīntiān xiàwǔ, wǒ hé māma yìqǐ qù chāoshì. Wǒmen xiǎng mǎi píngguǒ, miànbāo hé niúnǎi. Píngguǒ wǔ kuài qián yì jīn. Māma shuō: \"Wǒ yào liǎng jīn píngguǒ.\" Wǒ shuō: \"Wǒ yě yào yí ge miànbāo hé yì píng niúnǎi.\" Wǒmen mǎi le hěn duō dōngxi, ránhòu huí jiā.", "en": "This afternoon, Mum and I go to the supermarket together. We want to buy apples, bread and milk. Apples cost five yuan per jin (500 g). Mum wants two jin of apples. I also want some bread and a bottle of milk. We buy lots of things and then go home.", "vi": "Chiều nay, tôi và mẹ cùng đi siêu thị. Chúng tôi muốn mua táo, bánh mì và sữa. Táo giá 5 tệ một cân Trung Quốc (500 g). Mẹ muốn mua hai cân táo. Tôi cũng muốn một ổ bánh mì và một chai sữa. Chúng tôi mua nhiều đồ rồi về nhà.", "questions": [{"q": "他们去哪里？", "a": "他们去超市。", "alt": [], "qEn": "Where do they go?", "aEn": "The supermarket.", "qVi": "Họ đi đâu?", "aVi": "Đi siêu thị."}, {"q": "苹果多少钱一斤？", "a": "苹果五块钱一斤。", "alt": [], "qEn": "How much are the apples per jin?", "aEn": "Five yuan.", "qVi": "Táo bao nhiêu tiền một cân Trung Quốc?", "aVi": "Năm tệ."}, {"q": "他们一共买几斤苹果？", "a": "他们一共买两斤苹果。", "alt": [], "qEn": "How many jin of apples do they buy?", "aEn": "Two jin.", "qVi": "Họ mua tổng cộng mấy cân táo?", "aVi": "Hai cân Trung Quốc."}], "words": [{"h": "苹果", "p": "píngguǒ", "en": "apple", "vi": "táo"}, {"h": "瓶", "p": "píng", "en": "bottle; measure word", "vi": "chai"}, {"h": "了", "p": "le", "en": "completed-action particle", "vi": "trợ từ chỉ hành động đã hoàn thành"}]}, {"id": "whats-the-plan-today", "titleZh": "今天有什么安排？", "titlePy": "Jīntiān yǒu shénme ānpái?", "titleEn": "What's the Plan Today?", "titleVi": "Hôm nay có kế hoạch gì?", "lessons": "Bài 7–9", "level": "Beginner", "zh": "今天是星期三。小红有很多事。她上午十点去银行取钱。中午十二点，她和朋友一起吃午饭。下午四点，她去咖啡店喝咖啡。晚上七点，她去电影院看电影。她今天很高兴。", "py": "Jīntiān shì xīngqīsān. Xiǎohóng yǒu hěn duō shì. Tā shàngwǔ shí diǎn qù yínháng qǔ qián. Zhōngwǔ shí'èr diǎn, tā hé péngyou yìqǐ chī wǔfàn. Xiàwǔ sì diǎn, tā qù kāfēidiàn hē kāfēi. Wǎnshang qī diǎn, tā qù diànyǐngyuàn kàn diànyǐng. Tā jīntiān hěn gāoxìng.", "en": "Today is Wednesday. Xiaohong has lots to do. At 10 am she goes to the bank to withdraw money. At noon she has lunch with a friend. At 4 pm she goes to a café for coffee. At 7 pm she goes to the cinema to watch a film. She's very happy today.", "vi": "Hôm nay là thứ Tư. Tiểu Hồng có nhiều việc phải làm. Lúc 10 giờ sáng cô ấy đi ngân hàng rút tiền. Trưa 12 giờ cô ấy ăn trưa với bạn. Chiều 4 giờ cô ấy đi quán cà phê uống cà phê. Tối 7 giờ cô ấy đi rạp xem phim. Hôm nay cô ấy rất vui.", "questions": [{"q": "小红几点去银行？", "a": "她上午十点去银行。", "alt": [], "qEn": "What time does Xiaohong go to the bank?", "aEn": "10 am.", "qVi": "Tiểu Hồng đi ngân hàng lúc mấy giờ?", "aVi": "10 giờ sáng."}, {"q": "她去银行做什么？", "a": "她去银行取钱。", "alt": [], "qEn": "Why does she go to the bank?", "aEn": "To withdraw money.", "qVi": "Cô ấy đi ngân hàng làm gì?", "aVi": "Để rút tiền."}, {"q": "她下午四点去哪里？", "a": "她去咖啡店喝咖啡。", "alt": [], "qEn": "Where does she go at 4 pm?", "aEn": "A café for coffee.", "qVi": "Cô ấy đi đâu lúc 4 giờ chiều?", "aVi": "Đến quán cà phê uống cà phê."}], "words": []}, {"id": "my-day", "titleZh": "我的一天", "titlePy": "Wǒ de yì tiān", "titleEn": "My Day", "titleVi": "Một ngày của tôi", "lessons": "Bài 8–9", "level": "Beginner", "zh": "我是留学生。我每天六点半起床。起床以后，我先刷牙、洗脸，然后吃早饭。八点开始上课。十一点半下课。下午我常常去图书馆看书。晚上我常常学习汉语，有时候看电视，有时候上网。我每天都很高兴。", "py": "Wǒ shì liúxuéshēng. Wǒ měitiān liù diǎn bàn qǐchuáng. Qǐchuáng yǐhòu, wǒ xiān shuāyá, xǐliǎn, ránhòu chī zǎofàn. Bā diǎn kāishǐ shàngkè. Shíyī diǎn bàn xiàkè. Xiàwǔ wǒ chángcháng qù túshūguǎn kàn shū. Wǎnshang wǒ chángcháng xuéxí Hànyǔ, yǒu shíhou kàn diànshì, yǒu shíhou shàngwǎng. Wǒ měitiān dōu hěn gāoxìng.", "en": "I'm an international student. I get up at 6:30 every day. After getting up, I brush my teeth and wash my face, then eat breakfast. Class starts at 8 and finishes at 11:30. In the afternoon I often go to the library to read. In the evening I often study Chinese, sometimes watch TV and sometimes go online. I'm happy every day.", "vi": "Tôi là du học sinh. Mỗi ngày tôi thức dậy lúc 6 giờ rưỡi. Sau khi thức dậy, tôi đánh răng, rửa mặt rồi ăn sáng. Lớp học bắt đầu lúc 8 giờ và kết thúc lúc 11 giờ rưỡi. Buổi chiều tôi thường đến thư viện đọc sách. Buổi tối tôi thường học tiếng Trung, đôi khi xem tivi, đôi khi lên mạng. Mỗi ngày tôi đều rất vui.", "questions": [{"q": "他每天几点起床？", "a": "他每天六点半起床。", "alt": [], "qEn": "What time does the person get up every day?", "aEn": "6:30.", "qVi": "Người ấy thức dậy lúc mấy giờ mỗi ngày?", "aVi": "6 giờ rưỡi."}, {"q": "起床以后他先做什么？", "a": "他先刷牙、洗脸。", "alt": [], "qEn": "What does the person do first after getting up?", "aEn": "Brush teeth and wash face.", "qVi": "Sau khi thức dậy người ấy làm gì trước?", "aVi": "Đánh răng, rửa mặt."}, {"q": "他晚上常常做什么？", "a": "他晚上常常学习汉语。", "alt": [], "qEn": "What does the person often do in the evening?", "aEn": "Study Chinese.", "qVi": "Buổi tối người ấy thường làm gì?", "aVi": "Học tiếng Trung."}], "words": []}], "patterns": [{"id": "pattern-subject-time-place-action", "title": "Subject + Time + Place + Action", "labels": ["Subject", "Time", "Place", "Action"], "zh": ["我", "下午两点", "去图书馆", "看书"], "zhEnd": "。", "py": ["Wǒ", "xiàwǔ liǎng diǎn", "qù túshūguǎn", "kàn shū"], "pyEnd": ".", "pyAll": "", "en": "I go to the library to read at 2 pm.", "vi": "Tôi đến thư viện đọc sách lúc 2 giờ chiều."}, {"id": "pattern-subject-frequency-verb", "title": "Subject + Frequency + Verb", "labels": ["Subject", "Frequency", "Verb"], "zh": ["我", "常常", "学习汉语"], "zhEnd": "。", "py": ["Wǒ", "chángcháng", "xuéxí Hànyǔ"], "pyEnd": ".", "pyAll": "", "en": "I often study Chinese.", "vi": "Tôi thường xuyên học tiếng Trung."}, {"id": "pattern-first-action-then-action", "title": "First Action + Then Action", "labels": ["Subject", "First action", "Then action"], "zh": ["我", "先洗澡", "然后吃早饭"], "zhEnd": "。", "py": ["Wǒ", "xiān xǐzǎo", "ránhòu chī zǎofàn"], "pyEnd": ".", "pyAll": "", "en": "I shower first, then eat breakfast.", "vi": "Tôi tắm rửa trước, sau đó ăn sáng."}]};
+const SEED_STORY_LIBRARY = {"stories": [{"id": "my-family", "titleZh": "我的家", "titlePy": "Wǒ de jiā", "titleEn": "My Family", "titleVi": "Gia đình tôi", "lessons": "Bài 2–5", "level": "Beginner", "zh": "我叫小明。\n我是中国人。\n我家有四口人：爸爸、妈妈、姐姐和我。\n爸爸是医生，妈妈是老师。\n姐姐是大学生，她学习英语。\n我学习汉语。\n我们都很喜欢学习。", "py": "Wǒ jiào Xiǎomíng.\nWǒ shì Zhōngguó rén.\nWǒ jiā yǒu sì kǒu rén: bàba, māma, jiějie hé wǒ.\nBàba shì yīshēng, māma shì lǎoshī.\nJiějie shì dàxuéshēng, tā xuéxí Yīngyǔ.\nWǒ xuéxí Hànyǔ.\nWǒmen dōu hěn xǐhuan xuéxí.", "en": "My name is Xiaoming.\nI'm Chinese.\nThere are four people in my family: Dad, Mum, my older sister and me.\nDad is a doctor, Mum is a teacher.\nMy sister is a university student and studies English.\nI study Chinese.\nWe all really like studying.", "vi": "Tôi tên là Tiểu Minh.\nTôi là người Trung Quốc.\nGia đình tôi có bốn người: bố, mẹ, chị gái và tôi.\nBố là bác sĩ, mẹ là giáo viên.\nChị gái là sinh viên đại học, chị ấy học tiếng Anh.\nTôi học tiếng Trung.\nChúng tôi đều rất thích học.", "questions": [{"q": "小明是哪国人？", "a": "小明是中国人。", "alt": [], "qEn": "What nationality is Xiaoming?", "aEn": "Xiaoming is Chinese.", "qVi": "Tiểu Minh là người nước nào?", "aVi": "Tiểu Minh là người Trung Quốc."}, {"q": "他家有几口人？", "a": "他家有四口人。", "alt": [], "qEn": "How many people are in his family?", "aEn": "Four.", "qVi": "Gia đình cậu ấy có mấy người?", "aVi": "Có bốn người."}, {"q": "他妈妈做什么工作？", "a": "他妈妈是老师。", "alt": [], "qEn": "What is his mother's job?", "aEn": "She is a teacher.", "qVi": "Mẹ cậu ấy làm nghề gì?", "aVi": "Mẹ cậu ấy là giáo viên."}], "words": []}, {"id": "my-saturday", "titleZh": "我的星期六", "titlePy": "Wǒ de xīngqīliù", "titleEn": "My Saturday", "titleVi": "Thứ Bảy của tôi", "lessons": "Bài 8–9", "level": "Beginner", "zh": "今天星期六，我不上班。\n我早上七点半起床。\n起床以后，我先洗澡，然后吃早饭。\n上午十点，我去超市买东西。\n中午十二点，我回家吃午饭。\n下午两点，我去图书馆看书。\n晚上，我在家看电视，有时候上网。", "py": "Jīntiān xīngqīliù, wǒ bù shàngbān.\nWǒ zǎoshang qī diǎn bàn qǐchuáng.\nQǐchuáng yǐhòu, wǒ xiān xǐzǎo, ránhòu chī zǎofàn.\nShàngwǔ shí diǎn, wǒ qù chāoshì mǎi dōngxi.\nZhōngwǔ shí'èr diǎn, wǒ huí jiā chī wǔfàn.\nXiàwǔ liǎng diǎn, wǒ qù túshūguǎn kàn shū.\nWǎnshang, wǒ zài jiā kàn diànshì, yǒu shíhou shàngwǎng.", "en": "Today is Saturday and I don't work.\nI get up at 7:30.\nAfter getting up, I shower first and then eat breakfast.\nAt 10 am I go shopping at the supermarket.\nAt noon I go home for lunch.\nAt 2 pm I go to the library to read.\nIn the evening I watch TV at home and sometimes go online.", "vi": "Hôm nay là thứ Bảy, tôi không đi làm.\nTôi thức dậy lúc 7 giờ rưỡi.\nSau khi thức dậy, tôi tắm rửa trước, sau đó ăn sáng.\nLúc 10 giờ sáng tôi đi siêu thị mua đồ.\nTrưa 12 giờ tôi về nhà ăn trưa.\nChiều 2 giờ tôi đến thư viện đọc sách.\nBuổi tối tôi xem tivi ở nhà, đôi khi lên mạng.", "questions": [{"q": "今天星期几？", "a": "今天星期六。", "alt": [], "qEn": "What day is it today?", "aEn": "Saturday.", "qVi": "Hôm nay là thứ mấy?", "aVi": "Thứ Bảy."}, {"q": "他几点起床？", "a": "他七点半起床。", "alt": [], "qEn": "What time does the person get up?", "aEn": "7:30.", "qVi": "Người ấy thức dậy lúc mấy giờ?", "aVi": "7 giờ rưỡi."}, {"q": "他下午两点去哪里？", "a": "他去图书馆看书。", "alt": [], "qEn": "Where does the person go at 2 pm?", "aEn": "To the library to read.", "qVi": "Lúc 2 giờ chiều người ấy đi đâu?", "aVi": "Đến thư viện đọc sách."}], "words": []}, {"id": "shopping-at-the-supermarket", "titleZh": "去超市买东西", "titlePy": "Qù chāoshì mǎi dōngxi", "titleEn": "Shopping at the Supermarket", "titleVi": "Đi siêu thị mua đồ", "lessons": "Bài 6–7", "level": "Beginner + small extension vocabulary", "zh": "今天下午，我和妈妈一起去超市。\n我们想买苹果、面包和牛奶。\n苹果五块钱一斤。\n妈妈说：\"我要两斤苹果。\"\n我说：\"我也要一个面包和一瓶牛奶。\"\n我们买了很多东西，然后回家。", "py": "Jīntiān xiàwǔ, wǒ hé māma yìqǐ qù chāoshì.\nWǒmen xiǎng mǎi píngguǒ, miànbāo hé niúnǎi.\nPíngguǒ wǔ kuài qián yì jīn.\nMāma shuō: \"Wǒ yào liǎng jīn píngguǒ.\"\nWǒ shuō: \"Wǒ yě yào yí ge miànbāo hé yì píng niúnǎi.\"\nWǒmen mǎi le hěn duō dōngxi, ránhòu huí jiā.", "en": "This afternoon, Mum and I go to the supermarket together.\nWe want to buy apples, bread and milk.\nApples cost five yuan per jin (500 g).\nMum wants two jin of apples.\nI also want some bread and a bottle of milk.\nWe buy lots of things and then go home.", "vi": "Chiều nay, tôi và mẹ cùng đi siêu thị.\nChúng tôi muốn mua táo, bánh mì và sữa.\nTáo giá 5 tệ một cân Trung Quốc (500 g).\nMẹ muốn mua hai cân táo.\nTôi cũng muốn một ổ bánh mì và một chai sữa.\nChúng tôi mua nhiều đồ rồi về nhà.", "questions": [{"q": "他们去哪里？", "a": "他们去超市。", "alt": [], "qEn": "Where do they go?", "aEn": "The supermarket.", "qVi": "Họ đi đâu?", "aVi": "Đi siêu thị."}, {"q": "苹果多少钱一斤？", "a": "苹果五块钱一斤。", "alt": [], "qEn": "How much are the apples per jin?", "aEn": "Five yuan.", "qVi": "Táo bao nhiêu tiền một cân Trung Quốc?", "aVi": "Năm tệ."}, {"q": "他们一共买几斤苹果？", "a": "他们一共买两斤苹果。", "alt": [], "qEn": "How many jin of apples do they buy?", "aEn": "Two jin.", "qVi": "Họ mua tổng cộng mấy cân táo?", "aVi": "Hai cân Trung Quốc."}], "words": [{"h": "苹果", "p": "píngguǒ", "en": "apple", "vi": "táo"}, {"h": "瓶", "p": "píng", "en": "bottle; measure word", "vi": "chai"}, {"h": "了", "p": "le", "en": "completed-action particle", "vi": "trợ từ chỉ hành động đã hoàn thành"}]}, {"id": "whats-the-plan-today", "titleZh": "今天有什么安排？", "titlePy": "Jīntiān yǒu shénme ānpái?", "titleEn": "What's the Plan Today?", "titleVi": "Hôm nay có kế hoạch gì?", "lessons": "Bài 7–9", "level": "Beginner", "zh": "今天是星期三。\n小红有很多事。\n她上午十点去银行取钱。\n中午十二点，她和朋友一起吃午饭。\n下午四点，她去咖啡店喝咖啡。\n晚上七点，她去电影院看电影。\n她今天很高兴。", "py": "Jīntiān shì xīngqīsān.\nXiǎohóng yǒu hěn duō shì.\nTā shàngwǔ shí diǎn qù yínháng qǔ qián.\nZhōngwǔ shí'èr diǎn, tā hé péngyou yìqǐ chī wǔfàn.\nXiàwǔ sì diǎn, tā qù kāfēidiàn hē kāfēi.\nWǎnshang qī diǎn, tā qù diànyǐngyuàn kàn diànyǐng.\nTā jīntiān hěn gāoxìng.", "en": "Today is Wednesday.\nXiaohong has lots to do.\nAt 10 am she goes to the bank to withdraw money.\nAt noon she has lunch with a friend.\nAt 4 pm she goes to a café for coffee.\nAt 7 pm she goes to the cinema to watch a film.\nShe's very happy today.", "vi": "Hôm nay là thứ Tư.\nTiểu Hồng có nhiều việc phải làm.\nLúc 10 giờ sáng cô ấy đi ngân hàng rút tiền.\nTrưa 12 giờ cô ấy ăn trưa với bạn.\nChiều 4 giờ cô ấy đi quán cà phê uống cà phê.\nTối 7 giờ cô ấy đi rạp xem phim.\nHôm nay cô ấy rất vui.", "questions": [{"q": "小红几点去银行？", "a": "她上午十点去银行。", "alt": [], "qEn": "What time does Xiaohong go to the bank?", "aEn": "10 am.", "qVi": "Tiểu Hồng đi ngân hàng lúc mấy giờ?", "aVi": "10 giờ sáng."}, {"q": "她去银行做什么？", "a": "她去银行取钱。", "alt": [], "qEn": "Why does she go to the bank?", "aEn": "To withdraw money.", "qVi": "Cô ấy đi ngân hàng làm gì?", "aVi": "Để rút tiền."}, {"q": "她下午四点去哪里？", "a": "她去咖啡店喝咖啡。", "alt": [], "qEn": "Where does she go at 4 pm?", "aEn": "A café for coffee.", "qVi": "Cô ấy đi đâu lúc 4 giờ chiều?", "aVi": "Đến quán cà phê uống cà phê."}], "words": []}, {"id": "my-day", "titleZh": "我的一天", "titlePy": "Wǒ de yì tiān", "titleEn": "My Day", "titleVi": "Một ngày của tôi", "lessons": "Bài 8–9", "level": "Beginner", "zh": "我是留学生。\n我每天六点半起床。\n起床以后，我先刷牙、洗脸，然后吃早饭。\n八点开始上课。十一点半下课。\n下午我常常去图书馆看书。\n晚上我常常学习汉语，有时候看电视，有时候上网。\n我每天都很高兴。", "py": "Wǒ shì liúxuéshēng.\nWǒ měitiān liù diǎn bàn qǐchuáng.\nQǐchuáng yǐhòu, wǒ xiān shuāyá, xǐliǎn, ránhòu chī zǎofàn.\nBā diǎn kāishǐ shàngkè. Shíyī diǎn bàn xiàkè.\nXiàwǔ wǒ chángcháng qù túshūguǎn kàn shū.\nWǎnshang wǒ chángcháng xuéxí Hànyǔ, yǒu shíhou kàn diànshì, yǒu shíhou shàngwǎng.\nWǒ měitiān dōu hěn gāoxìng.", "en": "I'm an international student.\nI get up at 6:30 every day.\nAfter getting up, I brush my teeth and wash my face, then eat breakfast.\nClass starts at 8 and finishes at 11:30.\nIn the afternoon I often go to the library to read.\nIn the evening I often study Chinese, sometimes watch TV and sometimes go online.\nI'm happy every day.", "vi": "Tôi là du học sinh.\nMỗi ngày tôi thức dậy lúc 6 giờ rưỡi.\nSau khi thức dậy, tôi đánh răng, rửa mặt rồi ăn sáng.\nLớp học bắt đầu lúc 8 giờ và kết thúc lúc 11 giờ rưỡi.\nBuổi chiều tôi thường đến thư viện đọc sách.\nBuổi tối tôi thường học tiếng Trung, đôi khi xem tivi, đôi khi lên mạng.\nMỗi ngày tôi đều rất vui.", "questions": [{"q": "他每天几点起床？", "a": "他每天六点半起床。", "alt": [], "qEn": "What time does the person get up every day?", "aEn": "6:30.", "qVi": "Người ấy thức dậy lúc mấy giờ mỗi ngày?", "aVi": "6 giờ rưỡi."}, {"q": "起床以后他先做什么？", "a": "他先刷牙、洗脸。", "alt": [], "qEn": "What does the person do first after getting up?", "aEn": "Brush teeth and wash face.", "qVi": "Sau khi thức dậy người ấy làm gì trước?", "aVi": "Đánh răng, rửa mặt."}, {"q": "他晚上常常做什么？", "a": "他晚上常常学习汉语。", "alt": [], "qEn": "What does the person often do in the evening?", "aEn": "Study Chinese.", "qVi": "Buổi tối người ấy thường làm gì?", "aVi": "Học tiếng Trung."}], "words": []}], "patterns": [{"id": "pattern-subject-time-place-action", "title": "Subject + Time + Place + Action", "labels": ["Subject", "Time", "Place", "Action"], "zh": ["我", "下午两点", "去图书馆", "看书"], "zhEnd": "。", "py": ["Wǒ", "xiàwǔ liǎng diǎn", "qù túshūguǎn", "kàn shū"], "pyEnd": ".", "pyAll": "", "en": "I go to the library to read at 2 pm.", "vi": "Tôi đến thư viện đọc sách lúc 2 giờ chiều."}, {"id": "pattern-subject-frequency-verb", "title": "Subject + Frequency + Verb", "labels": ["Subject", "Frequency", "Verb"], "zh": ["我", "常常", "学习汉语"], "zhEnd": "。", "py": ["Wǒ", "chángcháng", "xuéxí Hànyǔ"], "pyEnd": ".", "pyAll": "", "en": "I often study Chinese.", "vi": "Tôi thường xuyên học tiếng Trung."}, {"id": "pattern-first-action-then-action", "title": "First Action + Then Action", "labels": ["Subject", "First action", "Then action"], "zh": ["我", "先洗澡", "然后吃早饭"], "zhEnd": "。", "py": ["Wǒ", "xiān xǐzǎo", "ránhòu chī zǎofàn"], "pyEnd": ".", "pyAll": "", "en": "I shower first, then eat breakfast.", "vi": "Tôi tắm rửa trước, sau đó ăn sáng."}]};
 
 // ---- small helpers ----
 function stClone(o){ return JSON.parse(JSON.stringify(o)); }
@@ -12881,7 +12894,7 @@ function stSanitizeStory(s){
     h: stStr(w && w.h), p: stStr(w && w.p), en: stStr(w && w.en), vi: stStr(w && w.vi)
   })).filter(w => w.h);
   return {
-    id, titleZh: stStr(s.titleZh) || zh.slice(0, 10), titlePy: stStr(s.titlePy),
+    id, titleZh: stStr(s.titleZh) || zh.replace(/\s+/g, '').slice(0, 10), titlePy: stStr(s.titlePy),
     titleEn: stStr(s.titleEn), titleVi: stStr(s.titleVi),
     lessons: stStr(s.lessons), level: stStr(s.level),
     zh, py: stStr(s.py), en: stStr(s.en), vi: stStr(s.vi), questions, words
@@ -12909,6 +12922,19 @@ function stSeedLibrary(){
     patterns: SEED_STORY_LIBRARY.patterns.map(stSanitizePattern).filter(Boolean)
   };
 }
+// Starter stories saved before sentences were stored one per line hold exactly the same
+// words in one paragraph. When the words are identical (only the line breaks differ) they
+// are switched to the line-per-sentence version so everything lines up. Anything you have
+// edited is left alone.
+function stUpgradeSeedFormatting(story){
+  const seed = SEED_STORY_LIBRARY.stories.find(x => x.id === story.id);
+  if(!seed) return story;
+  ['zh', 'py', 'en', 'vi'].forEach(k => {
+    const a = story[k], b = seed[k];
+    if(a && b && !/\n/.test(a) && /\n/.test(b) && a.replace(/\s+/g, '') === b.replace(/\s+/g, '')) story[k] = b;
+  });
+  return story;
+}
 function loadStoryLibrary(){
   try{
     const raw = localStorage.getItem(STORY_LIB_KEY);
@@ -12916,7 +12942,7 @@ function loadStoryLibrary(){
       const parsed = JSON.parse(raw);
       if(parsed && Array.isArray(parsed.stories) && Array.isArray(parsed.patterns)){
         return {
-          stories: parsed.stories.map(stSanitizeStory).filter(Boolean),
+          stories: parsed.stories.map(stSanitizeStory).filter(Boolean).map(stUpgradeSeedFormatting),
           patterns: parsed.patterns.map(stSanitizePattern).filter(Boolean)
         };
       }
@@ -12993,6 +13019,10 @@ const STORY_TEMPLATE = `# Han Yu Learning — Story Time import template
 #  - id: leave it blank and the app makes one from the English title.
 #    Same id as an existing story = it REPLACES that story (your progress is kept).
 #    A new id = a new story is ADDED. Nothing is ever deleted by importing.
+#  - To get the Pinyin / English / Tiếng Việt to appear UNDER each Chinese sentence,
+#    write ONE SENTENCE PER LINE and use the same number of lines in [chinese],
+#    [pinyin], [english] and [vietnamese] (line 1 goes with line 1, and so on).
+#    If a section does not line up, it is shown as one block under the story instead.
 #  - Questions: each one starts with Q: and needs an A: (the model answer).
 #      ALT:  another answer that is also correct (add as many as you like)
 #      QEN / AEN = English,   QVI / AVI = Tiếng Việt   (all optional)
@@ -13018,16 +13048,20 @@ lessons: Bài 9
 level: Beginner
 
 [chinese]
-我每天七点起床。我先刷牙，然后吃早饭。
+我每天七点起床。
+我先刷牙，然后吃早饭。
 
 [pinyin]
-Wǒ měitiān qī diǎn qǐchuáng. Wǒ xiān shuāyá, ránhòu chī zǎofàn.
+Wǒ měitiān qī diǎn qǐchuáng.
+Wǒ xiān shuāyá, ránhòu chī zǎofàn.
 
 [english]
-I get up at 7:00 every day. I brush my teeth first, then eat breakfast.
+I get up at 7:00 every day.
+I brush my teeth first, then eat breakfast.
 
 [vietnamese]
-Mỗi ngày tôi thức dậy lúc 7 giờ. Tôi đánh răng trước, sau đó ăn sáng.
+Mỗi ngày tôi thức dậy lúc 7 giờ.
+Tôi đánh răng trước, sau đó ăn sáng.
 
 [questions]
 Q: 他每天几点起床？
@@ -13225,7 +13259,7 @@ function storyBackupData(){ return { library: storyLibrary, progress: storyProgr
 // Returns a short note for the import message ('' if the file had no stories section).
 function applyStoriesFromBackup(data, replaceMode){
   if(!data || typeof data !== 'object' || !data.library) return '';
-  const inStories = (Array.isArray(data.library.stories) ? data.library.stories : []).map(stSanitizeStory).filter(Boolean);
+  const inStories = (Array.isArray(data.library.stories) ? data.library.stories : []).map(stSanitizeStory).filter(Boolean).map(stUpgradeSeedFormatting);
   const inPatterns = (Array.isArray(data.library.patterns) ? data.library.patterns : []).map(stSanitizePattern).filter(Boolean);
   const inProgress = (data.progress && typeof data.progress === 'object' && !Array.isArray(data.progress)) ? data.progress : {};
   let note;
@@ -13314,12 +13348,45 @@ function closeStory(){
   setStoryMode('stories');
 }
 
-function storyTextHtml(s){
+// Cuts a text into the pieces that line up across languages. One sentence per line
+// (the way the starter stories and the template are written) is used as-is; a single
+// paragraph is cut at sentence ends instead (closing quotes stay with their sentence).
+function stSegments(text, isZh){
+  const t = String(text || '').trim();
+  if(!t) return [];
+  const lines = t.split(/\n+/).map(x => x.trim()).filter(Boolean);
+  if(lines.length > 1) return lines;
+  const re = isZh ? /[^。！？]+[。！？]+["”’'」』]?|[^。！？]+$/g
+                  : /[^.!?]+[.!?]+["”’']?(?=\s|$)|[^.!?]+$/g;
+  const parts = t.match(re);
+  return parts ? parts.map(x => x.trim()).filter(Boolean) : [t];
+}
+function stHighlight(text, s){
   const words = (s.words || []).map(w => w.h).filter(Boolean).sort((a, b) => b.length - a.length);
-  if(!storyShow.hl || !words.length) return escapeHtml(s.zh);
+  if(!storyShow.hl || !words.length) return escapeHtml(text);
   const re = new RegExp('(' + words.map(w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|') + ')', 'g');
-  return s.zh.split(re).map((part, i) =>
+  return text.split(re).map((part, i) =>
     i % 2 === 1 ? `<mark class="st-new" data-word="${escapeHtml(part)}">${escapeHtml(part)}</mark>` : escapeHtml(part)
+  ).join('');
+}
+// Chinese first. Each translation you switch on sits directly under the Chinese sentence it
+// belongs to; switch them all off and the text closes back up into one tight paragraph.
+// A translation whose sentences don't line up one-to-one with the Chinese can't be placed
+// sentence by sentence, so it is shown as one block right under the story instead.
+function storyTextHtml(s){
+  const zhSegs = stSegments(s.zh, true);
+  const langs = [['py', 'Pinyin', s.py], ['en', 'English', s.en], ['vi', 'Tiếng Việt', s.vi]].map(([k, label, text]) => {
+    const segs = stSegments(text, false);
+    return { k, label, text, segs, aligned: segs.length === zhSegs.length };
+  }).filter(l => storyShow[l.k] && l.text);
+  const inline = langs.filter(l => l.aligned);
+  const blocks = langs.filter(l => !l.aligned);
+  const body = zhSegs.map((seg, i) =>
+    `<span class="st-seg${inline.length ? ' on' : ''}"><span class="st-seg-zh hanzi">${stHighlight(seg, s)}</span>` +
+    inline.map(l => `<span class="st-tr ${l.k}">${escapeHtml(l.segs[i])}</span>`).join('') + '</span>'
+  ).join('');
+  return body + blocks.map(l =>
+    `<div class="st-fallback ${l.k}"><span class="st-block-label dark">${l.label}</span>${escapeHtml(l.text.replace(/\n+/g, ' '))}</div>`
   ).join('');
 }
 function renderStoryReader(){
@@ -13338,15 +13405,11 @@ function renderStoryReader(){
   hlBtn.style.display = hasWords ? '' : 'none';
   hlBtn.classList.toggle('on', storyShow.hl);
 
-  [['py', 'Pinyin', s.py], ['en', 'English', s.en], ['vi', 'Tiếng Việt', s.vi]].forEach(([k, label, text]) => {
+  [['py', s.py], ['en', s.en], ['vi', s.vi]].forEach(([k, text]) => {
     const btn = document.getElementById('story-show-' + k);
-    const box = document.getElementById('story-' + k);
     btn.classList.toggle('on', storyShow[k]);
     btn.disabled = !text;
     btn.title = text ? '' : 'Not provided for this story';
-    box.style.display = (storyShow[k] && text) ? '' : 'none';
-    box.innerHTML = `<span class="st-block-label">${label}</span>${escapeHtml(text)}`;
-    box.classList.toggle('py', k === 'py');
   });
 
   renderStoryWords();
@@ -13586,7 +13649,7 @@ function stSetFeedback(msg, ok){
 document.getElementById('story-mode-stories').addEventListener('click', () => setStoryMode('stories'));
 document.getElementById('story-mode-patterns').addEventListener('click', () => setStoryMode('patterns'));
 document.getElementById('story-back').addEventListener('click', closeStory);
-document.getElementById('story-listen').addEventListener('click', () => { const s = storyById(storyOpenId); if(s) speak(s.zh); });
+document.getElementById('story-listen').addEventListener('click', () => { const s = storyById(storyOpenId); if(s) speak(s.zh.replace(/\s*\n+\s*/g, '')); });
 document.getElementById('story-hl-toggle').addEventListener('click', () => { storyShow.hl = !storyShow.hl; renderStoryReader(); });
 ['py', 'en', 'vi'].forEach(k => document.getElementById('story-show-' + k).addEventListener('click', () => { storyShow[k] = !storyShow[k]; renderStoryReader(); }));
 document.getElementById('story-text').addEventListener('click', (e) => {
